@@ -1,0 +1,127 @@
+To do:
+
+Research
+* Introduce your research
+* How you estimate spill-over effect
+* What are your research assumptions and why
+    * Adaptive: user comes one by one
+    * Linear additive model
+* How you balance covariates? Why you balance it
+    * Covariate imbalance measure
+    * Minimize MSE
+
+Case 1: AB Testing
+Netflix want to convert non-member to member (pay) and run an experiment to test it. In Control: show images on the website; In Treatment, show videos on the website.  
+1. Clarify question
+    1. My Answer: Repeat the question
+    2. I ask: Target population? In general/all over the world. 
+2. Define Metrics: daily conversion rate = #pay/#non-member
+3. Sample Data: My Answer: Stratified sampling
+    1. Compare stratified sampling and post-experiment stratification reweighting (Adv and disadv)?
+        1. My Answer: Similar. 
+            1. Stratified sampling before the experiment is straightforward and can get the correct causal inference. However, it may be costly.
+            2. Reweighing needs more calculation, but it works.
+4. How to calculate sample size? How to decide the duration?
+5. How to decide the Traffic? 50-50 split 
+6. If Signup rate baseline is different, how to solve it? Diff in diff
+7. If a PM asks you run the AB test, you want to the sign-up rate to be high or low? Based on variance of Bernoulli, var=p(1-p), so pick extreme value such that variance is small 
+
+Case 2: Multiple testing
+1. Netflix run 100 tests simultaneously, finding 10 significant. What’s your action? 
+    1. Use type one error correction, e.g. Bonferroni correction, and see new significants.
+    2. Let’s say 3 still significant and 7 are not.
+        1. Condition all the mechanisms before the 3 are correct, conclude the 3 are significant.
+        2. Segment the 7, and see which are still sig‍‌‌‍‌‍‍‌‍‍‍‍‌‍‍‌‌‌‌‌nificant to understand the user behavior.
+2. How is the false negative change? 
+    1. My answer: if 0.05 decrease to 0.01, you are more likely not to reject H0 and thus more likely to accept H1. Then if h1 is true, then power will increase. If H1 is not true, type II also increases.
+
+
+https://www.1point3acres.com/bbs/thread-838879-1-1.html
+
+第一轮电面是和hiring manager打电话闲聊简历背景 然后考了几道简单的SQL
+第二轮电面是和组里一个Senior data scientist 也是问了简历背景
+然后考了SQL 和简单的Python 数据处理 比如怎么用python group by, merge and filter etc 
+最后考了一题case 大致是说 每一部Netflix的movie 他们都需要决定出多少版本的subtitle 但是还没有播放之前就要决定 然后一共有500+语言 问题是 怎么可以在播出之前就决定好 选择多少语言做subtitle 然后怎么选择是哪几个语言可以让收视率最高？（当然在播出之后你可以继续做subtitle 但是这个问题要你在播出前就决定）
+这个问题我感觉是他们实际中真的碰到的问题 我当时回答的时候从两点说的：
+一个是我觉得可以做predictive modeling 因为你有之前的movie观看记录 你可以先做一个clustering 把现在这部movie和之前的做一个clustering 然后看看他属于哪一类 找到了这个类之后 可以做一个regression或者你可以说ML的一些model 用一些variables 比如电影的时长, 电影origination country, 电影的director, 电影的级别, etc.这些movie信息 然后用dummy variable来加上各个不同语言的subtitle 最后就是看谁的观影时长最长 但是这个model有biased在于之前的movie 你并没有把每个subtitle都做了 所以不知道他对别的subtitle是什么结果
+第二个我是说可以用optimization来做 是一个linear programming 你可以说是dynamic linear programming 就是需要一些constraint 比如准备的时间有限 准备的budget有限 然后每一个subtitle的cost是fixed 最后要maximize 收视率加上minimize cost 
+.--https://towardsdatascience.com/journey-to-the-center-of-multi-label-classification-384c40229bff?gi=af119891a7df
+
+
+https://www.1point3acres.com/bbs/thread-814910-1-1.html
+
+https://www.1point3acres.com/bbs/thread-807091-1-1.html
+
+https://www.1point3acres.com/bbs/thread-575612-1-1.html
+
+https://www.1point3acres.com/bbs/thread-640890-1-1.html
+
+n家先是hm电话第一轮，只是聊聊简单的兴趣啊culture啊。第二轮hr, 就是问culture deck的问题。第三轮codepad 算是tech. 考了到关于data stream的sql 题，leetcode上有。然后问了许多a/b testing。 我感觉答得一般吧。现在工作太忙，也没有时间准备。
+
+https://www.1point3acres.com/bbs/thread-451392-1-1.html
+
+https://www.1point3acres.com/bbs/thread-504106-1-1.html
+
+https://www.1point3acres.com/bbs/thread-465031-1-1.html
+
+https://www.1point3acres.com/bbs/thread-450624-1-1.html
+
+https://www.1point3acres.com/bbs/thread-308571-1-1.html
+==========================
+
+Mle intern oa
+一道AUC计算，一道ensemble methods majority voting的计算，一个简单的算平均分，还有一道太简单以至于连题目都忘了。。coding的话一个要手写一个decision tree based on gini index，另一道要写包含了missing va‍‌‌‍‌‍‍‌‍‍‍‍‌‍‍‌‌‌‌‌lue的normalization，先把missing value 的替换成column average。
+
+1. 问一个binary classification两个ranker的smallest possible difference in AUC；
+2. 问majority vote是正确的probability是多少
+
+
+research scientist
+店面考了 house price prediction
+從feature engineering 到loss function, metric evaluation and model performance都考了 問得很細
+答完後開始coding. check 1point3acres for more.
+考了black jack game 要simulate two players black jack poker game 然後每一輪要算出勝率
+店面美國大叔人很nice 過程中一直都有positive 也都有很feedback！可惜coding part 表現不好 failed了
+
+題目其實就是這樣而已，要跟面試官互動，詢問他要的內容。我的情況是寫出一個雙人21點遊戲，莊家跟閒家，然後算出手牌的勝率來決定你要不要繼續抽牌。算機率時可以假設你看到所有的牌，也就是那些牌被抽走了，那些牌還在牌墩裡。就是這樣的一個情況！
+
+
+
+面试的是Research Scientist的职位，第一轮先和Hring manager聊45min技术面：
+先介绍了他组是干什么的，然后让我自我介绍以及做过的项目。对于其中一个recommendation的项目问题非常细，从如何收集data到deployment每一步都有问到。HM还问了modeling，engineering， communication三个部分平常的比例怎样的。然后我问了他需要招什么样的人，interview process什么样等等。
+
+整体感觉这个职位很偏应用，要写代码能力‍‌‌‍‌‍‍‌‍‍‍‍‌‍‍‌‌‌‌‌比较强，要知道如何把ML model放入产品。
+
+求大米，发后续。。。
+
+
+
+
+Mle
+3周前网上海投的，结果三天后hr联系hm要求video call，45分钟. 结果聊了1小时，感觉职位和我的背景相当的match.主要都是ml/ai方面的问题，和工作项目的问题，问的非常细，还问了几个他们遇到的类似问题，如何处理解释等。
+感觉hm还是挺sharp的。
+之后，hr联系 一周后technical  screening, 又是一个小时。三个部分，项目介绍20分钟的样子。然后是ml/nn基础概念，seq model， 
+bert, RL算法，推荐系统等等，很多小问题。最后coding是道数据分类的问题，要满足一定错开的条件，可以看作是有向图的染色问题， dfs就好了.
+
+之后第二天hr约2周后‍‌‌‍‌‍‍‌‍‍‍‍‌‍‍‌‌‌‌‌onsite.  感觉这轮挺像applied scientist的面试。不过面试官还是挺nice的。不用紧张。
+求大家给加米吧，等面完了再来给大家分享。
+
+
+
+Mle
+9月中网上投的简历，过3天recruiter预约HM店面一个小时。主要是看平时的工作项目是否match.之后recuiter预约一周后tech screen. 印度小哥是个刚毕业就到王菲的mle，工作4年多了，非常nice，
+
+主要做causal inference的。主要是介绍一个ml项目,然后统计和ml的八股文吧。面完半小时recruiter联系onsite.
+HM介绍onsite五轮，中间可能会突然死亡的。挺吓人的。
+1. 印度大叔，给2个电影/show之类的列表，里面有各种信息，如日期，名字，director等等，一个是王菲的，一个是第三方的，让写code比较找出最接近的。然后问实际工作中如何用ml的办法帮助解决，如何部署，各种monitor指标，设计statistical test 等。
+2.印度大姐，主要是问了很多推荐系统和搜索的问题，非常细，各种王菲出现的情况问怎么解决，比如用户搜索的片子没有，你咋办，怎么利用推荐算法搞定。如何利用用户搜索的query 等context 信息等。最后来了道coding, 一个ML模型的参数如何serialize, deserialize. 感觉这个印度小姐姐没有那个印度小哥友好。
+3.小白哥，很酷很叼的样子。王菲有很多电影/show的对，（title1， title2), 表示类似的电影在不同地区的观众数之类的，可以认为是个矩阵。问如何预测一个新片在某个国家地区的观众数。大概思路是建立个knowledge graph, 利用message pass计算每个title对应的representational vector来实现训练，可以是个简单的MLP网络。还有如何找相似的title.
+4. 很漂亮的白女，简单介绍了下他们工作中decision making过程。大意是如何分析用户和内容数据，给内容制作stakeholders如studio做决策。和上面的白哥差不多，问了内容content demand prediction的估计问题。差不多的套路，哪些feature数据。‍‌‌‍‌‍‍‌‍‍‍‍‌‍‍‌‌‌‌‌小姐姐很客气，很耐心。
+5. 一个白大叔director,主要问了BQ，对他们的文化怎么看，和一些常规问题。吃惊的是竟然还问了我一些design的问题，a/b test 和Ml部署的问题，metaflow上如果不能及时得到true label， 怎么监测data drift等。感觉技术上很强的。
+
+希望这些能对大家有用吧。大家好好休息先，新年快乐，来年多拿大包！
+1)训练完模型，参数提取出来，这样可以重建模型，按照自己选择的方式serialize,再deserialize;
+(2) 这个context部分没让动手写，就是说说思路，比如如何收集用户最近的search query, 看了那些products description， photos, 等等你可以定义的events, 在integrate加入到之前的模型中；
+（3）metaflow是奈菲自己的工程师搞得一个workflow系统简化很多pipeline, 面试中提到的，监督model的performance和数据的drift都可以作为节点加入schedule等。
+
+面试有一些运气成分，communication非常重要，聊的开心的话胜算会高些。不过这些也不是我们能控制的。good luck!
