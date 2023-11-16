@@ -1,0 +1,68 @@
+Clarification Questions and Pre-Meeting Discussion on Model Setup
+
+Hi [Developer's Name],
+
+I hope this email finds you well. I'm looking forward to our meeting tomorrow to delve into the model data structure. To ensure our discussion is as productive as possible, I have a few clarification questions regarding the model setup. If we could touch base on these before we dive into the data structure, it would be immensely helpful. Here are the questions:
+
+1. **Exposure Marginal Distribution:**
+   - In the MCMC process, the first step involves drawing Exposure Xi from the exposure marginal distribution. Could you specify which distribution is used for this purpose?
+
+   - In the second step, where Occurrence is sampled from each Exposure, the Occurrence follows a binomial distribution. Could you shed light on how the probability (p) for the binomial distribution is determined?
+
+   - Moving to the third step, the Expected Loss is sampled from each occurrence. Could you clarify which distribution governs the Expected Loss?
+
+2. **Model Testing:**
+   - The white paper mentions various model testing approaches such as validation of the transposition document, validation of the quantification document, back testing, sensitivity analysis, and benchmarking. However, I couldn't find specific details about model testing in the Model Development Documentation. Could you provide some insights or direct me to the relevant section?
+
+3. **Scenario Testing:**
+   - Scenario testing is noted as a model testing method to assess performance over a wide range of inputs, including extreme values. I couldn't locate specific testing results for this. Could you share any available information on scenario testing outcomes?
+
+4. **Identification of Current Scenarios:**
+   - Understanding how current scenarios are identified would be beneficial. My understanding is that scenarios are determined following a loss analysis and a set threshold. Could you provide more details on this process, such as how the threshold is decided?
+
+5. **Model Inputs to mSTAR Software:**
+   - Lastly, I'm curious about the specific model inputs to the mSTAR software. Could you share some insights into this aspect?
+
+Your insights on these questions will contribute significantly to our discussion. I appreciate your time and assistance in clarifying these details before our meeting.
+
+Looking forward to our discussion tomorrow.
+
+Best regards,
+
+Sophia [Last Name]
+[Your Contact Information]
+
+
+Subject: Pre-Meeting Clarification Questions on Model Setup
+
+Hi [Developer's Name],
+
+I hope this email finds you well. Our meeting tomorrow is right around the corner, and I wanted to touch base on some foundational aspects of the model setup before we delve into the data structure. If we could go over these questions during our discussion, it would provide a solid foundation for our exploration. Here are the questions:
+
+1. **Exposure Marginal Distribution:**
+   - In the MCMC process, the first step involves drawing Exposure Xi from the exposure marginal distribution. Could you specify which distribution is used for this purpose?
+
+   - In the second step, where Occurrence is sampled from each Exposure, the Occurrence follows a binomial distribution. Could you shed light on how the probability (p) for the binomial distribution is determined?
+
+   - Moving to the third step, the Expected Loss is sampled from each occurrence. Could you clarify which distribution governs the Expected Loss?
+
+2. **Model Testing:**
+   - The white paper mentions various model testing approaches such as validation of the transposition document, validation of the quantification document, back testing, sensitivity analysis, and benchmarking. However, I couldn't find specific details about model testing in the Model Development Documentation. Could you provide some insights or direct me to the relevant section?
+
+3. **Scenario Testing:**
+   - Scenario testing is noted as a model testing method to assess performance over a wide range of inputs, including extreme values. I couldn't locate specific testing results for this. Could you share any available information on scenario testing outcomes?
+
+4. **Identification of Current Scenarios:**
+   - Understanding how current scenarios are identified would be beneficial. My understanding is that scenarios are determined following a loss analysis and a set threshold. Could you provide more details on this process, such as how the threshold is decided?
+
+5. **Model Inputs to mSTAR Software:**
+   - Lastly, I'm curious about the specific model inputs to the mSTAR software. Could you share some insights into this aspect?
+
+Your insights on these questions will contribute significantly to our discussion. I appreciate your time and assistance in clarifying these details before we proceed into the data structure.
+
+Looking forward to our discussion tomorrow.
+
+Best regards,
+
+Sophia [Last Name]
+[Your Contact Information]
