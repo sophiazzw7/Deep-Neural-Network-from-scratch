@@ -534,3 +534,222 @@ plt.show()
 ### Notes
 - Make sure to replace `'your_dataset.csv'` with the actual path to your dataset.
 - Ensure your dataset columns match the column names used in the code (`latency`, `funded_amount`, `approval_date`, `loan_status`, `account_status`, `loan purpose category`, `application type`, `score`, `target`, `best_decisionZORS`, `best_PLRS`). Adjust the column names if necessary.
+====================================
+
+Sure! We can use the `tabulate` library to display the metrics in pretty tables. First, you'll need to install the `tabulate` library if you don't have it already:
+
+```bash
+pip install tabulate
+```
+
+Now, let's update the code to include the metrics in pretty tables:
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import (roc_curve, auc, precision_recall_curve, average_precision_score,
+                             confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, log_loss)
+from tabulate import tabulate
+
+# Assuming your dataset is in a CSV file
+df = pd.read_csv('your_dataset.csv')
+
+# Function to calculate AUC for a given loan purpose
+def calculate_auc_for_loan_purpose(df, loan_purpose):
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    roc_auc = auc(fpr, tpr)
+    return roc_auc
+
+# Function to calculate KS statistic for a given loan purpose
+def calculate_ks_for_loan_purpose(df, loan_purpose):
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    ks_stat = max(tpr - fpr)
+    return ks_stat
+
+# Function to calculate Gini coefficient for a given loan purpose
+def calculate_gini_for_loan_purpose(df, loan_purpose):
+    roc_auc = calculate_auc_for_loan_purpose(df, loan_purpose)
+    gini = 2 * roc_auc - 1
+    return gini
+
+# Function to plot CAP curve for a given loan purpose
+def plot_cap_curve_for_loan_purpose(df, loan_purpose):
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    df_sorted = df_filtered.sort_values(by='y_score', ascending=False)
+    cum_total = np.arange(1, len(y_true) + 1)
+    cum_positives = np.cumsum(df_sorted['y_true'])
+    
+    plt.figure()
+    plt.plot(cum_total, cum_positives, color='darkorange', lw=2, label='CAP curve')
+    plt.plot([0, len(y_true)], [0, sum(y_true)], color='navy', lw=2, linestyle='--', label='Random model')
+    plt.xlabel('Number of Loans')
+    plt.ylabel('Cumulative Positives')
+    plt.title(f'CAP Curve for {loan_purpose}')
+    plt.legend(loc="lower right")
+    plt.show()
+
+# Function to calculate confusion matrix and derived metrics
+def calculate_confusion_matrix_metrics(y_true, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred)
+    specificity = tn / (tn + fp)
+    
+    metrics = {
+        'accuracy': accuracy,
+        'precision': precision,
+        'recall': recall,
+        'f1_score': f1,
+        'specificity': specificity
+    }
+    
+    return metrics
+
+# Function to plot precision-recall curve
+def plot_precision_recall_curve(y_true, y_scores):
+    precision, recall, _ = precision_recall_curve(y_true, y_scores)
+    average_precision = average_precision_score(y_true, y_scores)
+    
+    plt.figure()
+    plt.plot(recall, precision, color='b', lw=2, label=f'PR curve (area = {average_precision:.2f})')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Precision-Recall Curve')
+    plt.legend(loc="lower left")
+    plt.show()
+
+# Function to calculate log-loss
+def calculate_log_loss(y_true, y_scores):
+    return log_loss(y_true, y_scores)
+
+# Analysis of Latency
+# Latency Distribution
+plt.figure(figsize=(10, 6))
+sns.histplot(df['latency'], kde=True)
+plt.title('Latency Distribution')
+plt.xlabel('Latency')
+plt.ylabel('Frequency')
+plt.show()
+
+# Correlation with Other Features
+correlation_matrix = df[['latency', 'funded_amount', 'approval_date']].corr()
+print("Correlation Matrix with Latency:")
+print(tabulate(correlation_matrix, headers='keys', tablefmt='pretty'))
+
+# Plot correlation matrix
+plt.figure(figsize=(10, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+plt.title('Correlation Matrix with Latency')
+plt.show()
+
+# Approval and Funding Analysis
+# Approval Rate
+approval_rate = df['loan_status'].value_counts(normalize=True).get('approved', 0) * 100
+print(f'Approval Rate: {approval_rate:.2f}%')
+
+# Funding Rate
+funding_rate = df['account_status'].value_counts(normalize=True).get('funded', 0) * 100
+print(f'Funding Rate: {funding_rate:.2f}%')
+
+# Time to Fund
+df['approval_date'] = pd.to_datetime(df['approval_date'])
+df['funded_date'] = pd.to_datetime(df['funded_date'])
+df['time_to_fund'] = (df['funded_date'] - df['approval_date']).dt.days
+
+plt.figure(figsize=(10, 6))
+sns.histplot(df['time_to_fund'].dropna(), kde=True)
+plt.title('Time to Fund Distribution')
+plt.xlabel('Days')
+plt.ylabel('Frequency')
+plt.show()
+
+# Segmentation Analysis
+# Application Type Analysis
+application_types = df['application type'].unique()
+
+app_type_metrics = []
+for app_type in application_types:
+    df_filtered = df[df['application type'] == app_type]
+    approval_rate = df_filtered['loan_status'].value_counts(normalize=True).get('approved', 0) * 100
+    funding_rate = df_filtered['account_status'].value_counts(normalize=True).get('funded', 0) * 100
+    app_type_metrics.append([app_type, f'{approval_rate:.2f}%', f'{funding_rate:.2f}%'])
+
+print("Application Type Analysis:")
+print(tabulate(app_type_metrics, headers=['Application Type', 'Approval Rate', 'Funding Rate'], tablefmt='pretty'))
+
+# Loan Purpose Analysis
+loan_purposes = df['loan purpose category'].unique()
+
+loan_purpose_metrics = []
+for purpose in loan_purposes:
+    df_filtered = df[df['loan purpose category'] == purpose]
+    approval_rate = df_filtered['loan_status'].value_counts(normalize=True).get('approved', 0) * 100
+    funding_rate = df_filtered['account_status'].value_counts(normalize=True).get('funded', 0) * 100
+    loan_purpose_metrics.append([purpose, f'{approval_rate:.2f}%', f'{funding_rate:.2f}%'])
+
+print("Loan Purpose Analysis:")
+print(tabulate(loan_purpose_metrics, headers=['Loan Purpose', 'Approval Rate', 'Funding Rate'], tablefmt='pretty'))
+
+# Score Analysis
+# Score Distribution
+plt.figure(figsize=(10, 6))
+sns.histplot(df['score'], kde=True)
+plt.title('Score Distribution')
+plt.xlabel('Score')
+plt.ylabel('Frequency')
+plt.show()
+
+# Score vs. Target
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='target', y='score', data=df)
+plt.title('Score vs. Target')
+plt.xlabel('Target')
+plt.ylabel('Score')
+plt.show()
+
+# Best Decision Analysis
+# Best DecisionZORS Analysis
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='best_decisionZORS', y='target', data=df)
+plt.title('Best DecisionZORS vs. Target')
+plt.xlabel('Best DecisionZORS')
+plt.ylabel('Target')
+plt.show()
+
+# Best PLRS Analysis
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='best_PLRS', y='target', data=df)
+plt.title('Best PLRS vs. Target')
+plt.xlabel('Best PLRS')
+plt.ylabel('Target')
+plt.show()
+
+# Calculate and print metrics for each loan purpose
+metrics_table = []
+for loan_purpose in df['loan_purpose'].unique():
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    y_pred = (y_scores > 0.5).astype(int)  # Assuming a threshold of 0.5 for classification
+    
+    auc_value = calculate_auc_for_loan_purpose(df, loan_purpose)
+    ks_stat = calculate_ks_for_loan_purpose(df, loan_purpose)
+    gini = calculate_gini_for_loan_purpose(df, loan_purpose)
+    log_loss_value = calculate_log_loss(y_true, y_scores)
+    confusion_metrics = calculate_confusion_matrix_metrics(y_true, y_pred)
+    
+    metrics_table.append([loan_purpose, f'{auc_value:.2f}', f'{ks_stat:.2f}', f'{gini:.2f}', f'{log_loss_value:.2f}',
+                          f"{confusion_metrics['accuracy']:.2f}", f"{confusion_metrics['precision']:.2f}",
+                          f
