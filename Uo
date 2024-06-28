@@ -1,68 +1,536 @@
-Clarification Questions and Pre-Meeting Discussion on Model Setup
+Sure, I can help you with that. Here's how you can calculate and plot the AUC for different loan purposes using the `pandas` and `scikit-learn` libraries. First, ensure you have the necessary libraries installed:
 
-Hi [Developer's Name],
+```bash
+pip install pandas matplotlib scikit-learn
+```
 
-I hope this email finds you well. I'm looking forward to our meeting tomorrow to delve into the model data structure. To ensure our discussion is as productive as possible, I have a few clarification questions regarding the model setup. If we could touch base on these before we dive into the data structure, it would be immensely helpful. Here are the questions:
+Here’s the Python code to calculate and plot the AUC for different loan purposes:
 
-1. **Exposure Marginal Distribution:**
-   - In the MCMC process, the first step involves drawing Exposure Xi from the exposure marginal distribution. Could you specify which distribution is used for this purpose?
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc
 
-   - In the second step, where Occurrence is sampled from each Exposure, the Occurrence follows a binomial distribution. Could you shed light on how the probability (p) for the binomial distribution is determined?
+# Assuming your dataset is in a CSV file
+df = pd.read_csv('your_dataset.csv')
 
-   - Moving to the third step, the Expected Loss is sampled from each occurrence. Could you clarify which distribution governs the Expected Loss?
+# Function to calculate and plot ROC curve for a given loan purpose
+def plot_roc_for_loan_purpose(df, loan_purpose):
+    # Filter the dataframe for the given loan purpose
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    
+    # Extract true labels and scores
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    
+    # Compute ROC curve and ROC area
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    roc_auc = auc(fpr, tpr)
+    
+    # Plot ROC curve
+    plt.figure()
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:0.2f})')
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(f'Receiver Operating Characteristic for {loan_purpose}')
+    plt.legend(loc="lower right")
+    plt.show()
 
-2. **Model Testing:**
-   - The white paper mentions various model testing approaches such as validation of the transposition document, validation of the quantification document, back testing, sensitivity analysis, and benchmarking. However, I couldn't find specific details about model testing in the Model Development Documentation. Could you provide some insights or direct me to the relevant section?
+# Calculate and plot ROC for each loan purpose
+for loan_purpose in df['loan_purpose'].unique():
+    plot_roc_for_loan_purpose(df, loan_purpose)
+```
 
-3. **Scenario Testing:**
-   - Scenario testing is noted as a model testing method to assess performance over a wide range of inputs, including extreme values. I couldn't locate specific testing results for this. Could you share any available information on scenario testing outcomes?
+Replace `'your_dataset.csv'` with the path to your actual dataset file. The code assumes your dataset has columns named `y_true`, `y_score`, and `loan_purpose`. It will calculate the AUC and plot the ROC curve for each unique loan purpose in your dataset.
 
-4. **Identification of Current Scenarios:**
-   - Understanding how current scenarios are identified would be beneficial. My understanding is that scenarios are determined following a loss analysis and a set threshold. Could you provide more details on this process, such as how the threshold is decided?
-
-5. **Model Inputs to mSTAR Software:**
-   - Lastly, I'm curious about the specific model inputs to the mSTAR software. Could you share some insights into this aspect?
-
-Your insights on these questions will contribute significantly to our discussion. I appreciate your time and assistance in clarifying these details before our meeting.
-
-Looking forward to our discussion tomorrow.
-
-Best regards,
-
-Sophia [Last Name]
-[Your Contact Information]
+If your dataset structure or column names are different, you may need to adjust the column names accordingly. Let me know if you need any further assistance!
 
 
-Subject: Pre-Meeting Clarification Questions on Model Setup
 
-Hi [Developer's Name],
+Sure, I can help you with that. Here's how to calculate the AUC, KS, Gini coefficient, and plot the CAP curve for each loan purpose using Python:
 
-I hope this email finds you well. Our meeting tomorrow is right around the corner, and I wanted to touch base on some foundational aspects of the model setup before we delve into the data structure. If we could go over these questions during our discussion, it would provide a solid foundation for our exploration. Here are the questions:
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc, confusion_matrix
 
-1. **Exposure Marginal Distribution:**
-   - In the MCMC process, the first step involves drawing Exposure Xi from the exposure marginal distribution. Could you specify which distribution is used for this purpose?
+# Assuming your dataset is in a CSV file
+df = pd.read_csv('your_dataset.csv')
 
-   - In the second step, where Occurrence is sampled from each Exposure, the Occurrence follows a binomial distribution. Could you shed light on how the probability (p) for the binomial distribution is determined?
+# Function to calculate AUC for a given loan purpose
+def calculate_auc_for_loan_purpose(df, loan_purpose):
+    # Filter the dataframe for the given loan purpose
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    
+    # Extract true labels and scores
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    
+    # Compute ROC curve and ROC area
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    roc_auc = auc(fpr, tpr)
+    
+    return roc_auc
 
-   - Moving to the third step, the Expected Loss is sampled from each occurrence. Could you clarify which distribution governs the Expected Loss?
+# Function to calculate KS statistic for a given loan purpose
+def calculate_ks_for_loan_purpose(df, loan_purpose):
+    # Filter the dataframe for the given loan purpose
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    
+    # Extract true labels and scores
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    
+    # Compute ROC curve
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    
+    # Compute KS statistic
+    ks_stat = max(tpr - fpr)
+    
+    return ks_stat
 
-2. **Model Testing:**
-   - The white paper mentions various model testing approaches such as validation of the transposition document, validation of the quantification document, back testing, sensitivity analysis, and benchmarking. However, I couldn't find specific details about model testing in the Model Development Documentation. Could you provide some insights or direct me to the relevant section?
+# Function to calculate Gini coefficient for a given loan purpose
+def calculate_gini_for_loan_purpose(df, loan_purpose):
+    # Calculate AUC
+    roc_auc = calculate_auc_for_loan_purpose(df, loan_purpose)
+    
+    # Gini coefficient is 2 * AUC - 1
+    gini = 2 * roc_auc - 1
+    
+    return gini
 
-3. **Scenario Testing:**
-   - Scenario testing is noted as a model testing method to assess performance over a wide range of inputs, including extreme values. I couldn't locate specific testing results for this. Could you share any available information on scenario testing outcomes?
+# Function to plot CAP curve for a given loan purpose
+def plot_cap_curve_for_loan_purpose(df, loan_purpose):
+    # Filter the dataframe for the given loan purpose
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    
+    # Extract true labels and scores
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    
+    # Sort by scores in descending order
+    df_sorted = df_filtered.sort_values(by='y_score', ascending=False)
+    
+    # Cumulative total positives
+    cum_total = np.arange(1, len(y_true) + 1)
+    
+    # Cumulative true positives
+    cum_positives = np.cumsum(df_sorted['y_true'])
+    
+    # Plot CAP curve
+    plt.figure()
+    plt.plot(cum_total, cum_positives, color='darkorange', lw=2, label='CAP curve')
+    plt.plot([0, len(y_true)], [0, sum(y_true)], color='navy', lw=2, linestyle='--', label='Random model')
+    plt.xlabel('Number of Loans')
+    plt.ylabel('Cumulative Positives')
+    plt.title(f'CAP Curve for {loan_purpose}')
+    plt.legend(loc="lower right")
+    plt.show()
 
-4. **Identification of Current Scenarios:**
-   - Understanding how current scenarios are identified would be beneficial. My understanding is that scenarios are determined following a loss analysis and a set threshold. Could you provide more details on this process, such as how the threshold is decided?
+# Calculate and print AUC, KS, Gini for each loan purpose
+for loan_purpose in df['loan_purpose'].unique():
+    auc_value = calculate_auc_for_loan_purpose(df, loan_purpose)
+    ks_stat = calculate_ks_for_loan_purpose(df, loan_purpose)
+    gini = calculate_gini_for_loan_purpose(df, loan_purpose)
+    
+    print(f'Loan Purpose: {loan_purpose}')
+    print(f'AUC: {auc_value:.2f}')
+    print(f'KS Statistic: {ks_stat:.2f}')
+    print(f'Gini Coefficient: {gini:.2f}')
+    
+    # Plot CAP curve
+    plot_cap_curve_for_loan_purpose(df, loan_purpose)
+```
 
-5. **Model Inputs to mSTAR Software:**
-   - Lastly, I'm curious about the specific model inputs to the mSTAR software. Could you share some insights into this aspect?
+This code defines functions to calculate AUC, KS statistic, and Gini coefficient, and to plot the CAP curve for each loan purpose. It then iterates over each unique loan purpose in the dataset, calculates the metrics, prints them out, and plots the CAP curve.
 
-Your insights on these questions will contribute significantly to our discussion. I appreciate your time and assistance in clarifying these details before we proceed into the data structure.
+Replace `'your_dataset.csv'` with the path to your actual dataset file. The code assumes your dataset has columns named `y_true`, `y_score`, and `loan_purpose`. Adjust the column names if necessary to match your dataset.
 
-Looking forward to our discussion tomorrow.
 
-Best regards,
+Sure, here's the complete Python code to calculate various metrics and plot different curves as described. Ensure you have the necessary libraries installed:
 
-Sophia [Last Name]
-[Your Contact Information]
+```bash
+pip install pandas numpy matplotlib scikit-learn
+```
+
+Now, here's the full code:
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import (roc_curve, auc, precision_recall_curve, average_precision_score,
+                             confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, log_loss)
+
+# Assuming your dataset is in a CSV file
+df = pd.read_csv('your_dataset.csv')
+
+# Function to calculate AUC for a given loan purpose
+def calculate_auc_for_loan_purpose(df, loan_purpose):
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    roc_auc = auc(fpr, tpr)
+    return roc_auc
+
+# Function to calculate KS statistic for a given loan purpose
+def calculate_ks_for_loan_purpose(df, loan_purpose):
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    ks_stat = max(tpr - fpr)
+    return ks_stat
+
+# Function to calculate Gini coefficient for a given loan purpose
+def calculate_gini_for_loan_purpose(df, loan_purpose):
+    roc_auc = calculate_auc_for_loan_purpose(df, loan_purpose)
+    gini = 2 * roc_auc - 1
+    return gini
+
+# Function to plot CAP curve for a given loan purpose
+def plot_cap_curve_for_loan_purpose(df, loan_purpose):
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    df_sorted = df_filtered.sort_values(by='y_score', ascending=False)
+    cum_total = np.arange(1, len(y_true) + 1)
+    cum_positives = np.cumsum(df_sorted['y_true'])
+    
+    plt.figure()
+    plt.plot(cum_total, cum_positives, color='darkorange', lw=2, label='CAP curve')
+    plt.plot([0, len(y_true)], [0, sum(y_true)], color='navy', lw=2, linestyle='--', label='Random model')
+    plt.xlabel('Number of Loans')
+    plt.ylabel('Cumulative Positives')
+    plt.title(f'CAP Curve for {loan_purpose}')
+    plt.legend(loc="lower right")
+    plt.show()
+
+# Function to calculate confusion matrix and derived metrics
+def calculate_confusion_matrix_metrics(y_true, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred)
+    specificity = tn / (tn + fp)
+    
+    metrics = {
+        'accuracy': accuracy,
+        'precision': precision,
+        'recall': recall,
+        'f1_score': f1,
+        'specificity': specificity
+    }
+    
+    return metrics
+
+# Function to plot precision-recall curve
+def plot_precision_recall_curve(y_true, y_scores):
+    precision, recall, _ = precision_recall_curve(y_true, y_scores)
+    average_precision = average_precision_score(y_true, y_scores)
+    
+    plt.figure()
+    plt.plot(recall, precision, color='b', lw=2, label=f'PR curve (area = {average_precision:.2f})')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Precision-Recall Curve')
+    plt.legend(loc="lower left")
+    plt.show()
+
+# Function to calculate log-loss
+def calculate_log_loss(y_true, y_scores):
+    return log_loss(y_true, y_scores)
+
+# Calculate and print metrics for each loan purpose
+for loan_purpose in df['loan_purpose'].unique():
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    y_pred = (y_scores > 0.5).astype(int)  # Assuming a threshold of 0.5 for classification
+    
+    auc_value = calculate_auc_for_loan_purpose(df, loan_purpose)
+    ks_stat = calculate_ks_for_loan_purpose(df, loan_purpose)
+    gini = calculate_gini_for_loan_purpose(df, loan_purpose)
+    log_loss_value = calculate_log_loss(y_true, y_scores)
+    confusion_metrics = calculate_confusion_matrix_metrics(y_true, y_pred)
+    
+    print(f'Loan Purpose: {loan_purpose}')
+    print(f'AUC: {auc_value:.2f}')
+    print(f'KS Statistic: {ks_stat:.2f}')
+    print(f'Gini Coefficient: {gini:.2f}')
+    print(f'Log-Loss: {log_loss_value:.2f}')
+    print(f'Confusion Matrix Metrics: {confusion_metrics}')
+    
+    plot_cap_curve_for_loan_purpose(df, loan_purpose)
+    plot_precision_recall_curve(y_true, y_scores)
+```
+
+### Breakdown of the Code
+1. **AUC Calculation**: Calculates the area under the ROC curve.
+2. **KS Statistic Calculation**: Computes the Kolmogorov-Smirnov statistic.
+3. **Gini Coefficient Calculation**: Computes the Gini coefficient.
+4. **CAP Curve Plotting**: Plots the Cumulative Accuracy Profile curve.
+5. **Confusion Matrix Metrics**: Computes accuracy, precision, recall, F1 score, and specificity.
+6. **Precision-Recall Curve**: Plots the precision-recall curve.
+7. **Log-Loss Calculation**: Computes the log-loss value.
+
+Replace `'your_dataset.csv'` with the path to your actual dataset file. The code assumes your dataset has columns named `y_true`, `y_score`, and `loan_purpose`. Adjust the column names if necessary to match your dataset.
+
+Feel free to run this code and let me know if you encounter any issues or need further modifications!
+
+
+Sure, here's the code for each of the additional analyses you mentioned:
+
+### 1. Analysis of Latency
+#### Latency Distribution
+```python
+import seaborn as sns
+
+# Latency Distribution
+plt.figure(figsize=(10, 6))
+sns.histplot(df['latency'], kde=True)
+plt.title('Latency Distribution')
+plt.xlabel('Latency')
+plt.ylabel('Frequency')
+plt.show()
+```
+
+#### Correlation with Other Features
+```python
+# Correlation with Other Features
+correlation_matrix = df[['latency', 'funded_amount', 'approval_date']].corr()
+print(correlation_matrix)
+
+# Plot correlation matrix
+plt.figure(figsize=(10, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+plt.title('Correlation Matrix with Latency')
+plt.show()
+```
+
+### 2. Approval and Funding Analysis
+#### Approval Rate
+```python
+# Calculate Approval Rate
+approval_rate = df['loan_status'].value_counts(normalize=True).get('approved', 0) * 100
+print(f'Approval Rate: {approval_rate:.2f}%')
+```
+
+#### Funding Rate
+```python
+# Calculate Funding Rate
+funding_rate = df['account_status'].value_counts(normalize=True).get('funded', 0) * 100
+print(f'Funding Rate: {funding_rate:.2f}%')
+```
+
+#### Time to Fund
+```python
+# Analyze Time to Fund
+df['approval_date'] = pd.to_datetime(df['approval_date'])
+df['funded_date'] = pd.to_datetime(df['funded_date'])
+df['time_to_fund'] = (df['funded_date'] - df['approval_date']).dt.days
+
+plt.figure(figsize=(10, 6))
+sns.histplot(df['time_to_fund'].dropna(), kde=True)
+plt.title('Time to Fund Distribution')
+plt.xlabel('Days')
+plt.ylabel('Frequency')
+plt.show()
+```
+
+### 3. Segmentation Analysis
+#### Application Type Analysis
+```python
+# Compare metrics across different application types
+application_types = df['application type'].unique()
+
+for app_type in application_types:
+    df_filtered = df[df['application type'] == app_type]
+    approval_rate = df_filtered['loan_status'].value_counts(normalize=True).get('approved', 0) * 100
+    funding_rate = df_filtered['account_status'].value_counts(normalize=True).get('funded', 0) * 100
+    print(f'Application Type: {app_type}')
+    print(f'Approval Rate: {approval_rate:.2f}%')
+    print(f'Funding Rate: {funding_rate:.2f}%\n')
+```
+
+#### Loan Purpose Analysis
+```python
+# Compare metrics across different loan purposes
+loan_purposes = df['loan purpose category'].unique()
+
+for purpose in loan_purposes:
+    df_filtered = df[df['loan purpose category'] == purpose]
+    approval_rate = df_filtered['loan_status'].value_counts(normalize=True).get('approved', 0) * 100
+    funding_rate = df_filtered['account_status'].value_counts(normalize=True).get('funded', 0) * 100
+    print(f'Loan Purpose: {purpose}')
+    print(f'Approval Rate: {approval_rate:.2f}%')
+    print(f'Funding Rate: {funding_rate:.2f}%\n')
+```
+
+### 4. Score Analysis
+#### Score Distribution
+```python
+# Score Distribution
+plt.figure(figsize=(10, 6))
+sns.histplot(df['score'], kde=True)
+plt.title('Score Distribution')
+plt.xlabel('Score')
+plt.ylabel('Frequency')
+plt.show()
+```
+
+#### Score vs. Target
+```python
+# Plot Score vs. Target
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='target', y='score', data=df)
+plt.title('Score vs. Target')
+plt.xlabel('Target')
+plt.ylabel('Score')
+plt.show()
+```
+
+### 5. Best Decision Analysis
+#### Best DecisionZORS Analysis
+```python
+# Analyze how best_decisionZORS affects the target variable
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='best_decisionZORS', y='target', data=df)
+plt.title('Best DecisionZORS vs. Target')
+plt.xlabel('Best DecisionZORS')
+plt.ylabel('Target')
+plt.show()
+```
+
+#### Best_PLRS Analysis
+```python
+# Analyze how best_PLRS affects the target variable
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='best_PLRS', y='target', data=df)
+plt.title('Best PLRS vs. Target')
+plt.xlabel('Best PLRS')
+plt.ylabel('Target')
+plt.show()
+```
+
+### Complete Code
+Here's the complete code put together:
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import (roc_curve, auc, precision_recall_curve, average_precision_score,
+                             confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, log_loss)
+
+# Assuming your dataset is in a CSV file
+df = pd.read_csv('your_dataset.csv')
+
+# Analysis of Latency
+# Latency Distribution
+plt.figure(figsize=(10, 6))
+sns.histplot(df['latency'], kde=True)
+plt.title('Latency Distribution')
+plt.xlabel('Latency')
+plt.ylabel('Frequency')
+plt.show()
+
+# Correlation with Other Features
+correlation_matrix = df[['latency', 'funded_amount', 'approval_date']].corr()
+print(correlation_matrix)
+
+# Plot correlation matrix
+plt.figure(figsize=(10, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+plt.title('Correlation Matrix with Latency')
+plt.show()
+
+# Approval and Funding Analysis
+# Approval Rate
+approval_rate = df['loan_status'].value_counts(normalize=True).get('approved', 0) * 100
+print(f'Approval Rate: {approval_rate:.2f}%')
+
+# Funding Rate
+funding_rate = df['account_status'].value_counts(normalize=True).get('funded', 0) * 100
+print(f'Funding Rate: {funding_rate:.2f}%')
+
+# Time to Fund
+df['approval_date'] = pd.to_datetime(df['approval_date'])
+df['funded_date'] = pd.to_datetime(df['funded_date'])
+df['time_to_fund'] = (df['funded_date'] - df['approval_date']).dt.days
+
+plt.figure(figsize=(10, 6))
+sns.histplot(df['time_to_fund'].dropna(), kde=True)
+plt.title('Time to Fund Distribution')
+plt.xlabel('Days')
+plt.ylabel('Frequency')
+plt.show()
+
+# Segmentation Analysis
+# Application Type Analysis
+application_types = df['application type'].unique()
+
+for app_type in application_types:
+    df_filtered = df[df['application type'] == app_type]
+    approval_rate = df_filtered['loan_status'].value_counts(normalize=True).get('approved', 0) * 100
+    funding_rate = df_filtered['account_status'].value_counts(normalize=True).get('funded', 0) * 100
+    print(f'Application Type: {app_type}')
+    print(f'Approval Rate: {approval_rate:.2f}%')
+    print(f'Funding Rate: {funding_rate:.2f}%\n')
+
+# Loan Purpose Analysis
+loan_purposes = df['loan purpose category'].unique()
+
+for purpose in loan_purposes:
+    df_filtered = df[df['loan purpose category'] == purpose]
+    approval_rate = df_filtered['loan_status'].value_counts(normalize=True).get('approved', 0) * 100
+    funding_rate = df_filtered['account_status'].value_counts(normalize=True).get('funded', 0) * 100
+    print(f'Loan Purpose: {purpose}')
+    print(f'Approval Rate: {approval_rate:.2f}%')
+    print(f'Funding Rate: {funding_rate:.2f}%\n')
+
+# Score Analysis
+# Score Distribution
+plt.figure(figsize=(10, 6))
+sns.histplot(df['score'], kde=True)
+plt.title('Score Distribution')
+plt.xlabel('Score')
+plt.ylabel('Frequency')
+plt.show()
+
+# Score vs. Target
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='target', y='score', data=df)
+plt.title('Score vs. Target')
+plt.xlabel('Target')
+plt.ylabel('Score')
+plt.show()
+
+# Best Decision Analysis
+# Best DecisionZORS Analysis
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='best_decisionZORS', y='target', data=df)
+plt.title('Best DecisionZORS vs. Target')
+plt.xlabel('Best DecisionZORS')
+plt.ylabel('Target')
+plt.show()
+
+# Best PLRS Analysis
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='best_PLRS', y='target', data=df)
+plt.title('Best PLRS vs. Target')
+plt.xlabel('Best PLRS')
+plt.ylabel('Target')
+plt.show()
+```
+
+### Notes
+- Make sure to replace `'your_dataset.csv'` with the actual path to your dataset.
+- Ensure your dataset columns match the column names used in the code (`latency`, `funded_amount`, `approval_date`, `loan_status`, `account_status`, `loan purpose category`, `application type`, `score`, `target`, `best_decisionZORS`, `best_PLRS`). Adjust the column names if necessary.
