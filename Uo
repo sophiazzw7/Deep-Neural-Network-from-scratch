@@ -751,5 +751,26 @@ for loan_purpose in df['loan_purpose'].unique():
     confusion_metrics = calculate_confusion_matrix_metrics(y_true, y_pred)
     
     metrics_table.append([loan_purpose, f'{auc_value:.2f}', f'{ks_stat:.2f}', f'{gini:.2f}', f'{log_loss_value:.2f}',
-                          f"{confusion_metrics['accuracy']:.2f}", f"{confusion_metrics['precision']:.2f}",
-                          f
+                          f'{confusion_metrics["accuracy"]:.2f}', f'{confusion_metrics["precision"]:.2f}',
+                          f'{confusion_metrics["recall"]:.2f}', f'{confusion_metrics["f1_score"]:.2f}',
+                          f'{confusion_metrics["specificity"]:.2f}'])
+
+# Display metrics table
+headers = ['Loan Purpose', 'AUC', 'KS Statistic', 'Gini Coefficient', 'Log Loss', 'Accuracy', 'Precision',
+           'Recall', 'F1 Score', 'Specificity']
+print("Metrics for each Loan Purpose:")
+print(tabulate(metrics_table, headers=headers, tablefmt='pretty'))
+
+# Plot precision-recall curve and CAP curve for each loan purpose
+for loan_purpose in df['loan_purpose'].unique():
+    df_filtered = df[df['loan_purpose'] == loan_purpose]
+    y_true = df_filtered['y_true']
+    y_scores = df_filtered['y_score']
+    
+    # Plot precision-recall curve
+    plot_precision_recall_curve(y_true, y_scores)
+    
+    # Plot CAP curve
+    plot_cap_curve_for_loan_purpose(df, loan_purpose)
+
+==========================================
