@@ -314,3 +314,105 @@ print(tabulate(metrics_table, headers=['Metric', 'Value'], tablefmt='pretty'))
 ```
 
 This code defines functions to calculate metrics such as AUC, KS statistic, Gini coefficient, and confusion matrix metrics. It then calculates these metrics for the entire dataset and prints them in a formatted table using `tabulate`. Adjust the threshold (`0.5` in this example) in `y_pred` based on your specific case.
+==========
+The `precision_score` function from `sklearn.metrics` does not accept the `zero_division` argument directly. This error typically arises because the `zero_division` parameter is not supported in older versions of scikit-learn (before version 0.24). Here's how you can address this issue:
+
+1. **Check scikit-learn Version**: First, ensure you are using scikit-learn version 0.24 or newer, where the `zero_division` parameter is supported.
+
+2. **Handle Zero Division Manually**: If you are using an older version of scikit-learn, you can handle the zero division scenario manually. For precision and recall scores, you might set them to 0 when there are no predicted positives (denominator is 0).
+
+Here's an updated approach to calculate metrics, including precision and recall, and handle the zero division scenario manually:
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import (roc_curve, auc, precision_recall_curve, average_precision_score,
+                             confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, log_loss)
+from tabulate import tabulate
+
+# Assuming your dataset is in a CSV file
+df = pd.read_csv('your_dataset.csv')
+
+# Function to calculate AUC for a given loan status
+def calculate_auc_for_loan_status(df, loan_status):
+    df_filtered = df[df['LOANSTATUS'] == loan_status]
+    y_true = df_filtered['target']
+    y_scores = df_filtered['BEST_SCORE']
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    roc_auc = auc(fpr, tpr)
+    return roc_auc
+
+# Function to calculate KS statistic for a given loan status
+def calculate_ks_for_loan_status(df, loan_status):
+    df_filtered = df[df['LOANSTATUS'] == loan_status]
+    y_true = df_filtered['target']
+    y_scores = df_filtered['BEST_SCORE']
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    ks_stat = max(tpr - fpr)
+    return ks_stat
+
+# Function to calculate Gini coefficient for a given loan status
+def calculate_gini_for_loan_status(df, loan_status):
+    roc_auc = calculate_auc_for_loan_status(df, loan_status)
+    gini = 2 * roc_auc - 1
+    return gini
+
+# Function to plot CAP curve for a given loan status
+def plot_cap_curve_for_loan_status(df, loan_status):
+    df_filtered = df[df['LOANSTATUS'] == loan_status]
+    y_true = df_filtered['target']
+    y_scores = df_filtered['BEST_SCORE']
+    df_sorted = df_filtered.sort_values(by='BEST_SCORE', ascending=False)
+    cum_total = np.arange(1, len(y_true) + 1)
+    cum_positives = np.cumsum(df_sorted['target'])
+    
+    plt.figure()
+    plt.plot(cum_total, cum_positives, color='darkorange', lw=2, label='CAP curve')
+    plt.plot([0, len(y_true)], [0, sum(y_true)], color='navy', lw=2, linestyle='--', label='Random model')
+    plt.xlabel('Number of Loans')
+    plt.ylabel('Cumulative Positives')
+    plt.title(f'CAP Curve for {loan_status}')
+    plt.legend(loc="lower right")
+    plt.show()
+
+# Function to calculate confusion matrix and derived metrics
+def calculate_confusion_matrix_metrics(y_true, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    accuracy = accuracy_score(y_true, y_pred)
+    
+    # Calculate precision, recall, and F1 score with manual handling of zero division
+    precision = tp / (tp + fp) if (tp + fp) != 0 else 0
+    recall = tp / (tp + fn) if (tp + fn) != 0 else 0
+    f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) != 0 else 0
+    
+    specificity = tn / (tn + fp) if (tn + fp) != 0 else 0
+    
+    metrics = {
+        'Accuracy': accuracy,
+        'Precision': precision,
+        'Recall': recall,
+        'F1 Score': f1,
+        'Specificity': specificity
+    }
+    
+    return metrics
+
+# Calculate metrics for the entire dataset
+y_true = df['target']
+y_pred = (df['BEST_SCORE'] >= 0.5).astype(int)  # Example threshold, adjust as needed
+metrics = calculate_confusion_matrix_metrics(y_true, y_pred)
+
+# Pretty print metrics table
+metrics_table = [[key, value] for key, value in metrics.items()]
+print("Metrics Summary:")
+print(tabulate(metrics_table, headers=['Metric', 'Value'], tablefmt='pretty'))
+```
+
+In this code:
+
+- The `calculate_confusion_matrix_metrics` function computes precision, recall, and F1 score manually using simple arithmetic operations to avoid the `zero_division` error.
+- The results are then formatted into a table using `tabulate`.
+
+Adjust the threshold (`0.5` in `y_pred`) based on your specific case and ensure you have scikit-learn version 0.24 or newer to use the `zero_division` parameter directly in metrics like precision_score and recall_score if needed.
