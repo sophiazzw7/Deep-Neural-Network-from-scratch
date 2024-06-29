@@ -774,3 +774,78 @@ for loan_purpose in df['loan_purpose'].unique():
     plot_cap_curve_for_loan_purpose(df, loan_purpose)
 
 ==========================================
+If you're encountering an error stating that `seaborn` has no attribute `hisplot`, it might be due to a typo or a version issue with `seaborn`. The correct attribute for plotting histograms with `seaborn` is `histplot` (not `hisplot`). However, if you're still facing issues or prefer an alternative, we can use `matplotlib` for plotting histograms. Here's how you can modify the code to use `matplotlib` instead:
+
+### Update Score Distribution Plot using Matplotlib
+
+Replace the `sns.histplot` with `plt.hist` for the Score Distribution plot:
+
+```python
+import matplotlib.pyplot as plt
+
+# Score Distribution
+plt.figure(figsize=(10, 6))
+plt.hist(df['score'], bins=30, edgecolor='black')
+plt.title('Score Distribution')
+plt.xlabel('Score')
+plt.ylabel('Frequency')
+plt.grid(True)
+plt.show()
+```
+
+### Update Time to Fund Distribution Plot using Matplotlib
+
+For the Time to Fund distribution plot, you can similarly use `plt.hist`:
+
+```python
+# Time to Fund Distribution
+plt.figure(figsize=(10, 6))
+plt.hist(df['time_to_fund'].dropna(), bins=30, edgecolor='black')
+plt.title('Time to Fund Distribution')
+plt.xlabel('Days')
+plt.ylabel('Frequency')
+plt.grid(True)
+plt.show()
+```
+
+### Using Pandas for Bar Plots
+
+For categorical variables like Loan Purpose, Application Type, Best DecisionZORS, and Best PLRS, you can use `df['column'].value_counts().plot(kind='bar')` for bar plots:
+
+```python
+# Loan Purpose Analysis (Bar Plot)
+plt.figure(figsize=(10, 6))
+df['loan purpose category'].value_counts().plot(kind='bar')
+plt.title('Loan Purpose Analysis')
+plt.xlabel('Loan Purpose')
+plt.ylabel('Count')
+plt.show()
+
+# Application Type Analysis (Bar Plot)
+plt.figure(figsize=(10, 6))
+df['application type'].value_counts().plot(kind='bar')
+plt.title('Application Type Analysis')
+plt.xlabel('Application Type')
+plt.ylabel('Count')
+plt.show()
+
+# Best DecisionZORS Analysis (Bar Plot)
+plt.figure(figsize=(10, 6))
+df['best_decisionZORS'].value_counts().plot(kind='bar')
+plt.title('Best DecisionZORS Analysis')
+plt.xlabel('Best DecisionZORS')
+plt.ylabel('Count')
+plt.show()
+
+# Best PLRS Analysis (Bar Plot)
+plt.figure(figsize=(10, 6))
+df['best_PLRS'].value_counts().plot(kind='bar')
+plt.title('Best PLRS Analysis')
+plt.xlabel('Best PLRS')
+plt.ylabel('Count')
+plt.show()
+```
+
+### Adjusting Other Plots
+
+For correlation matrices or heatmaps, you can use `plt.imshow` or `plt.matshow` for simple visualizations, but `seaborn` provides more convenient methods for correlation visualization. If you encounter any specific plot type you need help with, feel free to ask!
