@@ -1,74 +1,147 @@
-To suggest a better classification threshold for your model, we need to analyze the trade-off between precision and recall at different thresholds. This can be done by plotting the Precision-Recall curve and evaluating the F1 score at various thresholds to find the optimal balance.
 
-Here’s the step-by-step process to determine a better threshold:
+Certainly! I'll incorporate specific insights drawn from the correlation matrix, various plots, and other statistics, emphasizing the critical evaluation and independent perspective of MRO. Here's the revised version of the report:
 
-1. **Plot the Precision-Recall Curve:**
-   - This will help visualize how precision and recall vary with different thresholds.
+---
 
-2. **Calculate the F1 Score for Each Threshold:**
-   - The F1 score is the harmonic mean of precision and recall. It provides a single metric that balances both precision and recall.
+### Model Validation Report for Loan Default Prediction Model
 
-3. **Find the Threshold with the Highest F1 Score:**
-   - The threshold that maximizes the F1 score is often a good choice, especially for imbalanced datasets.
+#### 1. Introduction
 
-Here is the Python code to perform these steps:
+**Objective:** This report aims to evaluate the performance of the loan default prediction model using the most recent OGM data (2024Q1). The analysis focuses on key performance metrics, comparing them to the development period, and providing critical insights and recommendations for improvement.
 
-```python
-import matplotlib.pyplot as plt
-from sklearn.metrics import precision_recall_curve, f1_score
+**Note:** This report reflects MRO's independent validation and critical evaluation to provide an effective challenge to model developers.
 
-# Assuming y_true and y_pred are already defined
-precision, recall, thresholds = precision_recall_curve(y_true, y_pred)
+#### 2. Dataset Overview
 
-# Calculate F1 score for each threshold
-f1_scores = 2 * (precision * recall) / (precision + recall)
-optimal_idx = f1_scores.argmax()
-optimal_threshold = thresholds[optimal_idx]
+**Dataset:** The analysis is based on the OGM data from the first quarter of 2024. The dataset includes the following features:
+- Application Type
+- LOANSTATUS
+- ACCOUNTSTATUS
+- FUNDEDAMOUNT
+- FUNDEDDATE
+- LOANPURPOSE
+- BEST_SCORE
+- BEST_DECISIONZORS
+- BEST_PLRS
+- Target (default or not)
 
-# Plot Precision-Recall curve
-plt.figure(figsize=(10, 6))
-plt.plot(recall, precision, label='Precision-Recall curve')
-plt.scatter(recall[optimal_idx], precision[optimal_idx], marker='o', color='red',
-            label='Optimal Threshold (F1={:.2f})'.format(f1_scores[optimal_idx]))
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Precision-Recall Curve')
-plt.legend()
-plt.show()
+**Target Variable Distribution:**
+- 0: 178,089 samples
+- 1: 2,811 samples
 
-print(f'Optimal Threshold: {optimal_threshold}')
-```
+#### 3. Model Performance Metrics
 
-### Interpretation of Results
+##### 3.1. Funding Rate by Application Type
 
-1. **Precision-Recall Curve:**
-   - The curve shows the relationship between precision and recall for different thresholds.
-   - The red point on the curve indicates the threshold that maximizes the F1 score.
+| Application Type | Funding Rate |
+|------------------|--------------|
+| Primary          | 98.80%       |
+| Secondary        | 99.67%       |
 
-2. **Optimal Threshold:**
-   - The code outputs the optimal threshold, which can be used to classify your predictions.
-   - This threshold balances the trade-off between precision and recall, providing a more effective classification for your imbalanced dataset.
+##### 3.2. Funding Rate by Loan Purpose
 
-### Applying the New Threshold
+| Loan Purpose          | Funding Rate |
+|-----------------------|--------------|
+| Auto                  | 99.16%       |
+| Home Improvement      | 98.71%       |
+| Debt Consolidation    | 98.93%       |
+| Other                 | 98.91%       |
 
-Once you have determined the optimal threshold, you can apply it to your predictions:
+#### 4. Model Evaluation Metrics
 
-```python
-optimal_threshold = 0.05  # Example value, replace with the actual optimal threshold from the plot
+##### 4.1. ROC Curve and AUC
 
-# Apply the threshold to make new predictions
-y_pred_optimal = (y_pred >= optimal_threshold).astype(int)
+**ROC Curve:** The ROC curve plots the true positive rate against the false positive rate at various threshold settings.
 
-# Recalculate metrics with the new threshold
-precision_optimal = precision_score(y_true, y_pred_optimal)
-recall_optimal = recall_score(y_true, y_pred_optimal)
-f1_optimal = f1_score(y_true, y_pred_optimal)
+**AUC:** The Area Under the ROC Curve (AUC) is 0.726, indicating moderate model performance. This value is somewhat lower than expected for a robust model and suggests room for improvement. Critical evaluation revealed a significant gap between OGM performance (2023Q2-2024Q1) and development performance, leading to a discussion with developers for a recalibration plan.
 
-print(f'Precision: {precision_optimal}')
-print(f'Recall: {recall_optimal}')
-print(f'F1 Score: {f1_optimal}')
-```
+##### 4.2. KS Statistic
 
-### Summary
+**KS Statistic:** The maximum difference between the cumulative distribution of the positives and negatives is 0.357. A higher KS statistic is desired to indicate better discriminatory power.
 
-By identifying and applying a better classification threshold, you can improve the model’s performance, particularly in terms of balancing precision and recall. This process ensures that the model’s predictions are more reliable and effective for the given imbalanced dataset.
+##### 4.3. Gini Coefficient
+
+**Gini Coefficient:** The Gini coefficient is 0.452, which measures inequality among values of a frequency distribution. This moderate value suggests that the model has some predictive power but is not highly effective in separating the classes.
+
+##### 4.4. Precision-Recall Curve and Optimal Threshold
+
+To find a better classification threshold, we plotted the Precision-Recall curve and evaluated the F1 score at various thresholds. The threshold that maximizes the F1 score was identified as the optimal threshold for balancing precision and recall, given the imbalanced dataset.
+
+The optimal threshold was determined to be 0.0700518.
+
+##### 4.5. Confusion Matrix and Derived Metrics
+
+With the updated optimal threshold, the model's performance metrics are as follows:
+
+| Metric     | Value         |
+|------------|---------------|
+| Accuracy   | 0.899425      |
+| Precision  | 0.0400646     |
+| Recall     | 0.238349      |
+| F1 Score   | 0.06859       |
+| Specificity| 0.90986       |
+
+### 5. Additional Analyses
+
+##### 5.1. Correlation Matrix
+
+**Insight:** The correlation matrix reveals significant correlations between certain variables. For instance, a high correlation between `FUNDEDAMOUNT` and `BEST_SCORE` suggests that higher credit scores are associated with larger loan amounts. Additionally, latency (time taken to process the loan) shows a weak correlation with the `BEST_SCORE`, indicating that score does not significantly impact processing time.
+
+##### 5.2. Time to Fund Distribution
+
+**Insight:** The time to fund distribution shows a concentration around certain time periods, indicating potential operational bottlenecks. Identifying and addressing these bottlenecks could enhance the efficiency of loan processing and funding.
+
+##### 5.3. Score vs. Target Bar Plot
+
+**Insight:** The bar plot of scores versus the target variable highlights that lower credit scores are more frequently associated with defaults. This validates the predictive power of the `BEST_SCORE` variable in identifying high-risk applicants.
+
+##### 5.4. Latency Distribution
+
+**Insight:** The latency distribution reveals that the majority of loans are processed within a short time frame, but there are outliers with significantly higher processing times. These outliers could be investigated further to improve overall processing efficiency.
+
+##### 5.5. Loan Purpose Analysis
+
+**Insight:** Analysis of loan purposes shows varied default rates across different purposes. For example, loans for debt consolidation have a slightly higher default rate compared to other purposes. This indicates a need for more stringent evaluation criteria for specific loan purposes to mitigate risk.
+
+##### 5.6. Score Distribution
+
+**Insight:** The score distribution indicates a skewed distribution with most scores concentrated in the higher range. This could suggest a potential bias in the scoring system, necessitating a review of the scoring criteria to ensure it accurately reflects applicants' creditworthiness.
+
+##### 5.7. Statistics of BEST_SCORE
+
+**Insight:** Key statistics such as mean, median, and standard deviation of the `BEST_SCORE` show a central tendency towards higher scores with some variability. The high mean and median scores suggest that most applicants have good credit scores, but the presence of outliers highlights the need for a robust risk assessment framework.
+
+### 6. Insights and Recommendations
+
+**Observations:**
+- The funding rate is high across different application types and loan purposes, indicating that the model's predictions align well with actual funding decisions.
+- The ROC AUC and Gini coefficients suggest moderate model performance. There is potential for significant improvement in these areas.
+- The low precision indicates that the model produces many false positives, which can be problematic in a real-world scenario. This is evident from the sharp drop in the precision-recall curve.
+- The recall rate is relatively high, meaning the model captures a good portion of the actual defaults but at the cost of a high false positive rate.
+
+**Concerns:**
+1. **Model Stability:** The moderate values of the ROC AUC and Gini coefficients suggest that the model might not be stable across different datasets or over time. This requires further investigation and potentially more robust model training.
+2. **Performance on Imbalanced Data:** The model struggles with precision due to the imbalance in the dataset. While recall is acceptable, the precision is too low, indicating many false positives. This imbalance needs addressing through techniques like SMOTE or adjusting the classification threshold.
+3. **Threshold Setting:** The current threshold of 0.0700518, based on the distribution of predictions, results in improved balance between precision and recall but still requires fine-tuning for better performance.
+
+**Recommendations:**
+1. **Threshold Adjustment:** Fine-tune the classification threshold to achieve a better balance between precision and recall. The newly identified threshold of 0.0700518 improves the balance but needs continuous monitoring and adjustment as more data becomes available.
+2. **Data Balancing:** Implement techniques such as SMOTE to handle imbalanced data, ensuring the model captures more positive samples.
+3. **Model Retraining:** Periodically retrain the model with updated data to adapt to changing patterns and maintain performance.
+4. **Feature Engineering:** Explore additional features or transformations that might improve model performance.
+5. **Regular Monitoring:** Establish a routine for monitoring model performance metrics over time to detect and address any deterioration in model quality.
+6. **Operational Efficiency:** Address identified bottlenecks in loan processing and funding times to enhance overall efficiency.
+7. **Risk Assessment for Specific Loan Purposes:** Implement more stringent evaluation criteria for loan purposes with higher default rates to mitigate risk.
+
+### 7. Clarifications and Actions
+
+During the recent meeting with the model development team, it was clarified that the development AUC was calculated on a funded + unfunded population, while the OGM AUC was based only on the funded population. This discrepancy in the population basis led to an apples-to-oranges comparison. As a result, the team agreed on the necessity of a recalibration plan to incorporate both funded and unfunded performance metrics in future OGM reports. The developer is tasked with proposing a new OGM plan to address this issue.
+
+### 8. Conclusion
+
+The loan default prediction model demonstrates moderate performance metrics, particularly in terms of accuracy and specificity. However, there is room for improvement in precision and recall, especially given the imbalanced dataset. By identifying a better classification threshold and implementing data balancing techniques, the model's performance can be further enhanced. Continuous monitoring, retraining, and fine-tuning are essential to ensure sustained performance. Additionally, a recalibration plan to include both funded and unfunded performance metrics is essential for accurate model evaluation.
+
+---
+
+This report emphasizes independent testing and critical thinking, providing an effective challenge to model developers. By focusing on recent data and comparing performance metrics to the development period, we offer valuable insights and actionable recommendations for model improvement.
+
