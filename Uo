@@ -1,10 +1,28 @@
-If you need to dynamically calculate a threshold for each loan purpose and then generate a confusion matrix based on that threshold, you can proceed with the following approach. This assumes you want to optimize the threshold individually for each loan purpose segment to maximize a certain metric (e.g., F1 score).
+The code provided does perform multiple threshold calculations, which could be computationally expensive depending on the size of your dataset and the number of unique predicted scores (`y_score`) per loan purpose. Here are a few optimizations and considerations to improve performance:
 
-Here’s a step-by-step Python code example using a hypothetical dataset structure:
+### Optimization Suggestions:
+
+1. **Reduce Threshold Testing Range**:
+   - Instead of testing every unique score, consider sampling or using a smaller set of thresholds. You can use methods like percentiles (`np.percentile`) or predefined ranges (`np.linspace`) to limit the number of thresholds tested.
+
+2. **Parallel Processing**:
+   - Utilize parallel processing (e.g., with `joblib` or `concurrent.futures`) to compute thresholds for different loan purposes simultaneously. This can significantly reduce the overall computation time if you have a multi-core processor.
+
+3. **Early Stopping**:
+   - Implement an early stopping mechanism if the improvement in metric (e.g., F1 score) does not increase beyond a certain threshold or number of iterations.
+
+4. **Data Preprocessing**:
+   - Ensure your dataset is properly indexed and sorted for efficient slicing and grouping operations.
+
+### Code Optimization Example:
+
+Here’s an updated version of the code using `np.percentile` to reduce the number of thresholds tested and applying multiprocessing for parallel computation:
 
 ```python
 import pandas as pd
+import numpy as np
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+from joblib import Parallel, delayed  # for parallel processing
 
 # Example data setup (replace with your actual data)
 data = {
@@ -20,29 +38,32 @@ loan_purposes = df['LoanPurpose'].unique()
 
 results = []
 
-# Iterate through each loan purpose
-for purpose in loan_purposes:
+# Function to find best threshold for a loan purpose
+def find_best_threshold(y_true, y_score):
+    thresholds = np.percentile(y_score, np.linspace(0, 100, num=10))  # Example: test 10 percentiles
+    best_threshold = None
+    best_f1_score = -1  # Initialize with a value lower than any possible F1 score
+
+    for threshold in thresholds:
+        y_pred = (y_score >= threshold).astype(int)
+        f1 = f1_score(y_true, y_pred)
+
+        if f1 > best_f1_score:
+            best_f1_score = f1
+            best_threshold = threshold
+
+    return best_threshold, best_f1_score
+
+# Parallel computation for each loan purpose
+results = Parallel(n_jobs=-1)(delayed(process_loan_purpose)(purpose) for purpose in loan_purposes)
+
+# Process each loan purpose
+def process_loan_purpose(purpose):
     subset = df[df['LoanPurpose'] == purpose]
     y_true = subset['y_true']
     y_score = subset['y_score']
 
-    # Define thresholds to test
-    thresholds = sorted(y_score.unique())  # Example: test all unique scores as thresholds
-
-    # Initialize variables to store best metrics and threshold
-    best_threshold = None
-    best_f1_score = -1  # Initialize with a value lower than any possible F1 score
-
-    # Iterate over thresholds to find the best one based on F1 score
-    for threshold in thresholds:
-        y_pred = (y_score >= threshold).astype(int)
-
-        f1 = f1_score(y_true, y_pred)
-
-        # Update best threshold if found a higher F1 score
-        if f1 > best_f1_score:
-            best_f1_score = f1
-            best_threshold = threshold
+    best_threshold, best_f1_score = find_best_threshold(y_true, y_score)
 
     # Use the best threshold to calculate metrics and confusion matrix
     y_pred_best = (y_score >= best_threshold).astype(int)
@@ -52,7 +73,7 @@ for purpose in loan_purposes:
     precision = precision_score(y_true, y_pred_best, zero_division=1)
     recall = recall_score(y_true, y_pred_best)
 
-    results.append({
+    return {
         'LoanPurpose': purpose,
         'BestThreshold': best_threshold,
         'Accuracy': accuracy,
@@ -65,7 +86,7 @@ for purpose in loan_purposes:
             'FN': fn,
             'TP': tp
         }
-    })
+    }
 
 # Print results or further process them as needed
 for result in results:
@@ -78,14 +99,12 @@ for result in results:
 
 ### Explanation:
 
-1. **Iterating through Loan Purposes**: The code iterates through each unique loan purpose in your dataset.
+- **Parallel Processing**: `Parallel(n_jobs=-1)` utilizes all available cores for parallel computation, improving efficiency.
+  
+- **Threshold Optimization**: `np.percentile(y_score, np.linspace(0, 100, num=10))` tests 10 evenly spaced percentiles of `y_score` values, reducing the number of thresholds tested.
 
-2. **Threshold Optimization**: For each loan purpose, it identifies unique predicted scores (`y_score`) and tests different thresholds.
+- **Function Refactoring**: The `process_loan_purpose` function encapsulates the logic for processing each loan purpose, including threshold optimization and metric calculation.
 
-3. **Finding the Best Threshold**: It selects the threshold that maximizes the F1 score for that loan purpose segment.
+- **Results Handling**: Results are collected in a list (`results`) and printed or further processed as needed.
 
-4. **Metrics Calculation**: Using the best threshold found, it calculates metrics (`accuracy`, `precision`, `recall`, `F1 score`) and generates a confusion matrix (`TN`, `FP`, `FN`, `TP`).
-
-5. **Results Handling**: Results are stored in a list (`results`) and can be printed or further processed as needed.
-
-This approach allows you to dynamically optimize the threshold for each loan purpose segment and evaluate model performance based on the chosen metric (F1 score in this example). Adjust the code as per your specific dataset structure and evaluation criteria.
+By applying these optimizations, the code should run more efficiently, reducing the time required to compute thresholds and generate confusion matrices for each loan purpose segment in your dataset. Adjust the number of percentiles (`num=10` in `np.linspace`) based on your dataset size and computational resources.
