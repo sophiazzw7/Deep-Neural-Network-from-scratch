@@ -1,9 +1,10 @@
-To calculate the evaluation metrics (accuracy, precision, recall, F1 score, specificity) for each loan purpose separately, you can adapt the code to group the data by loan purpose and compute the metrics within each group. Here’s how you can modify your code:
+If you need to dynamically calculate a threshold for each loan purpose and then generate a confusion matrix based on that threshold, you can proceed with the following approach. This assumes you want to optimize the threshold individually for each loan purpose segment to maximize a certain metric (e.g., F1 score).
+
+Here’s a step-by-step Python code example using a hypothetical dataset structure:
 
 ```python
 import pandas as pd
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
-from tabulate import tabulate  # Assuming you have tabulate installed for pretty printing
 
 # Example data setup (replace with your actual data)
 data = {
@@ -14,51 +15,77 @@ data = {
 
 df = pd.DataFrame(data)
 
-# Calculate metrics for each loan purpose
+# Get unique loan purposes
 loan_purposes = df['LoanPurpose'].unique()
+
 results = []
 
+# Iterate through each loan purpose
 for purpose in loan_purposes:
     subset = df[df['LoanPurpose'] == purpose]
     y_true = subset['y_true']
     y_score = subset['y_score']
 
-    # Apply threshold
-    threshold = 0.028
-    y_pred = (y_score >= threshold).astype(int)
+    # Define thresholds to test
+    thresholds = sorted(y_score.unique())  # Example: test all unique scores as thresholds
 
-    # Calculate confusion matrix and metrics
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    accuracy = accuracy_score(y_true, y_pred)
-    precision = precision_score(y_true, y_pred, zero_division=1)  # Handle zero division with default value
-    recall = recall_score(y_true, y_pred)
-    f1 = f1_score(y_true, y_pred)
-    specificity = tn / (tn + fp) if (tn + fp) != 0 else 0
+    # Initialize variables to store best metrics and threshold
+    best_threshold = None
+    best_f1_score = -1  # Initialize with a value lower than any possible F1 score
+
+    # Iterate over thresholds to find the best one based on F1 score
+    for threshold in thresholds:
+        y_pred = (y_score >= threshold).astype(int)
+
+        f1 = f1_score(y_true, y_pred)
+
+        # Update best threshold if found a higher F1 score
+        if f1 > best_f1_score:
+            best_f1_score = f1
+            best_threshold = threshold
+
+    # Use the best threshold to calculate metrics and confusion matrix
+    y_pred_best = (y_score >= best_threshold).astype(int)
+
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred_best).ravel()
+    accuracy = accuracy_score(y_true, y_pred_best)
+    precision = precision_score(y_true, y_pred_best, zero_division=1)
+    recall = recall_score(y_true, y_pred_best)
 
     results.append({
         'LoanPurpose': purpose,
+        'BestThreshold': best_threshold,
         'Accuracy': accuracy,
         'Precision': precision,
         'Recall': recall,
-        'F1 Score': f1,
-        'Specificity': specificity
+        'F1 Score': best_f1_score,
+        'ConfusionMatrix': {
+            'TN': tn,
+            'FP': fp,
+            'FN': fn,
+            'TP': tp
+        }
     })
 
-# Print results using tabulate for a nice table format
-print(tabulate(results, headers='keys', tablefmt='pretty'))
+# Print results or further process them as needed
+for result in results:
+    print(f"Loan Purpose: {result['LoanPurpose']}")
+    print(f"Best Threshold: {result['BestThreshold']}")
+    print(f"Accuracy: {result['Accuracy']:.4f}, Precision: {result['Precision']:.4f}, Recall: {result['Recall']:.4f}, F1 Score: {result['F1 Score']:.4f}")
+    print(f"Confusion Matrix: TN={result['ConfusionMatrix']['TN']}, FP={result['ConfusionMatrix']['FP']}, FN={result['ConfusionMatrix']['FN']}, TP={result['ConfusionMatrix']['TP']}")
+    print()
 ```
 
 ### Explanation:
 
-1. **Grouping by Loan Purpose**: `loan_purposes = df['LoanPurpose'].unique()` identifies unique loan purposes in your dataset.
-  
-2. **Iterating through Loan Purposes**: The loop iterates through each unique loan purpose, extracts data subset (`subset`) for that purpose, and computes metrics based on actual (`y_true`) and predicted (`y_pred`) values.
+1. **Iterating through Loan Purposes**: The code iterates through each unique loan purpose in your dataset.
 
-3. **Metrics Calculation**: Within each loop iteration:
-   - `y_true` and `y_score` are extracted from the subset.
-   - `y_pred` is computed based on a threshold (`0.028` in this example).
-   - Metrics (`accuracy`, `precision`, `recall`, `f1_score`, `specificity`) are computed using `sklearn.metrics` functions.
+2. **Threshold Optimization**: For each loan purpose, it identifies unique predicted scores (`y_score`) and tests different thresholds.
 
-4. **Tabulate for Output**: The `tabulate` function is used to print the results in a clear, formatted table (`tablefmt='pretty'`).
+3. **Finding the Best Threshold**: It selects the threshold that maximizes the F1 score for that loan purpose segment.
 
-This approach allows you to compute and display evaluation metrics tailored to each loan purpose category in your dataset, ensuring you can analyze model performance across different segments effectively. Adjust the threshold or any other parameters based on your specific needs and data characteristics.
+4. **Metrics Calculation**: Using the best threshold found, it calculates metrics (`accuracy`, `precision`, `recall`, `F1 score`) and generates a confusion matrix (`TN`, `FP`, `FN`, `TP`).
+
+5. **Results Handling**: Results are stored in a list (`results`) and can be printed or further processed as needed.
+
+This approach allows you to dynamically optimize the threshold for each loan purpose segment and evaluate model performance based on the chosen metric (F1 score in this example). Adjust the code as per your specific dataset structure and evaluation criteria.
