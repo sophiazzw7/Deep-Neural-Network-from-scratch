@@ -222,3 +222,175 @@ The meeting provided clarity on the strategy for integrating live stream product
 [End of Meeting Notes]
 
 
+
+**Meeting Notes**
+
+**Date:** [Insert Date]
+
+**Participants:** [List of Participants]
+
+---
+
+**Participant 1:**
+"Yeah. OK. So, but there is gonna be a account differences between the input file versus output file, right?"
+
+**Participant 2:**
+"Yeah, I think that that is that, that is my question because um we, we wanted um a comparison between like what we requested versus what we got."
+
+**Participant 1:**
+"And if so the top one is what, what you, what we requested, right? So the bottom one is what we got because we match two different archives for each acquisition vintage."
+
+**Participant 2:**
+"You will have one archive at a time uh of March 2020 16. You have another archive at the time of June 2020. So there is always gonna be a differences between those two, right? But as long as the difference is is smaller enough, I feel we feel fine then that's usually where we're gonna go."
+
+**Participant 1:**
+"Yeah. Could you could you um could you document all that? Because what we wanted to see is like like what is the data you requested versus the data you got? And why is there any missing? If yes, um why do you think that's OK. Things like that."
+
+**Participant 2:**
+"Oh OK. So I have some kind of uh like reason about this. Yeah. Yeah. Try to provide a bit of uh provide a bit of um um like rational here."
+
+**Participant 1:**
+"Um Here u usually what, what we do is um we do like matching or not. Um You will have another, for example, just a small example, you will have a matching or not like match and you will have some yes and some nos and if there's a no, there's a rational here. And why do you think that's a acceptable things like that?"
+
+**Participant 2:**
+"Um Yeah. Um Yeah, one suggestion is to provide a bit of uh provide a bit of um um like rational here."
+
+**Participant 1:**
+"And also I wanted to um ask you regarding the Third Excel here. I I was trying to match things up with um the second one but I am having a bit of hard time here reading this Third Excel."
+
+**Participant 2:**
+"Is this the Excel that um you share the data with? DAS?"
+
+**Participant 1:**
+"No. So I I want to explain it in detail, right? So the, the Z data is actually sent out directly from Transunion, it then go to us. So this is the detailed data which Transunion send us to Z directly."
+
+**Participant 2:**
+"So what we are trying to match is look at this data and see if it's aligned with, you know what we are seeing."
+
+**Participant 1:**
+"Yeah, that would be great. That would be great because I, I was trying to figure out like where all those pieces come together because what, what, what we are trying to see is how the data actually flows and how at each step there's a match or there's a check things like that."
+
+**Participant 2:**
+"Um OK. Yeah, let me create a flow data flow. So um yeah, that would be great. Maybe get some checkpoints on that string, application data. I can actually use the data process flow but add some checkpoints on that page."
+
+**Participant 1:**
+"OK. Let me do that. Yeah, maybe try to explain a bit more like how these numbers matching with like the second one, things like that just to get a bit of um details on it because right now it's, it's pretty difficult to follow like how the data flow from Transunion to that."
+
+**Participant 2:**
+"For example, if you are, I'm assuming you have two copies, one transunion directly sent to you and Transunion directly sent to that. If you do some tracks between those, what are like the um you probably compare the counts. Um What is like the checks or the um quality assurance things that you do."
+
+**Participant 1:**
+"These are some examples um that I could think of. Also, I know we talked about the reject influence data that was directly sent to um Z as well from Transunion."
+
+**Participant 2:**
+"Um Could you also reject, what do you mean reject data?"
+
+**Participant 1:**
+"So here, let me go back to this one. So here there was a data, it's, it was."
+
+**Participant 2:**
+"So it's a target. So it's a target. So there the fire from um I don't know if this one explain well enough."
+
+**Participant 1:**
+"So the starting point is what we send all the input file to Transunion Transunion append their TU data set, then they send back to us and they will send the one copy to um that we're on the train line data, right? So it, it's not the same data that Transunion share with you and versus they share with us. So it's the same data they share with us versus Z. But the only thing is that get is deducted data, meaning they do not get, they only get the trade line data, they don't get other information, they only get the trade line data at the time of acquisition. They don't get the performance data."
+
+**Participant 2:**
+"That's right. So what we actually create, which is the same as that L model is what Luis created the target file. Then we send that target file back to, to Z as their, you know, every, every 60 within our 1215, 18 months, that's the file we send to Z, then they match to that whatever the train line that they get."
+
+**Participant 1:**
+"Oh, got it. Can we um maybe clarify a little bit about that because looking at this, it's not the, the process is, well, it was a little different from what I heard from you."
+
+**Participant 2:**
+"So um and maybe try to, I would say try to um update this graph a little bit to include it in the MD D um just to clarify things up a little."
+
+**Participant 1:**
+"Um And I would so for here, all three excels are internal here, right? We don't get anything from that."
+
+**Participant 2:**
+"Um We don't know if there's anything they done to check the cons or check if the data they receive is complete."
+
+**Participant 1:**
+"This is, this is the count, the quantity is actually coming from uh what Trans Union send out to that."
+
+**Participant 2:**
+"I get the count. I don't get the detailed data."
+
+**Participant 1:**
+"OK. So this is the cons that that received. Is that right?"
+
+**Participant 2:**
+"OK. OK. Let me take a look and get back to you because I do have to take back to my original data and make sure I get everything."
+
+**Participant 1:**
+"Yeah, sure that'd be good."
+
+**Participant 2:**
+"Um I also wanted to uh do like a a remind you really quick about the uh because I see the data was 2 2020 um here."
+
+**Participant 1:**
+"So I do want to make sure that we are also doing the same thing for the OGN data source as well."
+
+**Participant 2:**
+"What do you mean doing the same?"
+
+**Participant 1:**
+"So they there are two piece of certification is development data and the OGM data source. So whatever we are using in the OGM reports like the the the OGM data, they also would need to be checked."
+
+**Participant 2:**
+"Oh OK. So that's gonna be a little bit nuance on that. Um I can create a waterfall on that piece. But the problem is OGM data is a real production data, right?"
+
+**Participant 1:**
+"Um So it's basically what zest actually produce at real time that might have to."
+
+**Participant 2:**
+"So that's external data. None of those."
+
+**Participant 1:**
+"Yeah, the internal is over the performance data we send over. Um But the rest of data is actually at the Z how how does that piece actually work out? How are we going to certify it on that?"
+
+**Participant 2:**
+"So the application, so essentially the internal piece is the performance data we provided for comparison, right? And the application scoring happened on that."
+
+**Participant 1:**
+"Basically there's an internal label, we we provide it and there's an external label they they done and we do a comparison that's producing the OGM report. Is that, is that right?"
+
+**Participant 2:**
+"Um The performance data, yes, we provided the the the rest is production real time because they are scoring data for us, right? So that's what they are providing, it's that they are getting um real time data from us, which is the builder data. They create a score right on the spot."
+
+**Participant 1:**
+"Yep. And that score is actually the output. So we only care about the input part. So we want to make sure everything we sent to for them to for them to score is accurate."
+
+**Participant 2:**
+"Yeah, yeah, that piece uh we don't, we don't check for here because there's no way to check it, right? Because we do. But again, it's production Right. So it's production data, how it's all, it's real time, everything is systematic."
+
+**Participant 1:**
+"I mean, how are we gonna do this? So there's no, it's all like we have a, like a,
+
+ like number of cons or things like that. Right."
+
+**Participant 2:**
+"Yeah, I, I got it. What's the production? Do you have any, like, because all the model usually majority of the model run real time. Right."
+
+**Participant 1:**
+"So, do you have any things I can follow?"
+
+**Participant 2:**
+"Yeah, I'm going to try to dig more into this. Um That is a great question. Uh So I will try to find out more about how do we deal with like real time production data? How do we do certification on that? I don't know this answer yet, but I will get back to you once I ok. So give me a little bit of time because I will be out for the last two days of this week. I probably have to get back to you when I come back next week."
+
+**Participant 1:**
+"That's fine. That's totally fine. I'll be, I'll be out as well, so no worries."
+
+**Participant 2:**
+"Ok, have a great long weekend then."
+
+**Participant 1:**
+"Ok, thank you. Thank you, Vera. Bye bye."
+
+**Participant 2:**
+"Ok. Yeah. Yeah."
+
+---
+
+[End of Meeting Notes]
+
+
