@@ -1,3 +1,141 @@
-default_counts_by_purpose = data.groupby('LOANPURPOSE')['Target'].sum().reset_index()
-default_counts_by_purpose.columns = ['Loan Purpose', 'Default Count']
-default_counts_by_purpose
+Based on the provided image, we can extract and analyze the following insights from the comparison of confusion matrix metrics between the development and 2024Q1 OGM data for different loan purposes:
+
+### Insights from Confusion Matrix Comparison
+
+#### 1. **Auto Loan Purpose**
+- **Development Period:**
+  - Accuracy: 0.99
+  - F1 Score: 0.025
+  - Precision: 0.025
+  - Recall: 0.024
+  - Specificity: 0.995
+- **2024Q1:**
+  - Accuracy: 0.8843
+  - F1 Score: 0.0626
+  - Precision: 0.0347
+  - Recall: 0.3145
+  - Specificity: 0.8914
+  - **Best Threshold:** 0.0474
+
+**Observation:**
+- The recall for the 2024Q1 period is significantly higher (0.3145) compared to the development period (0.024), indicating an improved ability to identify true positives.
+- However, the accuracy and specificity have decreased, suggesting an increase in false positives.
+
+#### 2. **Home Improvement Loan Purpose**
+- **Development Period:**
+  - Accuracy: 0.976
+  - F1 Score: 0.011
+  - Precision: 0.028
+  - Recall: 0.007
+  - Specificity: 0.995
+- **2024Q1:**
+  - Accuracy: 0.8813
+  - F1 Score: 0.0842
+  - Precision: 0.0491
+  - Recall: 0.2946
+  - Specificity: 0.8923
+  - **Best Threshold:** 0.0536
+
+**Observation:**
+- There is a noticeable improvement in recall (0.2946 in 2024Q1 vs. 0.007 in the development period), indicating better detection of defaults.
+- The increase in recall comes at the cost of reduced accuracy and specificity, similar to the auto loan purpose.
+
+#### 3. **Debt Consolidation Loan Purpose**
+- **Development Period:**
+  - Accuracy: 0.95
+  - F1 Score: 0.071
+  - Precision: 0.135
+  - Recall: 0.048
+  - Specificity: 0.987
+- **2024Q1:**
+  - Accuracy: 0.881
+  - F1 Score: 0.0683
+  - Precision: 0.0392
+  - Recall: 0.2631
+  - Specificity: 0.8914
+  - **Best Threshold:** 0.0848
+
+**Observation:**
+- The recall has significantly increased (0.2631 in 2024Q1 vs. 0.048 in the development period), suggesting a better identification of true positives.
+- However, precision has decreased, indicating more false positives.
+
+#### 4. **Other Loan Purpose**
+- **Development Period:**
+  - Accuracy: 0.969
+  - F1 Score: 0.075
+  - Precision: 0.1
+  - Recall: 0.06
+  - Specificity: 0.988
+- **2024Q1:**
+  - Accuracy: 0.8805
+  - F1 Score: 0.0615
+  - Precision: 0.0352
+  - Recall: 0.2419
+  - Specificity: 0.891
+  - **Best Threshold:** 0.0731
+
+**Observation:**
+- An improvement in recall (0.2419 in 2024Q1 vs. 0.06 in the development period) is observed, similar to other loan purposes.
+- Precision has decreased, resulting in more false positives.
+
+### Overall Insights
+- **Improvement in Recall Across All Loan Purposes:** The 2024Q1 period shows a significant improvement in recall for all loan purposes, indicating better identification of defaults.
+- **Decrease in Precision:** There is a notable decrease in precision for all loan purposes, suggesting an increase in false positives.
+- **Accuracy and Specificity:** Both accuracy and specificity have decreased in the 2024Q1 period compared to the development period, highlighting a trade-off between improved recall and reduced precision.
+
+### Recommendations
+- **Threshold Adjustment:** Consider further fine-tuning the classification threshold to achieve a better balance between precision and recall.
+- **Model Retraining:** Regularly retrain the model with updated data to maintain performance and adapt to changing patterns.
+- **Feature Engineering:** Explore additional features or transformations to improve model performance.
+- **Regular Monitoring:** Establish a routine for monitoring model performance metrics over time to detect and address any deterioration in model quality.
+
+These insights and recommendations highlight the need for continuous model evaluation and adjustments to ensure optimal performance in predicting loan defaults.
+
+
+.4. Precision-Recall Curve
+
+Precision-Recall Curve: The precision-recall curve, which is especially useful for imbalanced datasets like ours, indicates that precision drops sharply as recall increases. This is expected given the imbalance in the dataset.
+
+Average Precision Score: The average precision score is 0.046, summarizing the precision-recall curve as the weighted mean of precisions achieved at each threshold.
+
+4.5. Confusion Matrix and Derived Metrics
+
+Metric	Value
+Accuracy	0.947
+Precision	0.041
+Recall	0.569
+F1 Score	0.077
+Specificity	0.947
+Note: The metrics are calculated with a threshold set to 0.028 based on the distribution of y_true and y_pred.
+
+5. Insights and Recommendations
+Observations:
+
+The funding rate is high across different application types and loan purposes, indicating that the model's predictions align well with actual funding decisions.
+The ROC AUC and Gini coefficients suggest moderate model performance. There is potential for significant improvement in these areas.
+The low precision indicates that the model produces many false positives, which can be problematic in a real-world scenario. This is evident from the sharp drop in the precision-recall curve.
+The recall rate is relatively high, meaning the model captures a good portion of the actual defaults but at the cost of a high false positive rate.
+Concerns:
+
+Model Stability: The moderate values of the ROC AUC and Gini coefficients suggest that the model might not be stable across different datasets or over time. This requires further investigation and potentially more robust model training.
+Performance on Imbalanced Data: The model struggles with precision due to the imbalance in the dataset. While recall is acceptable, the precision is too low, indicating many false positives. This imbalance needs addressing through techniques like SMOTE or adjusting the classification threshold.
+Threshold Setting: The current threshold of 0.028, based on the distribution of predictions, results in low precision. A thorough analysis to find an optimal threshold that balances precision and recall is necessary.
+Recommendations:
+
+Threshold Adjustment: Fine-tune the classification threshold to achieve a better balance between precision and recall.
+Data Balancing: Implement techniques such as SMOTE to handle imbalanced data, ensuring the model captures more positive samples.
+Model Retraining: Periodically retrain the model with updated data to adapt to changing patterns and maintain performance.
+Feature Engineering: Explore additional features or transformations that might improve model performance.
+Regular Monitoring: Establish a routine for monitoring model performance metrics over time to detect and address any deterioration in model quality.
+6. Clarifications and Actions
+During the recent meeting with the model development team, it was clarified that the development AUC was calculated on a funded + unfunded population, while the OGM AUC was based only on the funded population. This discrepancy in the population basis led to an apples-to-oranges comparison. As a result, the team agreed on the necessity of a recalibration plan to incorporate both funded and unfunded performance metrics in future OGM reports. The developer is tasked with proposing a new OGM plan to address this issue.
+
+
+
+
+Conclusion
+The loan default prediction model demonstrates moderate performance metrics, particularly in terms of funding rates. However, adjustments in threshold settings and handling data imbalance are crucial to enhancing precision and recall. Continuous monitoring and model retraining are recommended to ensure sustained performance. Additionally, a recalibration plan to include both funded and unfunded performance metrics is essential for accurate model evaluation.
+
+Note on Model Monitoring
+It is important to highlight that monitoring only AUC might not capture the full performance of the model. Including precision and recall in the monitoring process provides a more comprehensive view of the model's ability to correctly identify defaults and avoid false positives.
+
