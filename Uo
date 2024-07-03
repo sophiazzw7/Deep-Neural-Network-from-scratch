@@ -1,31 +1,86 @@
-The assumption that "the past will reflect the future" is a common one in many modeling contexts, particularly when the models are developed using historical data. This assumption posits that the distribution of input variables during the development phase will be similar to the distribution of those variables in the production environment. Here are some considerations to determine if this assumption makes sense:
+Sure, here is the cleaned-up version of the transcript:
 
-### When the Assumption is Valid:
+---
 
-1. **Stable Environment**: If the environment in which the model operates is relatively stable, meaning there are no significant changes in the underlying data generation process, this assumption can hold. Examples include well-established industries with stable consumer behavior or economic conditions.
+**Speaker 1:** We do have some issues on our side pulling Transunion data because we need a budget for it. If we can have a plan on paper, just a couple of pages, we can follow that plan. Give us what you need from a data perspective, and we can discuss it with Transunion according to that plan.
 
-2. **Short Time Horizons**: If the time between the development and deployment of the model is short, the likelihood that the input variable distributions will remain similar is higher. 
+**Speaker 2:** That sounds good.
 
-3. **Regulated or Controlled Systems**: In systems with strong regulatory controls or consistent operational procedures, changes in the data patterns might be minimal, supporting the assumption.
+**Speaker 3:** OK, Chen, do you want to take it away?
 
-### When the Assumption May Not Hold:
+**Chen:** Sure. I'm going to share something that I already sent to you, but not to everyone. Here is the OTM report findings from MRO. There are ten bullet points, and I have five here. We'll discuss the other five. 
 
-1. **Dynamic Environments**: In rapidly changing environments, such as technology, finance, or consumer markets, past data might not be a reliable indicator of future patterns. Changes in regulations, market conditions, or consumer behavior can significantly alter input variable distributions.
+The first point is about visualization. We have the data, so we can plan for a UC curve. The second point involves a test statistic, which can be done quickly. We will calculate the KS statistic, and I'll work with Greg on this. 
 
-2. **External Shocks**: Events such as economic recessions, pandemics, or natural disasters can drastically change the distribution of input variables. Models developed before such events may not perform well post-event without adjustments.
+**Greg:** Hi Chen. A quick note: we suggest using 20 bins for rank ordering. However, 10 bins might make more sense for this case. It's up to you to choose the appropriate number based on the model and the data.
 
-3. **Data Drift**: Over time, the properties of the data can change (a phenomenon known as data drift). This can be due to changes in the underlying processes generating the data or changes in the way data is collected or processed.
+**Chen:** Understood. Moving on to the third point, this involves using the model as a benchmark. We'll do this once the model becomes available. The fourth point is about exploring alternative ways to set model discrimination metric thresholds. We'll discuss this later. And for the fifth point, we need to include sensitivity analysis in the OGM report. 
 
-### Mitigating the Risks:
+**Speaker 4:** Hi Chen, just a question. How are you planning on ranking to find the 20 or 10 bins? Will it be based on predicted values?
 
-1. **Regular Monitoring**: Implementing continuous monitoring of input variable distributions in production can help detect deviations from the development data distributions. This allows for timely updates or retraining of the model.
+**Chen:** Yes, it will be based on predicted values from the model. I’ll create deciles, and within each decile, I will compare the distribution of good and bad. 
 
-2. **Adaptive Models**: Developing models that can adapt to changing data distributions can help maintain performance. Techniques like online learning or periodically retraining the model with recent data can be beneficial.
+**Speaker 4:** Got it. Just sharing some experience: if you use the same model to create the bins and then remeasure performance within those bins, you may end up with bias. Are there guidelines on ranking versus interior ranking?
 
-3. **Validation with Recent Data**: Including more recent data in the validation set during model development can provide a better indication of future performance. Additionally, using techniques like cross-validation with time-series data can help account for temporal changes.
+**Chen:** I'll have to look into it. But we use predicted values for this analysis. The KS statistic is calculated based on model output.
 
-4. **Scenario Analysis**: Performing scenario analysis and stress testing the model with different data distributions can help understand how robust the model is to changes in the input variables.
+**Speaker 4:** Understood. Thank you for the clarification.
 
-### Conclusion:
+**Chen:** Moving on, point six involves defining OGM roles and responsibilities. Vera and I will work on this. Point seven involves modifying the model documentation according to these tables. Point eight is about compensating controls, which will also be included in the model documentation. 
 
-While the assumption that the past will reflect the future can be a reasonable starting point, it is essential to critically evaluate its validity based on the specific context and environment in which the model operates. Implementing strategies to monitor and adapt to changing data distributions can help mitigate the risks associated with this assumption.
+**Speaker 5:** Do you need help with the verbiage for the model documentation?
+
+**Chen:** I'll contact Vera and will let you know if we need assistance. Point nine involves regenerating OGM reports based on new data. This will be done by our team.
+
+**Sophia:** A quick feedback on the AUC threshold you proposed: why not use two standard deviations as the inner threshold and three standard deviations as the outer threshold? This is more common.
+
+**Chen:** Two standard deviations cover 95%, which means there’s a 5% chance of triggering an escalation process by mistake. That’s why I chose three and four standard deviations.
+
+**Sophia:** Understood. I’ll pass this feedback to the OGM review team. Another question: Are we still including both funded and unfunded populations in the OGM report?
+
+**Speaker 6:** We need to work with the team to determine if we can get unfunded targets every quarter. If not, we might only do funded.
+
+**Speaker 5:** Any other questions or contact points with Zest?
+
+**Speaker 6:** Just a reminder to maintain timely communication. The OGM reports must preclude any fraud-determined data.
+
+---
+
+Is there anything else you would like to modify or add?
+
+
+Sure, here is the cleaned-up version:
+
+---
+
+Yeah, that sounds good to me. Chang mentioned that theoretically, you could have a population similar to the development population, but a random sample 5% of the time might trigger it when it shouldn't. Great, I appreciate you sharing that. That was exactly what I was going to mention as well. Thank you. 
+
+So, Sophia, we're looking for something outside the norm. There's still a chance you might see something within two standard deviations of the development population. But with three standard deviations, it indicates a significant difference from the development population.
+
+---
+
+Let me know if any further adjustments are needed!
+
+Sure, here is the cleaned-up version:
+
+---
+
+I recall from our last discussion, the proposal was to change the OGM plan to include reporting both funded and unfunded populations. What we see here is the threshold for the funded population. Is the plan still the same to report both funded and unfunded? Are we continuing with that proposal?
+
+So, you can do unfunded if you don't know how they perform, right? Yeah, that's the problem. We did it last quarter in Q1 this year. We were able to pull it from the bureau, which was very insightful for the unfunded population. But we need to work with Livestream Vera to determine if she wants to do that every quarter. If not, we might have to stick with just funded. Ideally, we would pull those proxy loan targets from Bo Corner, but we need to work with the business on that.
+
+My question is layered because if we're going to do a recalibration in the next six months to a year, MRO wants to see these OGM changes before the model goes live. Implementing this in a year wouldn't satisfy the need when we have an updated model. Is that right?
+
+This is Salle Shankar, sorry to interrupt. Hello, everyone. We don't have a timeline for calibration yet, so we don't have a commitment or anything in writing. If you can put forward a concrete plan, we can discuss changes to the OGM plan. But without a calibration proposal, this is what we are trying to do with the OGM.
+
+Backtracking to updating the OGM to include unfunded targets, let's say we get approval from Livestream to get unfunded targets every quarter. Would we include that as part of the OGM template renewal? The process should be the same. Once we get the approval, we can meet and discuss details. 
+
+Just a word of caution: we have eight or nine outstanding underwriting models in the bank, only one of which is a vended model. None of the other models include unfunded targets. The bank didn't want to pay for bureau proxy information every quarter or every six months. It would be outside the norm if this became a requirement.
+
+We should explore all the options. We need to know the costs and budget. We have to balance the pros and cons. There is meaningful information from including an unfunded population, but we don't want to overspend beyond the potential benefits.
+
+Absolutely, we understand the costs. We'll keep that in mind as we work on a long-term OGM plan with the business. In the meantime, we can implement some of these findings.
+
+Ok, I don't have any more items to go through.
+
+---
