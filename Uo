@@ -1,96 +1,35 @@
-Sure, here is the cleaned-up version of the transcript:
+SHere are the meeting notes summarizing your discussion:
 
 ---
 
-**Speaker 1:** We do have some issues on our side pulling Transunion data because we need a budget for it. If we can have a plan on paper, just a couple of pages, we can follow that plan. Give us what you need from a data perspective, and we can discuss it with Transunion according to that plan.
+**Participants:** Sean Kar, Cheng, Greg  
+**Date:** [Date of the meeting]
 
-**Speaker 2:** That sounds good.
+**Summary of Discussion:**
 
-**Speaker 3:** OK, Chen, do you want to take it away?
+- **Sean:** Asked about ranking to find 10 or 20 bins based on predicted values. Inquired about comparing KS within each bin and whether ranking would involve variables like FICO or vintage to compare models like Zest vs. LIDS.
 
-**Chen:** Sure. I'm going to share something that I already sent to you, but not to everyone. Here is the OTM report findings from MRO. There are ten bullet points, and I have five here. We'll discuss the other five. 
+- **Cheng:** Clarified that ranking for bins is based on model output to assess separation of good and bad outcomes. Emphasized using predicted values from the model, comparing distributions within deciles, and avoiding bias by using the same model to create and measure performance within bins.
 
-The first point is about visualization. We have the data, so we can plan for a UC curve. The second point involves a test statistic, which can be done quickly. We will calculate the KS statistic, and I'll work with Greg on this. 
+- **Sean:** Highlighted the need for guidelines or preferences at Truist regarding outer ranking vs. interior ranking. Shared previous experience with biases when using the same model for tier creation and performance measurement.
 
-**Greg:** Hi Chen. A quick note: we suggest using 20 bins for rank ordering. However, 10 bins might make more sense for this case. It's up to you to choose the appropriate number based on the model and the data.
+- **Cheng:** Mentioned having done preliminary analysis using code that reports KS statistics based on predicted values and class labels (0 or 1). Clarified using cumulative distribution function at specific points rather than 10 deciles.
 
-**Chen:** Understood. Moving on to the third point, this involves using the model as a benchmark. We'll do this once the model becomes available. The fourth point is about exploring alternative ways to set model discrimination metric thresholds. We'll discuss this later. And for the fifth point, we need to include sensitivity analysis in the OGM report. 
+- **Greg:** Sought confirmation that KS is based on predicted values from the model, asking for specifics on implementation in SAS.
 
-**Speaker 4:** Hi Chen, just a question. How are you planning on ranking to find the 20 or 10 bins? Will it be based on predicted values?
+- **Cheng:** Agreed, noted that KS should indeed be based on predicted values from the model output.
 
-**Chen:** Yes, it will be based on predicted values from the model. I’ll create deciles, and within each decile, I will compare the distribution of good and bad. 
+- **Sean:** Thanked Cheng for clarification, aiming for consistent comparisons between models without bias from tier-setting processes. Agreed on focusing KS separation at specific volume cuts (10%, 20%, 30%, etc.).
 
-**Speaker 4:** Got it. Just sharing some experience: if you use the same model to create the bins and then remeasure performance within those bins, you may end up with bias. Are there guidelines on ranking versus interior ranking?
+- **Cheng:** Confirmed understanding, ensuring clarity on the process.
 
-**Chen:** I'll have to look into it. But we use predicted values for this analysis. The KS statistic is calculated based on model output.
+**Action Items:**
+- Sean to review guidelines on tier-ranking preferences at Truist.
+- Cheng to verify implementation specifics of KS in SAS.
+- Further exploration into ensuring consistent comparisons between models.
 
-**Speaker 4:** Understood. Thank you for the clarification.
-
-**Chen:** Moving on, point six involves defining OGM roles and responsibilities. Vera and I will work on this. Point seven involves modifying the model documentation according to these tables. Point eight is about compensating controls, which will also be included in the model documentation. 
-
-**Speaker 5:** Do you need help with the verbiage for the model documentation?
-
-**Chen:** I'll contact Vera and will let you know if we need assistance. Point nine involves regenerating OGM reports based on new data. This will be done by our team.
-
-**Sophia:** A quick feedback on the AUC threshold you proposed: why not use two standard deviations as the inner threshold and three standard deviations as the outer threshold? This is more common.
-
-**Chen:** Two standard deviations cover 95%, which means there’s a 5% chance of triggering an escalation process by mistake. That’s why I chose three and four standard deviations.
-
-**Sophia:** Understood. I’ll pass this feedback to the OGM review team. Another question: Are we still including both funded and unfunded populations in the OGM report?
-
-**Speaker 6:** We need to work with the team to determine if we can get unfunded targets every quarter. If not, we might only do funded.
-
-**Speaker 5:** Any other questions or contact points with Zest?
-
-**Speaker 6:** Just a reminder to maintain timely communication. The OGM reports must preclude any fraud-determined data.
+**Next Steps:** Follow up on guidelines and implementation specifics, aim for consistent and unbiased comparisons between models.
 
 ---
 
-Is there anything else you would like to modify or add?
-
-
-Sure, here is the cleaned-up version:
-
----
-
-Yeah, that sounds good to me. Chang mentioned that theoretically, you could have a population similar to the development population, but a random sample 5% of the time might trigger it when it shouldn't. Great, I appreciate you sharing that. That was exactly what I was going to mention as well. Thank you. 
-
-So, Sophia, we're looking for something outside the norm. There's still a chance you might see something within two standard deviations of the development population. But with three standard deviations, it indicates a significant difference from the development population.
-
----
-
-Let me know if any further adjustments are needed!
-
-Sure, here is the cleaned-up version:
-
----
-
-I recall from our last discussion, the proposal was to change the OGM plan to include reporting both funded and unfunded populations. What we see here is the threshold for the funded population. Is the plan still the same to report both funded and unfunded? Are we continuing with that proposal?
-
-So, you can do unfunded if you don't know how they perform, right? Yeah, that's the problem. We did it last quarter in Q1 this year. We were able to pull it from the bureau, which was very insightful for the unfunded population. But we need to work with Livestream Vera to determine if she wants to do that every quarter. If not, we might have to stick with just funded. Ideally, we would pull those proxy loan targets from Bo Corner, but we need to work with the business on that.
-
-My question is layered because if we're going to do a recalibration in the next six months to a year, MRO wants to see these OGM changes before the model goes live. Implementing this in a year wouldn't satisfy the need when we have an updated model. Is that right?
-
-This is Salle Shankar, sorry to interrupt. Hello, everyone. We don't have a timeline for calibration yet, so we don't have a commitment or anything in writing. If you can put forward a concrete plan, we can discuss changes to the OGM plan. But without a calibration proposal, this is what we are trying to do with the OGM.
-
-Backtracking to updating the OGM to include unfunded targets, let's say we get approval from Livestream to get unfunded targets every quarter. Would we include that as part of the OGM template renewal? The process should be the same. Once we get the approval, we can meet and discuss details. 
-
-Just a word of caution: we have eight or nine outstanding underwriting models in the bank, only one of which is a vended model. None of the other models include unfunded targets. The bank didn't want to pay for bureau proxy information every quarter or every six months. It would be outside the norm if this became a requirement.
-
-We should explore all the options. We need to know the costs and budget. We have to balance the pros and cons. There is meaningful information from including an unfunded population, but we don't want to overspend beyond the potential benefits.
-
-Absolutely, we understand the costs. We'll keep that in mind as we work on a long-term OGM plan with the business. In the meantime, we can implement some of these findings.
-
-Ok, I don't have any more items to go through.
-
----
-
-Sure, here’s a summary:
-
----
-
-Sean Kar reached out to discuss ranking and binning for model evaluation. The focus is on using predicted values to create bins (deciles) and comparing the distribution of good and bad outcomes within each bin to assess model performance, specifically using the KS statistic. Sean noted the potential bias when the same model is used to both create bins and evaluate performance within those bins. He inquired about guidelines or preferences from Truest regarding outer vs. interior ranking. The discussion clarified the importance of consistent evaluation processes across different models to ensure an apples-to-apples comparison, using cumulative distribution function points rather than fixed deciles.
-
----
-
-Is this summary concise and clear enough for your needs?
+Is there anything else you'd like to add or adjust?
