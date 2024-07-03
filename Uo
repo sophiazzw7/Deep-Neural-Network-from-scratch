@@ -1,35 +1,3 @@
-SHere are the meeting notes summarizing your discussion:
+urrently, in OGM reports, we only report funded loans. Therefore, I calculated AUCs specifically for funded loans. Here's what I did: I segmented the data into four categories—auto, consolidation, home improvement, and others. For each segment, I selected loan samples and computed their AUCs using XGBoost, tracking 1000 samples per segment to account for funding variations.
 
----
-
-**Participants:** Sean Kar, Cheng, Greg  
-**Date:** [Date of the meeting]
-
-**Summary of Discussion:**
-
-- **Sean:** Asked about ranking to find 10 or 20 bins based on predicted values. Inquired about comparing KS within each bin and whether ranking would involve variables like FICO or vintage to compare models like Zest vs. LIDS.
-
-- **Cheng:** Clarified that ranking for bins is based on model output to assess separation of good and bad outcomes. Emphasized using predicted values from the model, comparing distributions within deciles, and avoiding bias by using the same model to create and measure performance within bins.
-
-- **Sean:** Highlighted the need for guidelines or preferences at Truist regarding outer ranking vs. interior ranking. Shared previous experience with biases when using the same model for tier creation and performance measurement.
-
-- **Cheng:** Mentioned having done preliminary analysis using code that reports KS statistics based on predicted values and class labels (0 or 1). Clarified using cumulative distribution function at specific points rather than 10 deciles.
-
-- **Greg:** Sought confirmation that KS is based on predicted values from the model, asking for specifics on implementation in SAS.
-
-- **Cheng:** Agreed, noted that KS should indeed be based on predicted values from the model output.
-
-- **Sean:** Thanked Cheng for clarification, aiming for consistent comparisons between models without bias from tier-setting processes. Agreed on focusing KS separation at specific volume cuts (10%, 20%, 30%, etc.).
-
-- **Cheng:** Confirmed understanding, ensuring clarity on the process.
-
-**Action Items:**
-- Sean to review guidelines on tier-ranking preferences at Truist.
-- Cheng to verify implementation specifics of KS in SAS.
-- Further exploration into ensuring consistent comparisons between models.
-
-**Next Steps:** Follow up on guidelines and implementation specifics, aim for consistent and unbiased comparisons between models.
-
----
-
-Is there anything else you'd like to add or adjust?
+From these 1000 samples, I calculated the standard deviation and established thresholds at one, two, three, and four standard deviations. Using the statistical "68-95-99.7 rule," where three standard deviations cover nearly 100% of the data, I set the lower threshold at this limit for grading. The threshold for full coverage (100%) was set at four standard deviations.
