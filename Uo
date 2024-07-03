@@ -84,3 +84,13 @@ Absolutely, we understand the costs. We'll keep that in mind as we work on a lon
 Ok, I don't have any more items to go through.
 
 ---
+
+Sure, here’s a summary:
+
+---
+
+Sean Kar reached out to discuss ranking and binning for model evaluation. The focus is on using predicted values to create bins (deciles) and comparing the distribution of good and bad outcomes within each bin to assess model performance, specifically using the KS statistic. Sean noted the potential bias when the same model is used to both create bins and evaluate performance within those bins. He inquired about guidelines or preferences from Truest regarding outer vs. interior ranking. The discussion clarified the importance of consistent evaluation processes across different models to ensure an apples-to-apples comparison, using cumulative distribution function points rather than fixed deciles.
+
+---
+
+Is this summary concise and clear enough for your needs?
