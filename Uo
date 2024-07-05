@@ -1,28 +1,36 @@
 
-Certainly! Let’s review the assumptions of the Shapley value methodology as applied to the adverse action reason code model:
+CAbsolutely, I can help clarify these assumptions to ensure they are better understood. Here’s a more detailed explanation:
 
-### Key Model Assumptions of the Shapley Methodology:
+### Clarified Model Assumptions
+
 1. **Efficiency**:
-   - **Assumption**: The model score equals the sum of the feature attributes relative to a reference point; this allows Shapley values to be interpreted more easily, as the sum of the Shapley values equals the difference in score between the test data point and the reference.
-   - **Reasonableness**: This assumption is reasonable because it ensures that the total contribution of all features sums up to the model output, making the contributions interpretable. This aids in understanding how each feature contributes to the overall decision, which is crucial for regulatory compliance and transparency.
+   - **Original Assumption**: The model score equals the sum of the feature attributes relative to a reference point; this assumption allows Shapley values to be interpreted more easily, as the sum of the Shapley values equals the difference in score between the test data point and the reference.
+   - **Clarification**: This means that each feature in the model contributes a certain amount to the final score. The sum of all these contributions (Shapley values) should exactly equal the difference between the model's output (score) and a baseline score (reference point). This helps in understanding how much each feature is adding or subtracting from the baseline score, making the contributions straightforward to interpret.
 
 2. **Symmetry**:
-   - **Assumption**: Identical features receive identical attribution; this ensures that the value assigned to a feature remains the same when the feature plays the same role in the same model.
-   - **Reasonableness**: This assumption ensures fairness and consistency in feature attribution. It prevents the model from attributing different importance to identical features, maintaining a logical and justifiable approach to feature contribution.
+   - **Original Assumption**: Identical features receive identical attribution; this assumption ensures that the value assigned to a feature remains the same when the feature plays the same role in the same model.
+   - **Clarification**: If two features in the model are identical in terms of their values and roles, they should be given the same importance or contribution. This ensures fairness by treating similar features equally. For instance, if the same feature (like credit score) appears in different instances or segments but has the same value, its contribution to the score should be the same in each case.
 
 3. **Linearity**:
-   - **Assumption**: Ensures attributions from different models can be compared (e.g., the relative importance of a feature between models is captured in the Shapley value).
-   - **Reasonableness**: Linearity is important for combining feature attributions across multiple models or segments. It allows for a clear comparison of feature importance, which is especially useful in models with multiple segments tailored for different loan purposes. This consistency is necessary for aggregating and interpreting feature contributions across various contexts.
+   - **Original Assumption**: Ensures attributions from different models can be compared (e.g., the relative importance of a feature between models is captured in the Shapley value).
+   - **Clarification**: This means that the Shapley value method allows us to directly compare the importance of features across different models or segments. For example, if you have separate models for different loan types, linearity ensures that you can compare how much a feature (like income) influences the score in each model. This consistency is important for evaluating and comparing feature contributions across various models.
 
 4. **Nullity/Null Player**:
-   - **Assumption**: Features that do not participate in the model have no impact on the score.
-   - **Reasonableness**: This assumption simplifies the interpretation of feature contributions by ensuring that only relevant features are considered. It ensures that non-contributing features do not distort the attribution, focusing attention on the factors that actually influence the model's output.
+   - **Original Assumption**: Features that do not participate in the model have no impact on the score.
+   - **Clarification**: If a feature is not used in the model, it should not affect the final score at all. This ensures that the model only considers the features that are actually relevant to the prediction. Any feature that doesn't contribute should have a Shapley value of zero, indicating no influence on the outcome.
 
-### Summary:
-The Shapley value methodology is based on solid mathematical principles that ensure fair and interpretable feature attributions. Here’s why the assumptions are reasonable for your adverse action reason code model:
+### Examples to Illustrate the Assumptions
 
-- **Transparency and Interpretability**: The efficiency and null player assumptions make the model’s output easier to understand and explain, which is critical for compliance with federal regulations.
-- **Fairness and Consistency**: Symmetry ensures that identical features are treated equally, while linearity allows for consistent comparison across different models or segments.
-- **Focus on Relevant Features**: Null player assumption ensures that only contributing features are considered, preventing irrelevant data from skewing the results.
+1. **Efficiency**:
+   - Imagine the model’s score is 50 points above a reference score of 0. If the Shapley values for all features add up to 50, it shows that the contributions from all features explain the entire difference between the model’s score and the reference score.
 
-These assumptions collectively ensure that the model's feature attributions are logical, justifiable, and compliant with regulatory requirements, making the Shapley methodology a suitable choice for producing adverse action reasons.
+2. **Symmetry**:
+   - Suppose you have two features, A and B, both with a value of 10 and both influencing the model equally. If the model gives a Shapley value of 5 to A and 5 to B, symmetry ensures that both are considered equally important.
+
+3. **Linearity**:
+   - If Model 1 uses a feature "Income" and assigns it a Shapley value of 3, and Model 2 also uses "Income" but assigns it a value of 4, linearity allows you to say that "Income" is more influential in Model 2 compared to Model 1.
+
+4. **Nullity/Null Player**:
+   - If the feature "Employment Status" is not included in the model, it should have no Shapley value (0), indicating it has no impact on the prediction outcome.
+
+By breaking down the assumptions this way, it should be easier to grasp how they ensure the Shapley value methodology provides a fair, consistent, and interpretable way of attributing feature importance in your model. If you need further clarification or examples, feel free to ask!
