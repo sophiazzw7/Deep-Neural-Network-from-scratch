@@ -1,3 +1,28 @@
-urrently, in OGM reports, we only report funded loans. Therefore, I calculated AUCs specifically for funded loans. Here's what I did: I segmented the data into four categories—auto, consolidation, home improvement, and others. For each segment, I selected loan samples and computed their AUCs using XGBoost, tracking 1000 samples per segment to account for funding variations.
 
-From these 1000 samples, I calculated the standard deviation and established thresholds at one, two, three, and four standard deviations. Using the statistical "68-95-99.7 rule," where three standard deviations cover nearly 100% of the data, I set the lower threshold at this limit for grading. The threshold for full coverage (100%) was set at four standard deviations.
+Certainly! Let’s review the assumptions of the Shapley value methodology as applied to the adverse action reason code model:
+
+### Key Model Assumptions of the Shapley Methodology:
+1. **Efficiency**:
+   - **Assumption**: The model score equals the sum of the feature attributes relative to a reference point; this allows Shapley values to be interpreted more easily, as the sum of the Shapley values equals the difference in score between the test data point and the reference.
+   - **Reasonableness**: This assumption is reasonable because it ensures that the total contribution of all features sums up to the model output, making the contributions interpretable. This aids in understanding how each feature contributes to the overall decision, which is crucial for regulatory compliance and transparency.
+
+2. **Symmetry**:
+   - **Assumption**: Identical features receive identical attribution; this ensures that the value assigned to a feature remains the same when the feature plays the same role in the same model.
+   - **Reasonableness**: This assumption ensures fairness and consistency in feature attribution. It prevents the model from attributing different importance to identical features, maintaining a logical and justifiable approach to feature contribution.
+
+3. **Linearity**:
+   - **Assumption**: Ensures attributions from different models can be compared (e.g., the relative importance of a feature between models is captured in the Shapley value).
+   - **Reasonableness**: Linearity is important for combining feature attributions across multiple models or segments. It allows for a clear comparison of feature importance, which is especially useful in models with multiple segments tailored for different loan purposes. This consistency is necessary for aggregating and interpreting feature contributions across various contexts.
+
+4. **Nullity/Null Player**:
+   - **Assumption**: Features that do not participate in the model have no impact on the score.
+   - **Reasonableness**: This assumption simplifies the interpretation of feature contributions by ensuring that only relevant features are considered. It ensures that non-contributing features do not distort the attribution, focusing attention on the factors that actually influence the model's output.
+
+### Summary:
+The Shapley value methodology is based on solid mathematical principles that ensure fair and interpretable feature attributions. Here’s why the assumptions are reasonable for your adverse action reason code model:
+
+- **Transparency and Interpretability**: The efficiency and null player assumptions make the model’s output easier to understand and explain, which is critical for compliance with federal regulations.
+- **Fairness and Consistency**: Symmetry ensures that identical features are treated equally, while linearity allows for consistent comparison across different models or segments.
+- **Focus on Relevant Features**: Null player assumption ensures that only contributing features are considered, preventing irrelevant data from skewing the results.
+
+These assumptions collectively ensure that the model's feature attributions are logical, justifiable, and compliant with regulatory requirements, making the Shapley methodology a suitable choice for producing adverse action reasons.
