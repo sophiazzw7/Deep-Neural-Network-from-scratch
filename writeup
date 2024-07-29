@@ -1,147 +1,181 @@
 
-Certainly! I'll incorporate specific insights drawn from the correlation matrix, various plots, and other statistics, emphasizing the critical evaluation and independent perspective of MRO. Here's the revised version of the report:
+CeCertainly! To further improve the model's performance and enhance the exploratory data analysis (EDA), we can consider additional techniques and analyses. Below are some more comprehensive EDA steps and advanced modeling techniques to improve the R-squared value:
 
----
+### Additional Exploratory Data Analysis (EDA):
 
-### Model Validation Report for Loan Default Prediction Model
+1. **Feature Distribution Analysis**:
+   - Plot histograms and boxplots to understand the distribution and identify potential outliers.
+   
+2. **Interaction Effects**:
+   - Explore interaction effects between features to identify non-linear relationships.
 
-#### 1. Introduction
+3. **Feature Engineering**:
+   - Create new features or transform existing ones to capture more information.
 
-**Objective:** This report aims to evaluate the performance of the loan default prediction model using the most recent OGM data (2024Q1). The analysis focuses on key performance metrics, comparing them to the development period, and providing critical insights and recommendations for improvement.
+4. **Target Variable Analysis**:
+   - Analyze the distribution of the target variable and consider transformations if necessary (e.g., log transformation).
 
-**Note:** This report reflects MRO's independent validation and critical evaluation to provide an effective challenge to model developers.
+5. **Correlation with Target**:
+   - Calculate the correlation of each feature with the target variable to identify the most influential features.
 
-#### 2. Dataset Overview
+### Advanced EDA Code:
 
-**Dataset:** The analysis is based on the OGM data from the first quarter of 2024. The dataset includes the following features:
-- Application Type
-- LOANSTATUS
-- ACCOUNTSTATUS
-- FUNDEDAMOUNT
-- FUNDEDDATE
-- LOANPURPOSE
-- BEST_SCORE
-- BEST_DECISIONZORS
-- BEST_PLRS
-- Target (default or not)
+```python
+# Import necessary libraries for additional EDA
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.datasets import load_diabetes
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from scipy import stats
 
-**Target Variable Distribution:**
-- 0: 178,089 samples
-- 1: 2,811 samples
+# Load the diabetes dataset
+diabetes = load_diabetes()
+X = pd.DataFrame(diabetes.data, columns=diabetes.feature_names)
+y = pd.Series(diabetes.target)
 
-#### 3. Model Performance Metrics
+# Feature Distribution Analysis
+print("\nFeature Distribution Analysis...")
+for col in X.columns:
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    sns.histplot(X[col], kde=True)
+    plt.title(f'Distribution of {col}')
+    
+    plt.subplot(1, 2, 2)
+    sns.boxplot(x=X[col])
+    plt.title(f'Boxplot of {col}')
+    plt.show()
 
-##### 3.1. Funding Rate by Application Type
+# Correlation with Target
+print("\nCorrelation with Target Variable...")
+correlation_with_target = X.apply(lambda x: np.corrcoef(x, y)[0, 1])
+print(correlation_with_target)
 
-| Application Type | Funding Rate |
-|------------------|--------------|
-| Primary          | 98.80%       |
-| Secondary        | 99.67%       |
+# Pairplot for interaction effects
+print("\nGenerating pairplot to explore interaction effects...")
+sns.pairplot(pd.concat([X, y.rename('target')], axis=1))
+plt.show()
 
-##### 3.2. Funding Rate by Loan Purpose
+# Feature Engineering: Polynomial Features
+print("\nFeature Engineering: Creating Polynomial Features...")
+poly = PolynomialFeatures(degree=2, include_bias=False)
+X_poly = poly.fit_transform(X)
+poly_feature_names = poly.get_feature_names_out(X.columns)
 
-| Loan Purpose          | Funding Rate |
-|-----------------------|--------------|
-| Auto                  | 99.16%       |
-| Home Improvement      | 98.71%       |
-| Debt Consolidation    | 98.93%       |
-| Other                 | 98.91%       |
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_poly, y, test_size=0.2, random_state=42)
 
-#### 4. Model Evaluation Metrics
+# Standardize the data
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-##### 4.1. ROC Curve and AUC
+# Building a Linear Regression Model on Polynomial Features
+lr_poly = LinearRegression()
+lr_poly.fit(X_train_scaled, y_train)
 
-**ROC Curve:** The ROC curve plots the true positive rate against the false positive rate at various threshold settings.
+y_pred_train_poly = lr_poly.predict(X_train_scaled)
+y_pred_test_poly = lr_poly.predict(X_test_scaled)
 
-**AUC:** The Area Under the ROC Curve (AUC) is 0.726, indicating moderate model performance. This value is somewhat lower than expected for a robust model and suggests room for improvement. Critical evaluation revealed a significant gap between OGM performance (2023Q2-2024Q1) and development performance, leading to a discussion with developers for a recalibration plan.
+print(f"\nPolynomial Features Train RMSE: {np.sqrt(mean_squared_error(y_train, y_pred_train_poly)):.2f}")
+print(f"Polynomial Features Test RMSE: {np.sqrt(mean_squared_error(y_test, y_pred_test_poly)):.2f}")
+print(f"Polynomial Features Train R^2: {r2_score(y_train, y_pred_train_poly):.2f}")
+print(f"Polynomial Features Test R^2: {r2_score(y_test, y_pred_test_poly):.2f}")
+```
 
-##### 4.2. KS Statistic
+### Additional Model Optimization Techniques:
 
-**KS Statistic:** The maximum difference between the cumulative distribution of the positives and negatives is 0.357. A higher KS statistic is desired to indicate better discriminatory power.
+1. **Regularization Techniques**:
+   - Explore ElasticNet with different parameters to balance between Lasso and Ridge.
 
-##### 4.3. Gini Coefficient
+2. **Ensemble Methods**:
+   - Use ensemble methods like Random Forest, Gradient Boosting, or XGBoost to improve performance.
 
-**Gini Coefficient:** The Gini coefficient is 0.452, which measures inequality among values of a frequency distribution. This moderate value suggests that the model has some predictive power but is not highly effective in separating the classes.
+3. **Hyperparameter Tuning**:
+   - Perform extensive hyperparameter tuning using GridSearchCV or RandomizedSearchCV.
 
-##### 4.4. Precision-Recall Curve and Optimal Threshold
+4. **Cross-Validation**:
+   - Implement cross-validation to ensure the model's robustness and reduce overfitting.
 
-To find a better classification threshold, we plotted the Precision-Recall curve and evaluated the F1 score at various thresholds. The threshold that maximizes the F1 score was identified as the optimal threshold for balancing precision and recall, given the imbalanced dataset.
+### Advanced Model Optimization Code:
 
-The optimal threshold was determined to be 0.0700518.
+```python
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from xgboost import XGBRegressor
+from sklearn.model_selection import GridSearchCV
 
-##### 4.5. Confusion Matrix and Derived Metrics
+# Random Forest Regressor
+print("\nOptimizing using Random Forest Regressor...")
+rf = RandomForestRegressor(random_state=42)
+rf_params = {
+    'n_estimators': [100, 200],
+    'max_depth': [None, 10, 20],
+    'min_samples_split': [2, 5],
+    'min_samples_leaf': [1, 2]
+}
+rf_cv = GridSearchCV(rf, rf_params, cv=5, scoring='neg_mean_squared_error')
+rf_cv.fit(X_train_scaled, y_train)
 
-With the updated optimal threshold, the model's performance metrics are as follows:
+print(f"Best Random Forest Params: {rf_cv.best_params_}")
+rf_best = rf_cv.best_estimator_
 
-| Metric     | Value         |
-|------------|---------------|
-| Accuracy   | 0.899425      |
-| Precision  | 0.0400646     |
-| Recall     | 0.238349      |
-| F1 Score   | 0.06859       |
-| Specificity| 0.90986       |
+y_pred_rf = rf_best.predict(X_test_scaled)
+print(f"Random Forest Test RMSE: {np.sqrt(mean_squared_error(y_test, y_pred_rf)):.2f}")
+print(f"Random Forest Test R^2: {r2_score(y_test, y_pred_rf):.2f}")
 
-### 5. Additional Analyses
+# Gradient Boosting Regressor
+print("\nOptimizing using Gradient Boosting Regressor...")
+gb = GradientBoostingRegressor(random_state=42)
+gb_params = {
+    'n_estimators': [100, 200],
+    'learning_rate': [0.01, 0.1],
+    'max_depth': [3, 5]
+}
+gb_cv = GridSearchCV(gb, gb_params, cv=5, scoring='neg_mean_squared_error')
+gb_cv.fit(X_train_scaled, y_train)
 
-##### 5.1. Correlation Matrix
+print(f"Best Gradient Boosting Params: {gb_cv.best_params_}")
+gb_best = gb_cv.best_estimator_
 
-**Insight:** The correlation matrix reveals significant correlations between certain variables. For instance, a high correlation between `FUNDEDAMOUNT` and `BEST_SCORE` suggests that higher credit scores are associated with larger loan amounts. Additionally, latency (time taken to process the loan) shows a weak correlation with the `BEST_SCORE`, indicating that score does not significantly impact processing time.
+y_pred_gb = gb_best.predict(X_test_scaled)
+print(f"Gradient Boosting Test RMSE: {np.sqrt(mean_squared_error(y_test, y_pred_gb)):.2f}")
+print(f"Gradient Boosting Test R^2: {r2_score(y_test, y_pred_gb)):.2f}")
 
-##### 5.2. Time to Fund Distribution
+# XGBoost Regressor
+print("\nOptimizing using XGBoost Regressor...")
+xgb = XGBRegressor(random_state=42)
+xgb_params = {
+    'n_estimators': [100, 200],
+    'learning_rate': [0.01, 0.1],
+    'max_depth': [3, 5]
+}
+xgb_cv = GridSearchCV(xgb, xgb_params, cv=5, scoring='neg_mean_squared_error')
+xgb_cv.fit(X_train_scaled, y_train)
 
-**Insight:** The time to fund distribution shows a concentration around certain time periods, indicating potential operational bottlenecks. Identifying and addressing these bottlenecks could enhance the efficiency of loan processing and funding.
+print(f"Best XGBoost Params: {xgb_cv.best_params_}")
+xgb_best = xgb_cv.best_estimator_
 
-##### 5.3. Score vs. Target Bar Plot
+y_pred_xgb = xgb_best.predict(X_test_scaled)
+print(f"XGBoost Test RMSE: {np.sqrt(mean_squared_error(y_test, y_pred_xgb)):.2f}")
+print(f"XGBoost Test R^2: {r2_score(y_test, y_pred_xgb)):.2f}")
 
-**Insight:** The bar plot of scores versus the target variable highlights that lower credit scores are more frequently associated with defaults. This validates the predictive power of the `BEST_SCORE` variable in identifying high-risk applicants.
+print("\nAdvanced EDA and model optimization completed successfully.")
+```
 
-##### 5.4. Latency Distribution
+### Explanation for Group Meeting:
 
-**Insight:** The latency distribution reveals that the majority of loans are processed within a short time frame, but there are outliers with significantly higher processing times. These outliers could be investigated further to improve overall processing efficiency.
+1. **Additional EDA**:
+   - **Feature Distribution Analysis**: Helps in understanding the spread and identifying potential outliers.
+   - **Correlation with Target**: Identifies the most influential features.
+   - **Interaction Effects**: Explores non-linear relationships between features.
+   - **Feature Engineering**: Creating polynomial features to capture more complex relationships.
 
-##### 5.5. Loan Purpose Analysis
+2. **Advanced Model Optimization**:
+   - **Regularization**: Using ElasticNet to balance between Lasso and Ridge.
+   - **Ensemble Methods**: Implementing Random Forest, Gradient Boosting, and XGBoost for better performance.
+   - **Hyperparameter Tuning**: Extensively tuning parameters to achieve optimal results.
+   - **Cross-Validation**: Ensuring robustness and reducing overfitting.
 
-**Insight:** Analysis of loan purposes shows varied default rates across different purposes. For example, loans for debt consolidation have a slightly higher default rate compared to other purposes. This indicates a need for more stringent evaluation criteria for specific loan purposes to mitigate risk.
-
-##### 5.6. Score Distribution
-
-**Insight:** The score distribution indicates a skewed distribution with most scores concentrated in the higher range. This could suggest a potential bias in the scoring system, necessitating a review of the scoring criteria to ensure it accurately reflects applicants' creditworthiness.
-
-##### 5.7. Statistics of BEST_SCORE
-
-**Insight:** Key statistics such as mean, median, and standard deviation of the `BEST_SCORE` show a central tendency towards higher scores with some variability. The high mean and median scores suggest that most applicants have good credit scores, but the presence of outliers highlights the need for a robust risk assessment framework.
-
-### 6. Insights and Recommendations
-
-**Observations:**
-- The funding rate is high across different application types and loan purposes, indicating that the model's predictions align well with actual funding decisions.
-- The ROC AUC and Gini coefficients suggest moderate model performance. There is potential for significant improvement in these areas.
-- The low precision indicates that the model produces many false positives, which can be problematic in a real-world scenario. This is evident from the sharp drop in the precision-recall curve.
-- The recall rate is relatively high, meaning the model captures a good portion of the actual defaults but at the cost of a high false positive rate.
-
-**Concerns:**
-1. **Model Stability:** The moderate values of the ROC AUC and Gini coefficients suggest that the model might not be stable across different datasets or over time. This requires further investigation and potentially more robust model training.
-2. **Performance on Imbalanced Data:** The model struggles with precision due to the imbalance in the dataset. While recall is acceptable, the precision is too low, indicating many false positives. This imbalance needs addressing through techniques like SMOTE or adjusting the classification threshold.
-3. **Threshold Setting:** The current threshold of 0.0700518, based on the distribution of predictions, results in improved balance between precision and recall but still requires fine-tuning for better performance.
-
-**Recommendations:**
-1. **Threshold Adjustment:** Fine-tune the classification threshold to achieve a better balance between precision and recall. The newly identified threshold of 0.0700518 improves the balance but needs continuous monitoring and adjustment as more data becomes available.
-2. **Data Balancing:** Implement techniques such as SMOTE to handle imbalanced data, ensuring the model captures more positive samples.
-3. **Model Retraining:** Periodically retrain the model with updated data to adapt to changing patterns and maintain performance.
-4. **Feature Engineering:** Explore additional features or transformations that might improve model performance.
-5. **Regular Monitoring:** Establish a routine for monitoring model performance metrics over time to detect and address any deterioration in model quality.
-6. **Operational Efficiency:** Address identified bottlenecks in loan processing and funding times to enhance overall efficiency.
-7. **Risk Assessment for Specific Loan Purposes:** Implement more stringent evaluation criteria for loan purposes with higher default rates to mitigate risk.
-
-### 7. Clarifications and Actions
-
-During the recent meeting with the model development team, it was clarified that the development AUC was calculated on a funded + unfunded population, while the OGM AUC was based only on the funded population. This discrepancy in the population basis led to an apples-to-oranges comparison. As a result, the team agreed on the necessity of a recalibration plan to incorporate both funded and unfunded performance metrics in future OGM reports. The developer is tasked with proposing a new OGM plan to address this issue.
-
-### 8. Conclusion
-
-The loan default prediction model demonstrates moderate performance metrics, particularly in terms of accuracy and specificity. However, there is room for improvement in precision and recall, especially given the imbalanced dataset. By identifying a better classification threshold and implementing data balancing techniques, the model's performance can be further enhanced. Continuous monitoring, retraining, and fine-tuning are essential to ensure sustained performance. Additionally, a recalibration plan to include both funded and unfunded performance metrics is essential for accurate model evaluation.
-
----
-
-This report emphasizes independent testing and critical thinking, providing an effective challenge to model developers. By focusing on recent data and comparing performance metrics to the development period, we offer valuable insights and actionable recommendations for model improvement.
-
+By implementing these additional EDA techniques and advanced modeling strategies, you should be able to improve the model's performance and achieve a higher R-squared value. Let me know if you need further adjustments or explanations!
