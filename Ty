@@ -1,4 +1,16 @@
-Slide 1: Introduction
+Slide 1: Introduction# Extract a single tree (e.g., the first tree)
+tree = gbr.estimators_[0, 0]
+
+# Visualize the tree
+dot_data = export_graphviz(tree, out_file=None, 
+                           feature_names=data.feature_names,
+                           filled=True, rounded=True,
+                           special_characters=True)
+graph = graphviz.Source(dot_data)
+graph.render("gbr_tree")
+
+# Display the tree
+graph.view()
 
 "Good [morning/afternoon], everyone. Today, I'm excited to share with you how we've used a machine learning technique called Random Forest to predict the progression of diabetes using a dataset from sklearn. I'll break down the basics, so don't worry if you're not familiar with machine learning."
 
