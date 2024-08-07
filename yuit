@@ -1,0 +1,168 @@
+Here are the identified clarity issues in the text:
+
+### Section 7: Independent Validation Review
+
+#### Current Text:
+- "Model validation is a process to determine whether the model accurately captures customer or market behavior. The model is typically assessed both conceptually (i.e., whether model theory and assumptions are justifiable) for its soundness and likely robustness, and by performance (i.e., whether it has predictive power) across varied and stressed conditions, directly comparing model outputs to actual observations. In addition, testing may not be possible and other techniques, such as sensitivity analysis, are needed to determine the relative influence of assumptions and limitations. Although model validation encompasses a non-uniform combination of many different techniques, general guidelines are provided in the Model Validation Report Templates."
+
+#### Clarity Issues:
+1. **Sentence Length and Structure:**
+   - The first sentence is long and contains multiple concepts, which can make it difficult to follow.
+2. **Complex Terminology:**
+   - Terms like "conceptually", "soundness", "robustness", "predictive power", and "sensitivity analysis" might need further clarification or simpler alternatives for better understanding.
+3. **Flow and Readability:**
+   - The flow of the sentence can be improved to make the information more digestible.
+
+### Section 7.1: Vendor Model Validation
+
+#### Current Text:
+- "Review of vendor models is always challenging due to proprietary and transparency constraints. To the extent possible, vendor model validation should be the same as for the in-house models, and should encompass the following steps:
+   - Understand model selection and developer documentation explaining the reason for model selection in vendor’s implementation and assumptions.
+   - Evaluate the model inputs, model outputs, data sources, and how these data are mapped into the model inputs.
+   - Review the vendor model validation report.
+   - Assess the model customization based on internal model governance, including customization to meet internal standards. Understand the bank’s unique model use and request for customization.
+     - When customization involves external data feeds, evaluate:
+       - The reasonableness of the vendor default model mapping to a bank format.
+       - The vendor-provided material used to map external data.
+   - Assess the internal model documentation and its adherence to the following:
+     - Validate the model internally and understand its limitations.
+     - Document vendor model changes as model changes are made, including:
+       - Vendor-provided changes.
+       - Customization requests by the bank to enhance the model or other customizations.
+       - “Out of the box” model settings.
+     - Confirm model documentation and training materials are current and available.
+     - Periodic performance monitoring and results review.
+     - Ensure the vendor model is used in a manner consistent with vendor guidance.
+     - Reevaluate the model if the vendor is no longer available for support."
+
+#### Clarity Issues:
+1. **Complex Sentences:**
+   - The sentences are long and contain multiple points, making them difficult to read.
+2. **Redundant Phrasing:**
+   - Some phrases, like "model selection in vendor’s implementation and assumptions," are repetitive and can be simplified.
+3. **Unclear Segmentation:**
+   - The steps listed under model validation could be better segmented or bulleted for readability.
+
+### Section 7.2: Third-Party Model Validation
+
+#### Current Text:
+- "At times, MRO may engage external resources for validation purposes. The Chief Model Risk Officer (CMRO) or delegate is responsible for overseeing and validation performed by external parties. Models subject to validation are subject to the same requirements and approval process as in-house validations.
+   Engaging external validation includes the following procedures:
+   - Assist procurement in selecting bids from prospective third parties.
+   - Negotiate a statement of work (SOW).
+   - Review all third party’s terms and conditions, including the model, data, assumptions, limitations, and relevant performance metrics.
+   - Periodic performance reviews of the third party, with any findings reviewed and escalated to the CMRO.
+   - Conduct an internal risk assessment and review the third-party’s validation approach, ensuring it aligns with internal validation standards and regulatory expectations.
+   - Maintain documentation of all interactions with the third party."
+
+#### Clarity Issues:
+1. **Sentence Length and Complexity:**
+   - Sentences contain multiple clauses, which can be simplified.
+2. **Repetitive Information:**
+   - "Models subject to validation are subject to the same requirements" is repetitive.
+3. **List Structure:**
+   - The list of procedures can be formatted for better readability.
+
+By addressing these clarity issues, the text will be easier to understand and follow.
+
+
+
+Here are the parts of the text where clarity can be improved:
+
+### Section 6: Validation QA/QC
+
+#### Model Validator Responsibilities:
+
+1. **Sentence:**
+   - "Ensuring all review artifacts, including the package received from the model owner and model developer, relevant emails, meeting minutes, technical notes, and other references, validation testing code and results, and validation report are properly assembled;"
+   
+   **Issue:**
+   - The list of items to be assembled is long and could be more clearly structured.
+   
+   **Suggested Improvement:**
+   - "Ensuring all review artifacts are properly assembled. This includes the package received from the model owner and developer, relevant emails, meeting minutes, technical notes, validation testing code and results, and the validation report."
+
+2. **Sentence:**
+   - "Independently performing necessary validation tests either on their resources and/or conducting their own independent and testing as needed during the validation; and"
+   
+   **Issue:**
+   - The phrase "either on their resources and/or conducting their own independent and testing" is confusing.
+   
+   **Suggested Improvement:**
+   - "Independently performing necessary validation tests using their resources and/or conducting their own independent tests as needed during the validation; and"
+
+#### Subject Area Expert (SAE) Responsibilities:
+
+1. **Sentence:**
+   - "Providing leadership to the validation report and assessing the work performed by the validator. Highlighting any new or outstanding model issues or deficiencies."
+   
+   **Issue:**
+   - The phrase "Providing leadership to the validation report" is unclear.
+   
+   **Suggested Improvement:**
+   - "Leading the validation process and assessing the work performed by the validator. Highlighting any new or unresolved model issues or deficiencies."
+
+2. **Sentence:**
+   - "Ensuring validators have a clear understanding of the tasks assigned, deliverable expectations and timelines."
+   
+   **Issue:**
+   - The term "deliverable expectations" could be confusing.
+   
+   **Suggested Improvement:**
+   - "Ensuring validators clearly understand the assigned tasks, expected deliverables, and timelines."
+
+3. **Sentence:**
+   - "Providing feedback on validator’s analysis and testing results."
+   
+   **Issue:**
+   - The use of "validator’s" instead of "validator's" is a minor grammatical issue.
+   
+   **Suggested Improvement:**
+   - "Providing feedback on the validator's analysis and test results."
+
+4. **Sentence:**
+   - "Ensuring the review findings are formally relayed to the model owner and model developer, a proper remediation plan (PRP) is developed by the model owner and model developer and the publication of the draft validation report;"
+   
+   **Issue:**
+   - The structure is confusing with too many actions in one sentence.
+   
+   **Suggested Improvement:**
+   - "Ensuring the review findings are formally communicated to the model owner and developer, a proper remediation plan (PRP) is developed by the model owner and developer, and the draft validation report is published;"
+
+#### Team Manager (TM) Responsibilities:
+
+1. **Sentence:**
+   - "Ensuring all outstanding and previously identified issues are reviewed, and the decisions regarding such previously identified issues are appropriate."
+   
+   **Issue:**
+   - Repetition of "previously identified issues."
+   
+   **Suggested Improvement:**
+   - "Ensuring all outstanding and previously identified issues are reviewed, and the decisions regarding them are appropriate."
+
+2. **Sentence:**
+   - "Ensuring the review findings are communicated to the model owner and model developer, a proper remediation plan (PRP) is developed by the model owner and model developer prior to the publication of the draft validation report;"
+   
+   **Issue:**
+   - The structure is confusing with too many actions in one sentence.
+   
+   **Suggested Improvement:**
+   - "Ensuring the review findings are communicated to the model owner and developer, a proper remediation plan (PRP) is developed by the model owner and developer before the draft validation report is published;"
+
+### Section 7: Independent Validation Review
+
+1. **Sentence:**
+   - "Model validation is a process to determine whether the model accurately captures customer or market behavior. This includes whether the model is conceptually sound (i.e., whether the model is based on an appropriate theoretical framework), whether the model has been implemented correctly, whether the model's output is accurate and reliable, and whether the model is robust, particularly during periods of stress."
+   
+   **Issue:**
+   - The sentence is long and could be broken down for clarity.
+   
+   **Suggested Improvement:**
+   - "Model validation determines if the model accurately captures customer or market behavior. This includes checking whether the model is conceptually sound (i.e., based on an appropriate theoretical framework), correctly implemented, produces accurate and reliable output, and is robust, especially during stress periods."
+
+By addressing these areas, the document can be made clearer and easier to understand.
+
+
+Rephrasing for Enhanced Clarity:
+"Adjustments to the validation schedule are allowed as long as they do not extend the completion of the validation review more than 3 months beyond the 12-month window since the last validation. In other words, if a model validation begins within the 12-month window and is completed within 3 additional months, it is not considered a scheduling exception."
+
