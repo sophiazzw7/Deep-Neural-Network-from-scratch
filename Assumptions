@@ -1,0 +1,101 @@
+Model assumptions and limitations IVR:
+Based on the MRO procedure outlined in section 6 for reviewing model assumptions and limitations, let's critically evaluate the provided model documentation:
+
+### 6.1 Model Assumptions Evaluation:
+
+- **Clarity and Documentation:**
+   - The model assumptions are well-documented, covering inputs (Truist data such as teller transactions), coverage (client-facing time), methodology (forecasting for teller transactions and sales/service), and development (annual updates). The assumptions seem reflective of the business operations in the banking industry.
+   - However, the assumptions could benefit from a clearer alignment with **current market conditions**. For example, the forecast assumptions for transaction and service volumes are based on thresholds (5% for teller transactions, 20% for sales/service), but it's unclear how these thresholds align with external market volatility or shifts in customer behavior, such as changes in digital banking adoption.
+
+- **Reasonableness and Adequacy:**
+   - Assumptions around volume forecast thresholds and the annual update cycle are **reasonable**, especially since the model is expected to forecast within defined tolerances. The model assumes that these forecasts are sufficient for planning purposes, with the WFP team investigating deviations beyond thresholds.
+   - However, there could be further **quantification of the risk associated with these assumptions**. For example, what are the potential impacts on staffing if these thresholds are missed consistently? This risk assessment is not thoroughly addressed in the assumptions documentation.
+
+- **Distributional Assumptions:**
+   - While the model uses certain **statistical estimation techniques** for forecasting, the assumptions do not specify any **distributional requirements** (such as normality, homoscedasticity) that would be expected for some forecasting models. Clarifying whether the forecasting model relies on any distributional assumptions would help to assess the risk associated with its accuracy under different conditions.
+
+### 6.2 Model Limitations Evaluation:
+
+- **Identification of Limitations:**
+   - The limitations are documented in terms of **coverage** (only retail branches, excluding other business lines), **input risk** (if data sources fail or contain errors), and **implementation limitations** (merging of systems from two heritage institutions). These limitations are well-detailed, but the criticality of these limitations and their impacts on model performance could be elaborated further.
+
+- **Impact on Model Use:**
+   - The limitations identified have the potential to **affect intended model use**, especially in cases where new services are introduced without informing the model developers. This could result in inaccurate forecasts and staffing recommendations for branches using new service offerings. Additionally, the **input risk** related to data sources failing is significant, as it could result in **over or under-forecasting staffing needs**, directly impacting branch operations.
+   - The limitation on modeling for non-retail branches is also significant if the business decides to extend this model to other areas in the future. This would restrict the model's scalability across the organization, making it a **key limitation** affecting long-term utility.
+
+- **Key Limitations (Section 2.3 of Report):**
+   - Based on the documentation, the **key limitations** to be listed in section 2.3 should include:
+      1. **Input Risk**: If the data sources (Strategic Allowance, Operating Hours, etc.) fail or contain errors, it can result in inaccurate forecasts, affecting the staffing levels and overall branch performance.
+      2. **Coverage Limitation**: The model is limited to retail branches and cannot forecast for other business lines. This is critical if the organization seeks to expand model use.
+      3. **Untracked Activities**: Many activities performed in branches are not tracked, which could cause under or over-forecasting of capacity requirements.
+      4. **Implementation Risk**: Adoption of the model may face resistance from users unfamiliar with it, particularly with the merging of two systems from heritage institutions.
+
+   - These limitations are **key** because they either directly impact the accuracy of staffing recommendations or restrict the broader applicability of the model across the organization. For example, the **input risk** could lead to staffing imbalances, and the **coverage limitation** restricts potential model expansion.
+
+### Additional Considerations:
+- The documentation indicates that the **vendor (Kiran Analytics)** owns the proprietary model algorithms, which could pose a transparency issue for Truist. Not having full insight into the model's internal workings could make it difficult to validate the model's appropriateness under changing conditions or when investigating performance issues. This is another **key limitation** since it hinders complete control over model risk.
+
+### Conclusion:
+The model assumptions are **well-documented** and appear reasonable in the context of staffing planning. However, the documentation lacks a comprehensive risk quantification for missed forecast tolerances, and it could benefit from additional clarity on the market alignment of the assumptions. The model's limitations, particularly around data sources, model transparency, and restricted coverage, are significant and should be clearly highlighted in the report. These limitations could impact both **immediate operational performance** and the model's potential for future use.
+
+Certainly, here's an additional section addressing the limitations and assumptions:
+
+---
+
+### Limitations Identified in Model Documentation
+
+The model documentation outlines several limitations:
+
+1. **Limited Historical Data**: The model relies on a relatively short historical dataset, which may not capture all possible scenarios or fluctuations in the external environment.
+   
+2. **Simplified Input Assumptions**: Some inputs are treated as static, whereas they could be dynamic or interdependent in real-world scenarios, limiting the accuracy of the model.
+   
+3. **Extrapolation Beyond Data Range**: The model is limited in its ability to provide reliable estimates for scenarios outside the range of data used for model development and testing.
+   
+4. **Model Sensitivity to Outliers**: The model exhibits sensitivity to extreme values, which may skew predictions under certain conditions if not handled properly.
+   
+5. **Risk of Overfitting**: Due to complex interactions among variables, there is a risk of overfitting, especially with a high number of features, leading to potential degradation in out-of-sample performance.
+
+---
+
+### MRO's Assessment of Model Limitations and Impact on Intended Use
+
+MRO’s independent assessment indicates that while these limitations are acknowledged, they do not significantly impede the model’s intended use, which focuses on providing strategic insights for staff planning and work scheduling.
+
+- **Limited Historical Data**: The model is expected to be continuously updated with new data. The current data window is sufficient for short- to medium-term forecasts, but MRO suggests a mechanism to regularly extend the dataset.
+  
+- **Simplified Input Assumptions**: Although certain inputs are treated as static, these assumptions are aligned with the purpose of the model. For high-impact or highly sensitive assumptions, MRO recommends incorporating sensitivity analysis and dynamic inputs where feasible.
+
+- **Extrapolation Beyond Data Range**: The model’s use is confined to known operating ranges, minimizing risks. However, it is important to flag scenarios outside the model's data range for further review by subject matter experts (SMEs).
+
+- **Model Sensitivity to Outliers**: The documentation outlines basic strategies to deal with outliers, which should be monitored in production. Additional validation should be performed periodically to check for any evolving sensitivity.
+
+- **Overfitting**: The model developers have implemented measures to prevent overfitting through cross-validation and regularization techniques. MRO considers these safeguards adequate but advises continued monitoring of performance drift in production.
+
+---
+
+### Assumptions Identified in Model Documentation
+
+1. **Linearity of Relationships**: The model assumes linear relationships between variables, simplifying complex interactions.
+   
+2. **Constant Volatility**: Variance in input data is assumed to be constant over time, even though it may fluctuate in reality.
+   
+3. **Independence of Inputs**: The model assumes independence between certain inputs, despite potential correlations in real-world operations.
+   
+4. **Stable Economic Conditions**: The model assumes that the external economic conditions remain relatively stable over the forecast horizon.
+
+---
+
+### MRO’s Assessment of Assumptions
+
+- **Linearity of Relationships**: This assumption is generally acceptable for the intended purpose. However, if material non-linear effects are detected in future model performance, revisiting this assumption will be necessary.
+
+- **Constant Volatility**: This assumption could lead to inaccuracies if the environment becomes highly volatile. MRO recommends adding stress testing for volatility scenarios to evaluate model robustness.
+
+- **Independence of Inputs**: While simplifying assumptions are reasonable, MRO suggests periodically testing for correlations among inputs to ensure this assumption does not weaken model accuracy.
+
+- **Stable Economic Conditions**: This assumption is reasonable given the operational use of the model. However, MRO recommends adding scenario analysis or stress testing to assess the model's performance under different economic conditions.
+
+---
+
+This section adds a critical analysis of both the limitations and assumptions, ensuring that the model is evaluated holistically. Would you like any other sections modified or additional details included?
