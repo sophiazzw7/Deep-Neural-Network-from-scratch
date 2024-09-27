@@ -1,55 +1,7 @@
-Here's the summary in the prior format:
+The two major limitations in the context of business operations are:
 
----
-
-**Limitation or Weakness:**  
-Many of the activities performed in the branches are not tracked.  
-**Risk:**  
-The model can result in under or over-forecasting of capacity requirements in any given branch.  
-**Compensating Control:**  
-The forecast performance is monitored for tracked activities. When actual activity volume data from forecasted periods are available, the forecasted volumes are compared with actual volumes to evaluate performance. Monitoring reports reveal if the model has systematic bias or higher errors in some branches, which prompts recalibration of the volume forecasting module. The business reviews the forecast before it is published to the scheduler.
-
----
-
-**Limitation or Weakness:**  
-The field study did not include sampling of every branch in the network.  
-**Risk:**  
-Non-sampled branches may be poorly represented by the model.  
-**Compensating Control:**  
-The sample size and stratification were designed to be statistically sound. Branch operating environments are highly procedural. Subject matter experts within the bank review the model design, assumptions, and rules. The model is also reviewed annually to ensure it remains accurate.
-
----
-
-**Limitation or Weakness:**  
-The model's proprietary methodology (developed by Kiran Analytics) is not transparent to Truist.  
-**Risk:**  
-Truist does not know the exact steps or formulations used in the CloudCords Forecaster, limiting insight into how the forecasting is done.  
-**Compensating Control:**  
-Regular performance reviews and validation processes, as well as oversight from both Truist and vendor contract stipulations, ensure that the model operates as expected. Any changes to the methodology require careful evaluation and updates.
-
----
-
-**Limitation or Weakness:**  
-The model covers only retail branches and not other lines of business.  
-**Risk:**  
-The model is not applicable for forecasting in non-retail environments.  
-**Compensating Control:**  
-Truist acknowledges the scope limitation and ensures that forecasting for other business lines uses alternative methods where appropriate.
-
----
-
-**Limitation or Weakness:**  
-Untracked activities or newly introduced products/services are not accounted for in the model.  
-**Risk:**  
-The model may miss important activities or new products/services, resulting in inaccurate staffing forecasts.  
-**Compensating Control:**  
-The model is regularly updated, and mapping files are adjusted when Work Force Management (WFM) is notified of new activities or products. This ensures that the forecasting remains relevant and accurate.
-
----
-
-**Limitation or Weakness:**  
-Inconsistent data from merged institutions due to differing legacy systems.  
-**Risk:**  
-Inaccurate or inconsistent input data could lead to over- or underestimation of Full-Time Equivalent (FTE) requirements.  
-**Compensating Control:**  
-Truist monitors the data quality closely, reviewing input data regularly to identify and correct any discrepancies that may arise from the merger of legacy systems.
+Untracked Activities:
+The inability to track a significant portion of branch activities is a major limitation. This can result in the model under or over-forecasting staffing needs, which can directly impact operational efficiency in branch capacity planning.
+Proprietary Model:
+The fact that the specific algorithms and methodologies used by Kiran Analytics are proprietary limits Truist’s ability to fully understand how the model functions. This lack of transparency can be a significant issue for model governance, as it restricts the company’s capacity to independently assess and verify the model’s assumptions and processes.
+Both of these limitations impact the accuracy and reliability of the forecasting model, making them key concerns.
