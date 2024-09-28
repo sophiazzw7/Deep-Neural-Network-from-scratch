@@ -1,7 +1,106 @@
-The two major limitations in the context of business operations are:
+### List of Model Assumptions
 
-Untracked Activities:
-The inability to track a significant portion of branch activities is a major limitation. This can result in the model under or over-forecasting staffing needs, which can directly impact operational efficiency in branch capacity planning.
-Proprietary Model:
-The fact that the specific algorithms and methodologies used by Kiran Analytics are proprietary limits Truist’s ability to fully understand how the model functions. This lack of transparency can be a significant issue for model governance, as it restricts the company’s capacity to independently assess and verify the model’s assumptions and processes.
-Both of these limitations impact the accuracy and reliability of the forecasting model, making them key concerns.
+1. **Data Input Assumptions**:
+   - CloudCords is populated with Truist data such as teller transactions, sales, and service data.
+   - Historical data is a strong indicator of future behavior.
+
+2. **Teller/Universal Arrivals and Transactions**:
+   - Teller transactions represent tracked activity in the teller and remote drive-up (RDU).
+   - Forecasts are based on the unique transaction mix of each branch using 24 months of historical data.
+   - Transactions are queued by day and time, assuming 80% of clients are served within 5 minutes.
+
+3. **Platform/Universal Sales and Service Volume**:
+   - Sales and service forecasts are based on 24 months of historical data.
+   - Historical sales and service data are strong indicators of future client behavior.
+
+4. **Absorption Assumption** (for non-customer-facing tasks):
+   - Non-customer-driven activities can be absorbed during available idle time.
+   - The absorption level is determined by factors such as task duration, whether the task is interruptible, and the associate’s idle time.
+
+5. **Coverage Assumptions**:
+   - CloudCords output will align with client-facing time.
+   - Schedules are expected to maintain a >80% effectiveness rate on average.
+
+6. **Methodology Assumptions**:
+   - Teller transactions and sales/service forecasts will be updated annually.
+   - Branch attributes (e.g., number of ATMs, loans, active safety deposit boxes) will be updated annually.
+   - Branch operating hours will be updated as needed.
+   - Assumptions are maintained within acceptable tolerance levels.
+
+7. **Implementation Assumption**:
+   - The assumption model is implemented correctly with no human error.
+
+8. **Forecast Assumptions**:
+   - Forecast vs. actual performance will remain within a 5% tolerance for teller transactions and a 20% tolerance for sales/service transactions.
+
+9. **Strategic Allowance Assumptions**:
+   - Paid time off (PTO) and other allowances are added to estimate the Full-Time Equivalent (FTE) for each branch.
+
+These assumptions guide the forecast model's outputs and operations, ensuring alignment with historical trends and internal expectations.
+
+Assessing the **reasonableness**, **adequacy of support**, and the **quantification of risk** for the model assumptions involves several key steps, as well as assessing whether the assumptions are **conservative** or **optimistic** given the model's intended use. Let’s go through each assumption category, evaluating its reasonableness, risks, and conservatism.
+
+---
+
+### 1. **Data Input Assumptions**
+   - **Reasonableness**: Using **historical data** (24 months of teller transactions, sales, and service data) is generally a reasonable approach for forecasting. Past trends often offer valuable insights into future performance, assuming that no significant changes occur in customer behavior, market conditions, or service policies.
+   - **Support Adequacy**: Historical data, especially from **CloudCords** populated by Truist data, is a robust source. The assumption that it will remain representative of future trends is well-supported.
+   - **Risk Quantification**: The risk arises from **shifts in customer behavior** or **economic disruptions** (e.g., recessions, technological adoption). A significant variance from historical patterns could render forecasts inaccurate. Quantification could involve sensitivity analysis to measure the impact of deviations from the historical average.
+   - **Conservatism**: Assuming the future will behave similarly to the past is neither overly conservative nor aggressive. However, there should be contingency planning in place for sudden disruptions.
+
+### 2. **Teller/Universal Arrivals and Transactions**
+   - **Reasonableness**: Queue times, transaction patterns, and the 80% service level target are all reasonable for operational forecasting, based on typical industry benchmarks.
+   - **Support Adequacy**: 24 months of historical data provide a solid foundation for forecasting transaction volumes. The **5-minute service standard** is well-supported, as this is a common benchmark in banking operations.
+   - **Risk Quantification**: A key risk lies in transaction volatility due to seasonal changes, unanticipated customer surges, or staffing shortages. This could lead to missed service-level targets. Risk quantification might involve calculating the potential impact of unexpected changes in customer volume on staffing costs.
+   - **Conservatism**: An 80% service level target suggests a moderate approach, not overly conservative but reasonable, aiming for a high degree of customer satisfaction without overcommitting resources.
+
+### 3. **Platform/Universal Sales and Service Volume**
+   - **Reasonableness**: Like teller transactions, using 24 months of historical sales/service data is reasonable for predicting future client behavior.
+   - **Support Adequacy**: Historical data is a strong indicator of future client behavior in many businesses, especially in retail banking. However, this assumption could be limited if there are disruptive market changes or economic events.
+   - **Risk Quantification**: Risks include economic downturns or increased digital banking adoption, which could reduce in-person transactions. Quantification could involve stress-testing sales/service forecasts under different economic scenarios.
+   - **Conservatism**: Depending on how the forecast is used, the reliance on past behavior may not be conservative. For example, if digital transformation accelerates, this assumption may underpredict changes.
+
+### 4. **Absorption Assumption (Non-Customer Facing Tasks)**
+   - **Reasonableness**: The assumption that non-customer-facing tasks can be absorbed during idle time is reasonable but can be risky if idle time is overestimated or task absorption is impractical.
+   - **Support Adequacy**: This assumption is supported by basic operational logic—tasks that do not require customer interaction can indeed be absorbed during downtime.
+   - **Risk Quantification**: If idle time is misestimated, employees may not have sufficient time to complete tasks, leading to delays or errors. A risk analysis could involve modeling scenarios with less idle time and measuring the impact on task completion.
+   - **Conservatism**: This assumption leans slightly toward being **optimistic**. It presumes a high degree of flexibility and available idle time, which may not always materialize.
+
+### 5. **Coverage Assumptions**
+   - **Reasonableness**: Assuming schedules will maintain >80% effectiveness is reasonable, given proper planning and staffing models.
+   - **Support Adequacy**: Industry standards typically align with such effectiveness rates. These assumptions are supported by internal benchmarks and operational best practices.
+   - **Risk Quantification**: There is a risk of underperforming if unforeseen staff shortages, technical issues, or operational bottlenecks occur. Quantifying this risk could involve testing the sensitivity of schedule effectiveness to unexpected disruptions.
+   - **Conservatism**: This is relatively **conservative**, given that it assumes a high level of operational effectiveness, leaving some buffer for disruptions.
+
+### 6. **Methodology Assumptions**
+   - **Reasonableness**: Annual updates to teller transaction forecasts, sales/service metrics, and branch attributes are reasonable, especially in dynamic banking environments.
+   - **Support Adequacy**: The use of **subject-matter experts (SMEs)** and the Truist Leadership Model to guide updates ensures adequacy in the support of this assumption.
+   - **Risk Quantification**: The risk here is **low** because the assumption only affects how regularly inputs are updated, not the overall model structure. Delayed updates could lead to slightly outdated forecasts, but this would be quantifiable by comparing model performance pre- and post-update.
+   - **Conservatism**: This assumption is **moderately conservative**. Regular updates ensure the model remains relevant, and the yearly cadence provides flexibility without being overly reactive.
+
+### 7. **Implementation Assumption**
+   - **Reasonableness**: It is reasonable to assume correct implementation, especially with validation and testing phases.
+   - **Support Adequacy**: Implementation is typically verified through multiple checks and quality assurance measures. This assumption is supported if rigorous testing has been conducted.
+   - **Risk Quantification**: The risk of **human error** is always present in large models. Quantification could involve error rates from previous implementations or other benchmarks.
+   - **Conservatism**: This assumption is **neither conservative nor aggressive**. It assumes proper controls are in place.
+
+### 8. **Forecast Assumptions (Teller & Sales/Service)**
+   - **Reasonableness**: The 5% tolerance for teller transactions and 20% for sales/service forecasts is reasonable, providing clear thresholds for acceptable deviation.
+   - **Support Adequacy**: These tolerances are likely based on historical deviations and are common in similar models. There is adequate support from past performance.
+   - **Risk Quantification**: If variances exceed these thresholds, corrective actions may be needed, impacting costs and staffing. Quantification involves measuring how often these tolerances were breached historically and estimating the financial impact.
+   - **Conservatism**: The **5% threshold** for tellers is **conservative**, as it aims for high accuracy. The **20% tolerance** for sales/services is **less conservative**, likely reflecting the more volatile nature of sales forecasts.
+
+### 9. **Strategic Allowance Assumptions (FTE and PTO)**
+   - **Reasonableness**: Including paid time off and other allowances to estimate Full-Time Equivalent (FTE) per branch is reasonable and essential for an accurate staffing forecast.
+   - **Support Adequacy**: Truist’s HR policies and historical FTE data likely provide adequate support for this assumption.
+   - **Risk Quantification**: The primary risk is underestimating FTE, which could lead to staffing shortages. Quantification could involve modeling the effect of under- or overestimating PTO usage on branch staffing.
+   - **Conservatism**: This assumption is **moderately conservative**, ensuring that allowances are factored into overall workforce needs, providing a buffer for planned absences.
+
+---
+
+### **Overall Risk and Conservatism Summary**
+The model's assumptions generally appear **reasonable** and **well-supported**, with risks primarily arising from **unexpected changes** in customer behavior, economic conditions, or operational disruptions. In terms of **conservatism**:
+- The **5% tolerance** for teller transactions and inclusion of **strategic allowances** (PTO) are conservative approaches that prioritize reliability and operational continuity.
+- The **sales/service tolerances** (20%) and the **absorption assumptions** for non-customer-facing tasks lean toward **optimism**, assuming smooth operations and no significant shifts in idle time.
+
+Quantifying the risk involves running stress tests or scenario analyses where the model’s key assumptions (transaction volumes, sales, client behavior) deviate from historical patterns. This will highlight how conservative or aggressive the model is under varying conditions.
