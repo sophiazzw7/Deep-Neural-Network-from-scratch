@@ -1,64 +1,57 @@
-### **4. Review of Data Quality and Data Appropriateness**
-
-This section evaluates the quality and appropriateness of the data used in the model development process, focusing on data sources, relevance, and processing procedures.
-
-#### **Data Sources Appropriateness**
-The data sources include historical transactions, sales, and service data derived from the BB&T PC Teller System, BST Enterprise Teller System, BB&T Client Central, BST CLP, and EdgeSell. These data sources are relevant as they directly track client-facing activities, such as teller transactions, platform sales, and service activities, which are essential for generating accurate forecasts. The inclusion of both client-facing and non-client-facing activities ensures a comprehensive approach to workload forecasting.
-
-#### **Data Quality and Relevance**
-The historical data used spans 24 months, providing a sufficient period for capturing client behavior and trends. The data from the BST Enterprise Teller System and other platforms are considered a strong indicator of future client behavior, making them highly relevant to the forecast. The updates, such as the cash tier update in Fall 2021, ensure that the data remains current and aligned with operational changes.
-
-#### **Data Representativeness**
-The data sources are based on actual branch activities, reflecting the unique transaction and service mixes at each branch. This ensures that the data is representative of the specific operational environment at each branch and the wider network. Non-client-facing activities are also included, reflecting both industry-standard activities and those defined by the Truist Leadership Model (TLM).
-
-#### **Data Extraction, Cleaning, and Smoothing Procedures**
-Data is extracted from the relevant systems, with historical data feeds being validated. For example, teller transactions are mapped into forecast activity groups, and unnecessary data, such as night deposit transactions, is excluded. Each type of transaction and activity is assigned a time standard, ensuring consistency across the data.
-
-#### **Data Integrity**
-The historical data feeds from systems such as the mainframe and BST systems have been validated to ensure accuracy and appropriateness. Kiran has verified that all time standards and activities align with industry norms, supporting the data's reliability for model forecasting.
-
 ### **4.1 Summary of Data Processing**
 
-This section provides a summary of the process used to develop the model dataset, documenting the steps taken and identifying any gaps or missing information.
+This section provides a summary of the process used to develop the model dataset, identifying the steps taken and documenting any gaps or missing information.
 
 #### **Data Sources and Extraction**
-Data sources included:
+The data sources include:
 - **BB&T PC Teller System** and **BST Enterprise Teller System** for teller transactions.
 - **BB&T Client Central**, **BST CLP**, and **EdgeSell** for platform sales and service data.
 
-These data sources were confirmed to capture relevant transactional and client-facing activities. However, there is no specific mention of whether a **comprehensive data extraction process** was documented, which could impact transparency in the data source validation.
+These sources are mentioned as the basis for producing forecasts related to transactions and client-facing activities. However, **no explicit documentation** on the data extraction process itself has been provided, raising concerns about the transparency of the extraction phase.
 
 #### **Data Cleaning and Transformation Techniques**
-- **Cleaning**: The data was cleaned to remove irrelevant transactions (e.g., night deposits).
-- **Transformation**: Transactions were mapped to forecast groups and time standard groups. This process was described at a high level, but there is **no detailed documentation of empirical support** for the data cleaning or backfilling techniques used. The exact cleaning criteria and rationale are not provided.
+- **Cleaning**: Irrelevant transactions, such as night deposits, were excluded from the dataset.
+- **Transformation**: Transactions were mapped to forecast and time standard groups, and product sales were similarly mapped. These processes are described at a high level but **lack specific details** or empirical support for the data cleaning methods used, such as criteria for exclusion or backfilling data.
 
-#### **Variable Creation and Data Dictionary**
-A **data dictionary** was required, but no explicit mention of a formal data dictionary has been provided. Essential elements such as:
-- Descriptions of model variables.
-- Variable creation rules and source fields.
-- Formats (units) for each variable.
-- Decoding rules for categorical variables.
-- Basic descriptive statistics.
+#### **Data Dictionary and Variable Descriptions**
+From the images you provided, there is **no explicit mention** of a comprehensive **data dictionary** with all the required details (i.e., descriptions for all model variables, variable creation rules, source data fields, format, decoding rules for categorical variables, or basic descriptive statistics).
 
-These appear to be missing from the documentation provided. The absence of descriptive statistics raises concerns about the transparency of variable properties and the understanding of data distributions.
+However, some relevant pieces of information about the **source data fields** and **variable descriptions** are mentioned:
+- **Source Data Fields & Descriptions**: Several files have columns and descriptions, including:
+  - **Teller_Transactions_yymmdd.txt**: Fields like "Cost Center ID," "Transaction Code," "Transaction Amount."
+  - **DEP_sales_transaction_yymmdd.txt**: Fields like "Account Type," "Product Sale Date," "Product Code."
+  - **BRANCH_CAPTURE_yymmdd_yymmdd.txt**: Fields like "Teller ID," "Deposit ID," "Item ID."
+  - **Client Central yymmdd.txt**: Fields like "User ID," "Client Segment," "Service Transaction Type."
+
+While these fields are functionally described, there is **no comprehensive data dictionary** that includes formats, units, or detailed decoding rules for categorical variables.
+
+#### **Variable Creation Rules**
+Some mention of variable creation exists, such as:
+- **Mapping transactions** to Property IDs, Forecast Groups, and Time Standard Groups.
+- **Categorical variables** like "Transaction Code" and "Service Type" are referenced.
+
+However, there is **no full description of the rules** used to create variables, nor how categorical variables were decoded or treated.
+
+#### **Missing Descriptive Statistics**
+The documentation provided does **not include any descriptive statistics** (e.g., mean, median, standard deviation) for the model variables, which is a critical element for assessing data distribution and integrity.
 
 #### **Data Processing Rules**
-While data processing (e.g., exclusion of night deposits, mapping transactions to forecast groups) is mentioned, there is **no formal documentation provided** that details how missing data or any backfilled data values were handled. The lack of empirical support for such decisions limits the ability to verify that data treatments were methodologically sound.
+While data processing steps, such as filtering out irrelevant transactions and mapping to forecast groups, are described, **no detailed documentation** of the empirical support behind these steps is available. There is also **no mention of how missing or backfilled data values** were handled.
 
 #### **Analyses Supporting Data Appropriateness**
-Although the forecast is reviewed semi-annually by comparing actual and forecasted volumes, there is **no mention of specific analyses** supporting the appropriateness of the final model inputs. More detailed analysis should be documented to ensure that the chosen data inputs are empirically justified.
+There is **no evidence** of formal analyses supporting the appropriateness of the final model inputs. While semi-annual reviews are mentioned, no detailed analysis is provided to empirically justify the choice of input data.
 
 #### **Compliance with Regulatory Requirements**
-There is **no explicit documentation** showing how the bank’s data processing aligns with relevant regulatory data requirements. The absence of this documentation raises concerns about whether proper regulatory review has been conducted.
+There is **no specific documentation** provided that confirms compliance with regulatory data requirements, which is an important omission given the regulatory landscape.
 
 #### **Code Documentation**
-There is **no mention** of the code used to process the source data into intermediate and final datasets, which is a critical aspect for reproducibility and validation.
+No code used to process the source data into intermediate and final datasets has been documented, which hinders reproducibility and transparency in the data preparation phase.
 
 ### **Summary of Missing Elements**
-- **Formal data dictionary** with variable descriptions, units, decoding rules, and descriptive statistics.
-- **Detailed empirical support** for data cleaning and handling of missing or backfilled values.
-- **Analysis supporting the appropriateness** of final model inputs.
-- **Documentation of compliance** with regulatory requirements.
-- **Code used** to process the data into final datasets. 
+- **Comprehensive data dictionary** with variable descriptions, units, decoding rules, and descriptive statistics.
+- **Detailed empirical support** for data cleaning, handling missing or backfilled data, and variable creation rules.
+- **Formal analyses** to support the appropriateness of the final model inputs.
+- **Documentation of compliance** with regulatory data standards.
+- **Code used** for data processing.
 
-Without these elements, the model development process lacks transparency and robustness.
+Without these key elements, the model development process lacks the necessary transparency and rigor for full validation.
