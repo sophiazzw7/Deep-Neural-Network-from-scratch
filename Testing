@@ -1,0 +1,62 @@
+**9. Review of Development Testing/Model Performance**
+
+9.1 Overview of Model Performance Testing  
+The model performance review focuses on testing the forecast accuracy for teller transactions and platform sales/services across branches. Testing results are reviewed on a monthly and quarterly basis with established tolerances that trigger corrective actions if exceeded. Regular ongoing monitoring evaluates performance discrepancies and identifies areas for improvement. The model's performance testing assesses both predictive accuracy and operational efficiency, as documented in the development testing and ongoing monitoring results.
+
+9.2 Predictive Performance  
+The model’s predictive performance is assessed through comparison of actual results with forecasted teller transactions and platform services. As outlined in the performance testing results:
+
+- **Teller Transactions**:  
+   The model’s forecast accuracy for teller transactions is evaluated against a ±5% tolerance. Monitoring reports indicate that actual teller transactions fell within the tolerance range. For February 2021, the forecast deviation was 4%, which is considered acceptable. A detailed breakdown of day-to-day variances shows the need for corrective actions at certain branches due to closures or significant discrepancies.  
+   In the 2021-Q4 ongoing monitoring report, teller transactions showed minor concerns, with variances ranging between 5.2% and 9.8% over several months. 
+
+   - Example 2021 Monitoring: For hBB&T, actual teller transactions for February 2021 were 3% lower than forecasted, within tolerance.
+
+- **Platform Sales and Service**:  
+   Platform forecasts allow for a ±20% tolerance. In February 2021, actual platform transactions had an 11% variance from the forecast, which is acceptable. Ongoing monitoring noted some individual days where variances were significant (e.g., 33% on February 16, 2021), usually tied to branch closures or other disruptions.  
+   The 2021-Q4 monitoring report showed no breach of the 20% threshold for platform services, with variances ranging from 7.5% to 11.7%.
+
+9.3 Ongoing Monitoring Results (OGM Reports)  
+The OGM reports for 2020-Q4, 2021-Q4, 2022-Q4, and 2023-Q1 tracked key performance metrics such as Forecast vs Actual and Schedule Effectiveness:
+
+- **2020-Q4 Findings**:  
+   - Teller forecasts exhibited elevated concerns, with a -23.2% variance exceeding the 5% tolerance, resulting in a fail rating for the teller metric.
+   - Platform services remained compliant, with a -19.9% variance, within the 20% threshold.
+   - Corrective actions focused on addressing teller discrepancies, with external factors like COVID-19 contributing to underperformance.
+
+- **2021-Q4 Findings**:  
+   - Teller transactions continued to show minor concerns, with variances between 5.2% and 9.8%. While within acceptable ranges, they require continued monitoring.
+   - Platform services remained compliant, with no breach of the 20% threshold.
+
+- **2022 and 2023 Findings**:  
+   - The 2022-Q4 and 2023-Q1 monitoring showed no threshold breaches for either teller transactions or platform services, indicating improved forecast accuracy.
+   - The MRM model rating remained **Fit for Use**, with no new findings raised.
+
+9.4 Model Self-Assessment Results  
+Compliance with Tier 4 model requirements was confirmed during the 2022-Q4 and 2023-Q1 self-assessment. The self-assessment confirmed that model documentation is current, uploaded to MIMS, and that no threshold breaches were recorded for key performance metrics. The model was rated as **Fit for Use** based on these results.
+
+9.5 Recommendations for Model Monitoring and Improvements  
+Based on the monitoring and performance reports, the following recommendations are made:
+
+- **Continuous Monitoring**:  
+   Continued monthly monitoring is necessary for teller transactions, as minor variances still persist. Attention should be given to branches experiencing external disruptions, such as closures or local economic changes.
+   
+- **Escalation Procedures**:  
+   For elevated variances, ensure prompt escalation and action planning, as outlined in the reports from previous periods.
+
+- **Schedule Effectiveness**:  
+   Although COVID-19 caused reporting delays in 2020-Q4, monitoring for teller and platform schedule effectiveness should continue to ensure proper staffing levels and operational efficiency.
+
+9.6 Back-Testing and Outcome Analysis  
+While comparisons between forecasted and actual values are documented, it is unclear if back-testing was conducted using out-of-sample or out-of-time data. The documentation does not explicitly state whether such testing occurred. If not, the model developer should provide an appropriate justification for its absence.
+
+- **F_0013**: Include documentation on out-of-sample or out-of-time back-testing, or provide a justification if it was not feasible.
+
+9.7 Sensitivity Analysis  
+The documentation currently lacks sensitivity analysis results, which are crucial to assessing how changes in inputs, assumptions, and parameters may affect the model’s performance.
+
+- **F_0014**: Provide sensitivity analysis to assess the model's responsiveness to input changes and assumptions. Sensitivity analysis is necessary to validate the model’s robustness and potential limitations under varying conditions.
+
+---
+
+This section now integrates both the detailed testing process and the key findings for model performance, including the necessity for further documentation on back-testing and sensitivity analysis. Let me know if further changes are required!
