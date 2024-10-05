@@ -1,0 +1,169 @@
+11. Review of Ongoing Monitoring (OGM) Plan
+11.1 OGM Plan Element Applicability Review
+
+Ref No.	Monitoring Element	Included in OGM Plan	Related Metric No.	MRO Assessment for Excluded Elements
+1	Limitations Monitoring	Yes	Metric 1	N/A
+2	Backtesting	No	N/A	Addressed in Section 7.1 for monthly reviews
+3	Benchmarking Analysis	No	N/A	N/A
+4	Boundary Conditions associated with Model Stability	Yes	Metric 1	N/A
+5	Coefficient Stability	N/A	N/A	N/A
+6	Early Warning Indicators	Yes	Metric 1	Ongoing review based on thresholds
+7	Model Input Monitoring	Yes	Metric 1	Monthly data review based on actual vs forecast
+8	Overlay / Override / Qualitative Adjustment Tracking	Yes	Metric 1	SLA monitored for teller and platform adjustments
+9	Scenario / Stress Analysis	No	N/A	Not included in OGM at this time
+10	Sensitivity Analysis	No	N/A	N/A
+11.2 OGM Plan Assessment
+
+11.2.1 OGM Plan Granularity
+The OGM plan is granular enough to cover the key components related to monitoring the forecast vs actual metric for teller and platform transactions, branch-specific conditions, and escalation procedures. Data quality and variance thresholds are well-defined.
+
+11.2.2 Performance Tests and Monitoring Frequency
+Monthly monitoring of actual vs forecasted transactions and sales is included. The variance thresholds are ±5% for teller transactions and ±20% for platform services. The frequency and scope of performance monitoring align with the model’s business objectives.
+
+11.2.3 Performance Metrics and Thresholds
+The only performance metric is forecast vs actual, measured on a monthly basis. The thresholds are ±5% for teller transactions and ±20% for platform services. These metrics are sufficient for gauging model success and triggering corrective actions.
+
+11.2.4 OGM Starting Date
+The OGM officially began in 2021, with monthly monitoring of the forecast vs actual metric across all branches.
+
+11.2.5 Model Use Limitation
+The model forecasts transactions and sales to optimize branch staffing. The key assumption is that CloudCords outputs are aligned with Truist’s internal data, with minimal manual overrides unless variances exceed the defined thresholds.
+
+11.2.6 Escalation Plan
+If the variance exceeds the threshold (±5% for teller, ±20% for platform), the WFP team is notified to investigate and implement adjustments as needed. The escalation process may involve contacting the vendor in case of system-related issues, with response times defined by the severity of the issue
+
+
+
+
+To evaluate the Ongoing Monitoring (OGM) plan based on the procedure provided in the images, I will highlight how the key OGM elements align with the required criteria mentioned in your procedure. Here are the main evaluation points:
+
+### 1. **OGM Plan Support**  
+   - **Documentation Requirements**: The OGM plan includes a description of the model purpose and scope, stakeholders, first OGM due date, rationale for metrics selected, escalation actions, and assessment of model limitations.  
+   **Evaluation**: Based on the images you provided, the OGM plan has documented all key support elements including escalation procedures and responsible stakeholders (like the Workforce Planning Team), as well as the rationale for thresholds (such as the <5% threshold for teller and <20% for platform).  
+
+### 2. **First OGM Due Date and Frequency**  
+   - **Due Date & Timing**: It must specify the frequency of OGM reporting, including the first OGM submission date, and must be sufficient to collect sufficient data.  
+   **Evaluation**: The OGM plan mentions that monitoring will occur monthly and the model uses Truist data updated regularly to provide timely monitoring. This aligns with the prescribed frequency, ensuring enough data for assessment. However, the first OGM submission date could be further clarified in the plan.
+
+### 3. **Performance Tests and Metrics**  
+   - **Performance Metrics**: The OGM plan must include quantifiable performance tests and metrics to assess model precision, accuracy, or discriminative power. This includes robustness/stability metrics and justification if not applicable.  
+   **Evaluation**: The OGM plan includes clear performance metrics like forecast vs. actual for teller transactions and platform services, and the <5% and <20% thresholds are highlighted. Additionally, the OGM specifies that anomalies such as outliers and errors will be identified, ensuring comprehensive performance analysis.
+
+### 4. **Performance Thresholds and Escalation**  
+   - **Escalation Plan**: The OGM plan must define escalation actions if thresholds are breached, with corrective measures and compensating controls.  
+   **Evaluation**: The plan includes an escalation process where thresholds exceeding 5% for teller and 20% for platform will prompt investigations by the Workforce Planning Team (WFP). If adjustments are needed, the model owner, WFP, and relevant stakeholders will be alerted. This aligns well with the required escalation procedures.
+
+### 5. **Early Warning Metrics**  
+   - **Early Warning Metrics**: The OGM must define early warning thresholds and associated escalation actions.  
+   **Evaluation**: The plan outlines an early warning system, such as error rates exceeding 5% for teller transactions or 20% for platform. These are highlighted as critical points for early intervention, fulfilling the need for early warning thresholds.
+
+### 6. **Model Adjustments**  
+   - **Model Adjustments**: The plan must account for in-model adjustments, overrides, and recalibration or redevelopment of the model if needed.  
+   **Evaluation**: Overrides are specifically discussed in the OGM plan. Temporary adjustments are tracked through the Workforce Planning system, and escalations are triggered when thresholds are exceeded, ensuring that model adjustments are systematically addressed.
+
+### 7. **Evaluation of Model Limitations and Compensating Measures**  
+   - **Compensating Measures**: There must be a holistic review of model limitations and compensating measures should the model exceed thresholds.  
+   **Evaluation**: The OGM plan provides for adjustments if model limitations are identified, such as escalating to the vendor or adjusting the staffing plan. However, further details on how compensating measures would be applied are not deeply covered.
+
+### 8. **OGM Data Sources and Controls**  
+   - **Data Sources & Control**: The plan must document the source data and ensure the integrity of the data used for OGM.  
+   **Evaluation**: The plan references Truist data and CloudCords as the primary data sources, with monthly imports verified by the Workforce Planning Team, ensuring the data used is accurate and timely. This meets the criteria for data control.
+
+---
+
+### Conclusion:  
+The current OGM plan fulfills many of the requirements for monitoring performance, establishing thresholds, implementing escalation actions, and ensuring the model is accurate and within limits. However, some areas, such as clarifying the first OGM due date, specifying compensating measures, and elaborating on early warning thresholds, could be enhanced for comprehensive compliance. 
+
+This evaluation would help ensure that the OGM plan aligns with industry standards and meets the necessary requirements for ongoing monitoring..
+
+
+
+Based on the OGM plan documentation you provided and the corresponding procedure template, I'll list what’s missing and then create a findings section. Here's a breakdown of what was expected versus what seems to be missing:
+
+### Missing Elements Based on OGM Plan Template & Procedure
+
+1. **Backtesting**  
+   - The documentation mentions "actual vs forecast" but does not specify whether backtesting (using out-of-sample or out-of-time data) is performed. Backtesting is important for understanding how the model generalizes on unseen data.
+   - **Missing:** Explicit mention of backtesting as a component of the OGM plan and the process for incorporating historical data to assess prediction accuracy over time.
+
+2. **Performance Metrics and Escalation Thresholds**  
+   - The OGM plan lists the error rate formulas for teller and platform transactions (±5% for teller, ±20% for platform). However, the documentation does not detail the escalation procedures for breaches beyond these thresholds, nor does it provide specifics for minor vs. major deviations.
+   - **Missing:** Clear escalation plan based on specific threshold breaches (minor, moderate, major) and guidance on how to resolve or escalate the issue to the MOC or other teams.
+
+3. **Early Warning Metrics and Thresholds**  
+   - While there are performance thresholds listed, the documentation does not include an early warning system. This would provide alerts before the model's performance severely degrades, preventing potential escalation.
+   - **Missing:** Early warning thresholds (e.g., indicators that forecast accuracy is trending negatively) and associated escalation actions.
+
+4. **Benchmarking Analysis**  
+   - Benchmarking is crucial for comparing the model's performance against similar models, industry standards, or external benchmarks. The documentation does not mention benchmarking tests to ensure that the model aligns with industry or internal performance expectations.
+   - **Missing:** Benchmarking against external or internal standards to assess model performance relative to peers.
+
+5. **Limitations Monitoring**  
+   - The documentation does not outline how model limitations will be monitored and evaluated over time. It also lacks a plan for compensating measures when limitations are encountered.
+   - **Missing:** A clear plan for monitoring model limitations and compensating measures in the event the limitations become significant.
+
+6. **Sensitivity Analysis**  
+   - Sensitivity analysis is essential to evaluate how the model reacts to changes in key inputs and assumptions. This is missing from the ongoing monitoring section of the documentation.
+   - **Missing:** Sensitivity analysis plan to assess the impact of changes in key inputs and assumptions over time.
+
+7. **Scenario/Stress Testing**  
+   - Scenario and stress testing allow for understanding how the model behaves under extreme but plausible conditions. This is critical to ensure the model is robust under various conditions but is not present in the current OGM documentation.
+   - **Missing:** Plan for scenario analysis or stress testing, especially under adverse conditions that could stress the model's assumptions.
+
+8. **Overlay/Override Monitoring**  
+   - The documentation mentions overrides but does not describe how these will be tracked over time or how their impacts will be evaluated. Regularly monitoring overrides is important to ensure they don't degrade model performance.
+   - **Missing:** Process for tracking and assessing overrides and ensuring they don’t negatively impact model accuracy.
+
+---
+
+### Findings
+
+**F_0014: Absence of Backtesting Documentation**  
+- **Issue:** The OGM plan does not include any mention of backtesting using out-of-sample or out-of-time data. Backtesting is critical for ensuring the model’s predictions are accurate on unseen data.
+- **Recommendation:** Include a dedicated backtesting section in the OGM plan, with quarterly backtesting reports using historical data that was not used during model training.
+
+---
+
+**F_0015: Lack of Escalation Procedures for Threshold Breaches**  
+- **Issue:** The documentation provides error thresholds but does not specify the procedures for escalating minor, moderate, and major breaches of these thresholds.
+- **Recommendation:** Develop a clear escalation framework that categorizes threshold breaches (e.g., <5%, 5%-10%, >10%) and outlines appropriate actions, including escalating to the MOC or other teams.
+
+---
+
+**F_0016: Missing Early Warning System**  
+- **Issue:** The OGM documentation does not include early warning metrics that could alert the team before significant threshold breaches occur.
+- **Recommendation:** Establish early warning metrics and thresholds that trigger corrective actions when the model begins to deviate from expected performance, even if it hasn’t yet breached major thresholds.
+
+---
+
+**F_0017: No Benchmarking Analysis**  
+- **Issue:** Benchmarking tests are not included in the current OGM plan. Benchmarking is important to compare model performance against industry standards or other internal models.
+- **Recommendation:** Include benchmarking analysis in the OGM plan to compare model performance to external benchmarks or similar models within the organization.
+
+---
+
+**F_0018: Absence of Limitations Monitoring**  
+- **Issue:** The plan does not account for ongoing monitoring of known model limitations or provide compensating measures if limitations become significant.
+- **Recommendation:** Add a section dedicated to monitoring model limitations and their impact over time, as well as identifying compensating measures to mitigate potential risks associated with these limitations.
+
+---
+
+**F_0019: Missing Sensitivity Analysis**  
+- **Issue:** There is no mention of sensitivity analysis to test the impact of changes in key model inputs and assumptions.
+- **Recommendation:** Incorporate sensitivity analysis into the OGM plan to assess how changes in key model inputs affect model outcomes and performance.
+
+---
+
+**F_0020: No Scenario/Stress Testing**  
+- **Issue:** The OGM plan lacks scenario and stress testing to evaluate how the model would perform under extreme conditions.
+- **Recommendation:** Add scenario and stress testing to assess the model’s robustness under various conditions, particularly adverse scenarios that could challenge the model's assumptions.
+
+---
+
+**F_0021: Lack of Overlay/Override Tracking**  
+- **Issue:** While the OGM documentation mentions overrides, it does not explain how they will be tracked or their long-term impact on model performance.
+- **Recommendation:** Implement an override/overlay tracking system that evaluates how overrides impact the model's forecast accuracy and whether they should be reevaluated or removed.
+
+---
+
+By addressing these findings, the OGM plan can be more robust and comprehensive, ensuring the model performs well not only in current conditions but also in response to evolving data and business requirements. Let me know if you'd like to adjust any of these findings or recommendations!
