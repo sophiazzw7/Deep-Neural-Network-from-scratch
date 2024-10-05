@@ -1,35 +1,56 @@
+OGM finding list:
 
-Yes, several of the findings seem to overlap or repeat similar themes. Here's a review of potential redundancies and opportunities to consolidate findings:
 
-Identified Repeated Findings:
-F_0001 and F_0004:
-Both findings reference the need for descriptive statistics and information on variables. F_0001 asks for a detailed data dictionary, including units and decoding rules, while F_0004 specifically calls for descriptive statistics. These could be consolidated since a proper data dictionary typically includes basic descriptive statistics like mean, standard deviation, etc.
-Suggestion: Combine into one finding focused on the comprehensive data dictionary:
-Revised Finding: Provide a detailed data dictionary with variable creation rules, units, decoding rules, and descriptive statistics (mean, median, standard deviation, and frequency distribution).
-F_0002 and F_0006:
-Both findings refer to handling missing, corrupted, and duplicated data during the data cleaning process. F_0002 is more general, while F_0006 focuses specifically on duplication and missing data, which is part of the broader data cleaning process mentioned in F_0002.
-Suggestion: Consolidate into one finding about the overall data cleaning process.
-Revised Finding: Provide documentation on how missing, corrupted, incomplete, or duplicated data is handled during data cleaning.
-F_0003 and F_0009:
-F_0003 asks for code documentation, while F_0009 asks for documentation on the data cleaning process. The code for data processing would generally include cleaning steps, so these can be combined.
-Suggestion: Combine into one finding emphasizing both code and process documentation.
-Revised Finding: Provide code documentation and a detailed description of the data cleaning process, including how incorrect, corrupted, or incomplete data is treated.
-F_0005 and F_0007:
-Both findings relate to checking data for anomalies—F_0005 mentions outliers and missing values, while F_0007 focuses on consistency checks. Outlier detection and consistency checks are closely related parts of ensuring data validity.
-Suggestion: Combine these into one comprehensive finding for data validation.
-Revised Finding: Document the analysis of outliers, missing values, and consistency checks, with proper treatment methodologies for identified anomalies.
-F_0008 and F_0012:
-Both relate to the reliability and representativeness of data, with F_0008 focusing on data sources and F_0012 on statistical validation. These could be combined into one finding about assessing the representativeness and reliability of data.
-Suggestion: Merge these into a single finding on data source evaluation.
-Revised Finding: Provide an evaluation of data sources' reliability, representativeness, and statistical validation of data assumptions, particularly regarding the suitability of historical data for future forecasting.
-Non-repetitive Findings:
-F_0010: Provides additional documentation on advanced data transformations (e.g., normalization, clustering). This is unique and not covered by the others.
-F_0011: Documents any sampling, re-sampling, or partitioning methodologies used. This is specific to the way the data is partitioned or sampled and should remain a distinct finding.
-Revised List of Findings:
-F_0001: Provide a detailed data dictionary with variable creation rules, units, decoding rules, and descriptive statistics (mean, median, standard deviation, and frequency distribution).
-F_0002: Provide documentation on how missing, corrupted, incomplete, or duplicated data is handled during data cleaning.
-F_0003: Provide code documentation and a detailed description of the data cleaning process, including how incorrect, corrupted, or incomplete data is treated.
-F_0004: Document the analysis of outliers, missing values, and consistency checks, with proper treatment methodologies for identified anomalies.
-F_0005: Provide an evaluation of data sources' reliability, representativeness, and statistical validation of data assumptions, particularly regarding the suitability of historical data for future forecasting.
-F_0006: Provide additional documentation on advanced data transformations (e.g., normalization, clustering).
-F_0007: Document any sampling, re-sampling, or partitioning methodologies used.
+Here's a revised and consolidated list of OGM findings that maintains the necessary information while keeping it concise:
+
+
+
+### **OGM Finding List:**
+
+1. **F_001:** Please provide a comprehensive list of model stakeholders and their specific responsibilities related to the OGM process.
+
+2.  Please expand the definition and support for the thresholds used in the OGM plan (e.g., <5% error for tellers and <20% error for platform), including a detailed justification based on model-specific characteristics and/or quantitative analysis.
+
+3. Please provide metrics for assessing model robustness/stability and sensitivity analysis. Detailed justification should be provided if these metrics are not applicable.
+4. **F_004:** Please provide an early warning metric in the OGM plan to preemptively alert the team before significant deviations or threshold breaches occur.
+
+5. **F_005:** Please review and specify the frequency of evaluation of model assumption & limitations, including any compensating measures applied.
+
+6. **F_006:** Please provide documentation on data controls, including data validation, data lineage, and controls ensuring data consistency and completeness.
+
+7. **F_007:** The OGM plan does not include benchmarking of the model against industry standards or external benchmarks.
+
+8. **F_008:** Please provide justification for the allowable range of overrides (0.01 to 13 times), and ensure controls are in place to monitor and assess their long-term impact on model performance, including the magnitude, trend, and relevancy of overrides.
+
+
+9.  Model inputs are not monitored through the OGM process to ensure the quality, reliability, and consistency of the input data used to generate the model's predictions. 
+
+11. **F_011:** Detailed OGM reports and override tracking reports for 2022 and 2023 were not found in MIMS. Please ensure these reports are documented and available for review.
+
+
+
+
+
+
+
+
+
+Please provide the following documentation regarding model development data:
+
+Provide a detailed data dictionary with variable creation rules, units, decoding rules, and descriptive statistics (mean, median, standard deviation, and frequency distribution).
+Document the full data cleaning process, including smoothing, transformations (e.g., normalization, clustering), and justification for backfilling or corrections.
+Provide a comprehensive assessment of data quality, addressing outliers, missing, corrupted, incomplete, and duplicated data, along with consistency checks and proper treatment methodologies.
+Provide an evaluation of data sources' reliability, representativeness, and statistical validation of assumptions, particularly for historical data suitability in forecasting.
+Document sampling, re-sampling, and partitioning methodologies.
+Provide code documentation for processing source data into intermediate and final model datasets.
+
+
+from Model Documentation Review):
+
+1. Model risk tier support table should be updated.
+2. MDD should confirm to the new MDD template.
+
+Model controls findings: 
+Finding 1: Lack of Justification for Override Range The wide allowable override range (0.01 to 13 times the output) lacks documented rationale. 
+Finding 2: Insufficient Override Monitoring Controls Controls to ensure overrides stay within the allowed range are not well-established. 
+3. Model version update not reflected in MDD. Vendor name should be consistent in MDD
