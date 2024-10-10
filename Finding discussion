@@ -1,0 +1,130 @@
+To assist with the meeting, here is a breakdown of each finding, where the gap is located in the documentation, what is missing, and the requirements according to the procedure/template. This should help you guide the discussion with the developers, offer supporting reasons for raising the finding, and allow them to clarify or make quick fixes.
+
+### 1. **Comprehensive List of Model Stakeholders**  
+   **Finding:** Missing comprehensive list of stakeholders and their roles in OGM process.  
+   **Document Location:** Review OGM section (7.1) in the model documentation.  
+   **Missing:** There is no detailed list of stakeholders and their specific responsibilities related to the OGM process.  
+   **Procedure/Template Requirement:** The OGM plan must include a detailed list of model stakeholders and their roles (as mentioned in the procedure). Stakeholders include model developers, users, approvers, and SMEs.
+
+### 2. **Definition of Thresholds**  
+   **Finding:** No detailed justification for error thresholds (<5% error for tellers, <20% for platform).  
+   **Document Location:** Section 7.4 "OGM Metrics and Thresholds".  
+   **Missing:** The industry norms from Kiran Analytics are mentioned, but there’s no explanation specific to this model's characteristics and risk.  
+   **Procedure/Template Requirement:** The procedure requires a quantitative and qualitative justification for thresholds, supported by empirical data or historical performance.
+
+### 3. **Model Robustness/Stability Metrics**  
+   **Finding:** Lack of model robustness or stability metrics.  
+   **Document Location:** Stability metrics are not outlined in section 7 of the OGM or in the model performance section.  
+   **Missing:** No mention of robustness testing or sensitivity analysis to evaluate model stability.  
+   **Procedure/Template Requirement:** The procedure mandates the inclusion of a metric to measure model robustness/stability. If not applicable, detailed justification is required.
+
+### 4. **Early Warning Metric**  
+   **Finding:** No early warning metrics in place.  
+   **Document Location:** Missing from section 7 "OGM Plan".  
+   **Missing:** No proactive metrics to flag issues before threshold breaches occur.  
+   **Procedure/Template Requirement:** The OGM plan should include early warning systems to flag significant deviations before they breach thresholds.
+
+### 5. **Evaluation of Model Assumptions**  
+   **Finding:** No frequency specified for the evaluation of model assumptions and limitations.  
+   **Document Location:** Section 7.1 mentions the assumptions but lacks a clear schedule for their evaluation.  
+   **Missing:** No details on when and how assumptions and limitations will be revisited.  
+   **Procedure/Template Requirement:** The procedure requires a defined frequency for revisiting model assumptions and compensating measures.
+
+### 6. **Data Controls**  
+   **Finding:** Lack of documentation on data validation and controls in the OGM plan.  
+   **Document Location:** Section 7.3 "OGM Data Sources and Data Controls" briefly mentions the data sources but lacks details on controls.  
+   **Missing:** No data lineage documentation or detailed data validation and control mechanisms.  
+   **Procedure/Template Requirement:** The procedure requires comprehensive documentation of data validation processes, lineage, and controls ensuring data consistency and completeness.
+
+### 7. **Benchmarking**  
+   **Finding:** No benchmarking of the model against industry standards or external benchmarks.  
+   **Document Location:** This is not mentioned in the OGM section or model performance metrics.  
+   **Missing:** No comparison to external or industry benchmarks.  
+   **Procedure/Template Requirement:** The OGM plan should include benchmarking to validate model performance against external or industry standards.
+
+### 8. **Override Range Justification**  
+   **Finding:** No justification for the wide override range (0.01 to 13 times).  
+   **Document Location:** Section 7.4.1 "Monitoring of Overrides" does not explain why such a wide range is permitted.  
+   **Missing:** No rationale for the magnitude of overrides or long-term impact monitoring.  
+   **Procedure/Template Requirement:** Overrides should be documented with justification for their allowable range and monitored for long-term impacts.
+
+### 9. **Missing OGM and Override Reports for 2022 and 2023**  
+   **Finding:** OGM reports and Override Tracking for 2022 and 2023 not found in MIMS.  
+   **Document Location:** The reports were not available for review in MIMS.  
+   **Missing:** Documentation of OGM and override tracking for these years.  
+   **Procedure/Template Requirement:** All annual reports and overrides must be documented and available for review in MIMS.
+
+### Model Development Data:
+
+1. **Detailed Data Dictionary**  
+   **Finding:** Missing detailed data dictionary outlining variable creation rules, units, and decoding rules.  
+   **Document Location:** Data sections in OGM and model documentation.  
+   **Missing:** Detailed rules for variable creation and descriptive statistics.  
+   **Procedure/Template Requirement:** The procedure requires a comprehensive data dictionary with clear variable definitions.
+
+2. **Full Data Cleaning Process**  
+   **Finding:** No documentation of data cleaning, smoothing, transformations, or backfilling.  
+   **Document Location:** Data-related sections of the model documentation lack this information.  
+   **Missing:** Data cleaning steps, with justifications for each process (e.g., smoothing, backfilling).  
+   **Procedure/Template Requirement:** The procedure mandates that all steps in the data cleaning process be documented and justified.
+
+3. **Assessment of Data Quality**  
+   **Finding:** Missing a comprehensive assessment of data quality addressing outliers, missing, corrupted, and duplicated data.  
+   **Document Location:** Section 7.4 does not cover this.  
+   **Missing:** An in-depth review of data quality and consistency checks is not provided.  
+   **Procedure/Template Requirement:** The procedure requires a full assessment of data quality with proper treatment methodologies for anomalies.
+
+
+
+### 4. **Evaluation of Data Sources' Reliability**  
+   **Finding:** Missing a detailed evaluation of data sources' reliability, representativeness, and statistical validation of data assumptions, especially regarding the suitability of historical data.  
+   **Document Location:** Data sections in the model documentation do not have sufficient details on this.  
+   **Missing:** There's no validation of the reliability of historical data for future forecasting, nor any statistical validation of the assumptions.  
+   **Procedure/Template Requirement:** The procedure requires that all data sources be validated for reliability, representativeness, and appropriateness for the forecasting task.
+
+### 5. **Sampling and Partitioning Methodologies**  
+   **Finding:** Documentation on sampling, re-sampling, or partitioning methodologies used is absent.  
+   **Document Location:** This is not discussed in the data sections of the documentation.  
+   **Missing:** There's no mention of how data is sampled, re-sampled, or partitioned in the model development process.  
+   **Procedure/Template Requirement:** The procedure mandates the inclusion of detailed sampling methodologies to ensure model accuracy and relevance.
+
+### 6. **Code Documentation**  
+   **Finding:** Documentation of any code used to process source data into final model development datasets is missing.  
+   **Document Location:** This is not present in the model development sections.  
+   **Missing:** The actual code used for processing and transforming data isn't documented.  
+   **Procedure/Template Requirement:** The procedure requires that any code used to manipulate or transform the data should be documented and explained.
+
+### 7. **Compliance with Regulatory Data Requirements**  
+   **Finding:** Documentation confirming that the model data complies with regulatory data requirements is missing.  
+   **Document Location:** This is not specified in the documentation.  
+   **Missing:** There's no explicit confirmation that the data complies with necessary regulations.  
+   **Procedure/Template Requirement:** The procedure mandates that all models must confirm and document compliance with applicable data regulatory standards.
+
+### 8. **Data Appropriateness for Model Task**  
+   **Finding:** No documentation of analyses supporting the appropriateness of the model data for the task.  
+   **Document Location:** This is not covered in the data section of the model documentation.  
+   **Missing:** There's no sufficiency analysis to demonstrate that the 24 months of data used provide adequate coverage, trend, and volatility analysis.  
+   **Procedure/Template Requirement:** The procedure requires an analysis of whether the selected data set is suitable for the intended forecasting task, especially in terms of coverage and volatility.
+
+---
+
+### Issues on **Model Documentation and Model Controls**:
+
+1. **Model Risk Tier Support Table**  
+   **Finding:** The model risk tier support table is outdated.  
+   **Document Location:** Section on Model Risk Documentation.  
+   **Missing:** Updated model risk tier data.  
+   **Procedure/Template Requirement:** Risk tier tables must be updated regularly to reflect the current state of the model’s risk profile.
+
+2. **MDD Should Follow New Template**  
+   **Finding:** The Model Development Document (MDD) doesn't follow the new template.  
+   **Document Location:** MDD section of the model documentation.  
+   **Missing:** Alignment with the new model development template "MDD02 Model Development Documentation Template_T4_20240930".  
+   **Procedure/Template Requirement:** All model development documents should adhere to the latest templates to ensure consistency across models.
+
+3. **Model Version Update**  
+   **Finding:** The model version update is not reflected in the Model Development Documentation (MDD), and the vendor name should be consistent across the documentation.  
+   **Document Location:** Model version and vendor name discrepancies are located in the MDD.  
+   **Missing:** The documentation does not reflect the latest version of the model or consistent vendor naming.  
+   **Procedure/Template Requirement:** Model version control and vendor details must be kept up to date and consistent in the documentation.
+
