@@ -1,98 +1,71 @@
-From the documentation you've shared, there is **no explicit data quality analysis** provided. However, several sections indirectly reference aspects of data quality, such as data cleaning, exclusions, and the use of verified data sources. Here's a breakdown of what is covered and what is missing:
+### Meeting Minutes
 
-### **What is Covered:**
-1. **Data Collection, Cleaning & Exclusions (Section 1.10):**
-   - Mentions that data feeds are run through ETL (Extract, Transform, Load) processes, which typically involve handling missing or erroneous data. However, it doesn’t provide details on missing data percentages or specific quality checks like identifying duplicates or outliers.
+**Date:** [Insert Date]
+
+**Attendees:**
+- [List of Attendees]
+  
+**Purpose:** Discussion of model overrides, documentation updates, OGM reporting, and ongoing monitoring for Tier 3 and Tier 4 models.
+
+---
+
+### Key Points Discussed
+
+1. **Model Overrides Clarification:**
+   - Overrides are business decisions, not model output alterations.
+   - Clarification needed in the documentation to specify that the overrides are external to the model and handled in separate business meetings.
+   - Suggestion to remove the section about "allowable range of overrides" and add a description of the decision-making process.
+
+2. **OGM Reporting Requirements:**
+   - There was confusion over the need for ongoing monitoring (OGM) reports for Tier 4 models. It was clarified that while standalone OGM reports are no longer required, annual performance testing and documentation updates are still mandatory.
+   - A governance team will confirm whether any further action is required.
+
+3. **Updating Ongoing Monitoring Plans:**
+   - The team needs to ensure performance testing results are updated annually, even though formal reports may not be required.
+   - They will compile the 2022 and 2023 data for submission, with a future plan to submit on an annual basis moving forward.
+
+4. **Next Steps for Documentation:**
+   - Updates to the model documentation are necessary, including removing outdated references to secondary use and updating fields such as "model reliance" (set to "some").
+   - The model validation team will draft a table with the required updates and share it for review by stakeholders.
+
+5. **Stability and Sensitivity Analysis:**
+   - A discussion on the importance of adding metrics to track model stability and sensitivity.
+   - Stability analysis could involve tracking month-to-month prediction variances, and sensitivity analysis would include manually adjusting inputs like FTEs to check for appropriate output.
    
-2. **Vetted Data Sources (Section 1.9):**
-   - Data sources are vetted by subject matter experts, ensuring data reliability. However, the quality assessment focuses more on source verification than on the quality of the actual data (e.g., distribution, consistency).
-   
-3. **Transformation and Aggregation Logic (Section 1.11):**
-   - Describes how data is mapped, grouped, and filtered (e.g., excluding unnecessary transactions like Night Deposits). This hints at some level of data cleaning but lacks a detailed discussion of the data's quality, such as error detection or variable consistency.
+6. **Assumptions and Limitations Review:**
+   - A review plan is needed for assumptions and limitations to ensure they are still accurate and appropriate.
+   - Updates will be incorporated into ongoing monitoring procedures.
+
+7. **Remediation Plan:**
+   - A remediation plan will be documented to reflect the agreed actions, including documentation updates and clarifications. The deliverables and timeline will be determined by the end of next week.
+
+8. **Vendor Model Considerations:**
+   - For models developed by third-party vendors, it was acknowledged that not all data may be accessible, and high-level summaries will suffice.
+   - The team will check what information can be provided and include details about data sources and any data processing done by the vendor.
+
+9. **Model Documentation Transition:**
+   - The team is transitioning to a new template for model documentation. The existing document structure will be updated as part of the ongoing model development process.
+   - ServiceNow will replace the previous Archer system for documentation uploads.
 
 ---
 
-### **What is Missing:**
-1. **Distribution of Variables:**
-   - There’s no discussion of variable distributions (e.g., mean, median, standard deviation, frequency of categories) in the documentation. The documentation doesn’t include descriptive statistics for continuous or categorical variables.
+### Actions:
 
-2. **Outlier Detection:**
-   - There’s no mention of how outliers are identified or treated within the data. For example, extreme transaction volumes or sales numbers aren’t flagged or discussed.
+- **Documentation Updates:**
+  - Remove references to internal model overrides.
+  - Update the "model reliance" field to reflect the proper categorization ("some").
+  - Review and include model assumptions and limitations review processes.
 
-3. **Duplicated/Missing Values:**
-   - While **ETL** is mentioned, there are no statistics or analysis on missing or duplicated values. This step would typically involve checking for missing data and determining the percentage of incomplete records.
+- **Performance Monitoring Plan:**
+  - Compile performance testing data for 2022 and 2023.
+  - Submit future reports annually, with a possible target by the end of 2025 for the next submission.
 
-4. **Consistency Checks:**
-   - The documentation does not explicitly state how inconsistencies (like negative transaction amounts or invalid product codes) are handled. Consistency checks for logical values (e.g., age, amount) are missing.
+- **Vendor Data Clarification:**
+  - Gather high-level summaries from vendors regarding data usage and processing.
 
-5. **Detailed Data Quality Review:**
-   - There is no dedicated section for evaluating overall data quality or assessing if additional actions are required to improve the data.
-
----
-
-### **Conclusion:**
-The documentation touches on some aspects of data collection, cleaning, and transformation but **lacks a comprehensive data quality analysis**. You would need to add sections specifically focused on:
-
-- Distribution analysis (for continuous and categorical variables)
-- Outlier identification and treatment
-- Detailed treatment of missing and duplicated data
-- Consistency checks for values
-- A formal data quality assessment to evaluate the model developer’s approach.
-
-The documentation discusses the data structure, aggregation, and some level of validation (e.g., mapping transactions and products), but it does not comprehensively address:
-
-Distribution of variables (e.g., means, percentiles)
-Outlier analysis
-Duplicated/missing value assessments
-Consistency checks (like "age" being impossible values)
-Formal assessment of data sources being from reputable systems
-
-
-
-Here’s a detailed analysis of **Section 4.3 Data Appropriateness Assessment**, highlighting what is present in your documentation and images, and clearly marking what is missing or lacks sufficient detail:
+- **Timeline for Next Steps:**
+  - Team to provide an update by next Friday on progress and the plan for remediation and documentation updates.
 
 ---
 
-**4.3 Data Appropriateness Assessment**
-
-- **Assess the appropriateness of data cleaning, transformation, weighting, pooling, and partitioning and data relevance.**  
-  - **Data cleaning process:**  
-    - **Remove duplicate, irrelevant, and incorrect data:** 
-      - **Present:** The documentation notes the exclusion of unneeded transactions from the dataset during the aggregation process. 
-      - **Missing:** Specifics on how duplicates are identified and removed are not provided. No examples of irrelevant or incorrect data types are mentioned (e.g., values that do not make sense, such as "FICO" being "Yes" or "-200").
-      
-    - **Fix corrupted, incorrectly formatted data:**  
-      - **Present:** The documentation implies a standardized approach to data formatting in the aggregation section, though not explicitly detailed. 
-      - **Missing:** Specific strategies or examples of how naming conventions or typos are handled are absent.
-
-    - **Treatment of outliers:**  
-      - **Present:** Mentioned indirectly in the data aggregation and transformation section, where unneeded transactions are filtered. 
-      - **Missing:** Clear criteria or tests for detecting outliers, and specific treatments for outliers that are justified are not provided. There’s no indication of how outliers are classified or handled in detail.
-
-    - **Backfill incomplete/missing data:**  
-      - **Missing:** The documentation does not address how missing data is treated beyond noting that it’s accounted for. There are no strategies for backfilling missing data or how algorithms will handle it.
-
-  - **Data sampling and re-sampling methodologies:**  
-    - **Missing:** The documentation does not detail any specific methodologies used for data sampling or re-sampling during the model development phase.
-
-  - **Data transformation:**  
-    - **Present:** Some transformation processes are outlined in the data aggregation section (e.g., mapping and filtering of transactions).  
-    - **Missing:** Specific techniques like clustering, binning, or normalization are not mentioned.
-
-  - **Data relevance:**  
-    - **Present:** The documentation evaluates the relevance of data sources, ensuring they are from reputable internal systems.  
-    - **Missing:** A thorough assessment of the reasonability and consistency of the source variables relative to model objectives and specifications is lacking.
-
-- **Assess that the data definitions are consistent with the use of the data in the model:**  
-  - **Present:** The documentation describes data fields and their purposes, such as transaction amounts and account types.  
-  - **Missing:** There’s no explicit confirmation that these definitions align with model usage.
-
-- **Evaluate data transformation, missing data treatment, and data exclusion:**  
-  - **Missing:** A comprehensive evaluation of the aforementioned elements is not detailed in the documentation.
-
-- **Evaluate the statistical validity of data assumptions and the appropriateness of data sampling procedures used during model development:**  
-  - **Missing:** There is no discussion on the statistical validity of the assumptions made in the data or how sampling procedures were validated during model development.
-
----
-
-This breakdown summarizes the components present in your documentation while clearly indicating the areas where additional detail or content is necessary. If you need further clarification or assistance, feel free to ask!
+### Next Meeting: [Proposed Date] to review progress and finalize documentation updates.
