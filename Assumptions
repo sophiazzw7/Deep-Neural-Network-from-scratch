@@ -1,71 +1,89 @@
+Understood! Here's a revised version that sticks to recording what was discussed without drawing inferences.
+
+---
+
 ### Meeting Minutes
 
 **Date:** [Insert Date]
 
 **Attendees:**
 - [List of Attendees]
-  
-**Purpose:** Discussion of model overrides, documentation updates, OGM reporting, and ongoing monitoring for Tier 3 and Tier 4 models.
+
+**Purpose:** Discuss model overrides, ongoing monitoring (OGM) reporting, Tier 3 and Tier 4 model requirements, and performance metrics.
 
 ---
 
-### Key Points Discussed
+### Discussion Points
 
-1. **Model Overrides Clarification:**
-   - Overrides are business decisions, not model output alterations.
-   - Clarification needed in the documentation to specify that the overrides are external to the model and handled in separate business meetings.
-   - Suggestion to remove the section about "allowable range of overrides" and add a description of the decision-making process.
+**1. Model Overrides Clarification:**
+- The model does not allow for internal overrides.
+- Business teams can override the model's staffing recommendations in separate meetings, but this is independent of the model itself.
+- Documentation needs to be updated to remove references to internal overrides and clarify that overrides are business decisions, separate from the model's output.
 
-2. **OGM Reporting Requirements:**
-   - There was confusion over the need for ongoing monitoring (OGM) reports for Tier 4 models. It was clarified that while standalone OGM reports are no longer required, annual performance testing and documentation updates are still mandatory.
-   - A governance team will confirm whether any further action is required.
+**2. Ongoing Monitoring (OGM) Reporting for Tier 4 Models:**
+- Confusion regarding the requirement for OGM reports. The team was previously told that Tier 4 models did not require OGM reports.
+- Clarified that although a standalone OGM report is not required for Tier 4 models, annual performance testing still needs to be conducted and documented.
+- The governance team will confirm whether specific OGM sections, such as OGM stakeholders, are still required in the documentation.
 
-3. **Updating Ongoing Monitoring Plans:**
-   - The team needs to ensure performance testing results are updated annually, even though formal reports may not be required.
-   - They will compile the 2022 and 2023 data for submission, with a future plan to submit on an annual basis moving forward.
+**3. Performance Testing Results for 2022 and 2023:**
+- The team did not submit performance testing results for 2022 and 2023 due to the misunderstanding of reporting requirements.
+- Agreed to compile and submit the 2022 and 2023 performance data.
+- Moving forward, performance testing results will be submitted annually, with a potential submission target by the end of 2025.
 
-4. **Next Steps for Documentation:**
-   - Updates to the model documentation are necessary, including removing outdated references to secondary use and updating fields such as "model reliance" (set to "some").
-   - The model validation team will draft a table with the required updates and share it for review by stakeholders.
+**4. Metrics for Model Stability and Sensitivity:**
+- Stability metrics and sensitivity analysis need to be added.
+- Stability metrics could track monthly prediction variances.
+- Sensitivity analysis would involve adjusting model inputs (e.g., staffing levels) to evaluate the output.
+- The team will explore how to develop and document these metrics.
 
-5. **Stability and Sensitivity Analysis:**
-   - A discussion on the importance of adding metrics to track model stability and sensitivity.
-   - Stability analysis could involve tracking month-to-month prediction variances, and sensitivity analysis would include manually adjusting inputs like FTEs to check for appropriate output.
-   
+**5. Assumptions and Limitations Review:**
+- The team needs to regularly review and reassess assumptions and limitations in the model, particularly in response to business changes, such as alterations in branch operating hours.
+- A plan will be developed to review and update assumptions as part of the ongoing monitoring process.
+
+**6. Remediation Plan for Documentation:**
+- A remediation plan is required to close out the review. This plan will include:
+   - Documentation updates for overrides, performance testing, and OGM requirements.
+   - A timeline for completing the updates and submitting performance testing results.
+- The team will draft and share this plan by the end of next week (Friday).
+
+**7. Vendor Model Considerations:**
+- The model relies on third-party vendor software, limiting access to detailed development data.
+- A high-level summary of vendor data sources and data processing steps will be included in the documentation.
+- The team will work with the vendor to provide any available details about data cleaning and preprocessing.
+
+**8. Transition to New Documentation Template:**
+- The team is transitioning to a new model documentation template and will incorporate the discussed updates during this process.
+- The ServiceNow platform will replace Archer for documentation uploads, but the process should remain similar to the current one.
+- Documentation updates will include correcting vendor names and ensuring model version consistency.
+
+---
+
+### Action Items:
+
+1. **Documentation Updates:**
+   - Remove references to internal overrides.
+   - Clarify that business overrides are separate from the model's output.
+   - Update "model reliance" field to reflect accurate categorization ("some").
+
+2. **Performance Testing Results (2022-2023):**
+   - Compile performance data for 2022 and 2023 and submit it.
+   - Submit future results annually, with a tentative submission date by the end of 2025.
+
+3. **Vendor-Provided Data Summary:**
+   - Work with the vendor to obtain high-level summaries of data sources and processes.
+
+4. **Remediation Plan Development:**
+   - Draft a remediation plan and share it by next Friday for review.
+
+5. **Stability and Sensitivity Metrics:**
+   - Develop stability metrics and perform sensitivity analysis to track prediction consistency and input-output sensitivity.
+
 6. **Assumptions and Limitations Review:**
-   - A review plan is needed for assumptions and limitations to ensure they are still accurate and appropriate.
-   - Updates will be incorporated into ongoing monitoring procedures.
+   - Establish a review process for model assumptions and limitations.
 
-7. **Remediation Plan:**
-   - A remediation plan will be documented to reflect the agreed actions, including documentation updates and clarifications. The deliverables and timeline will be determined by the end of next week.
-
-8. **Vendor Model Considerations:**
-   - For models developed by third-party vendors, it was acknowledged that not all data may be accessible, and high-level summaries will suffice.
-   - The team will check what information can be provided and include details about data sources and any data processing done by the vendor.
-
-9. **Model Documentation Transition:**
-   - The team is transitioning to a new template for model documentation. The existing document structure will be updated as part of the ongoing model development process.
-   - ServiceNow will replace the previous Archer system for documentation uploads.
+7. **ServiceNow Transition:**
+   - Begin transitioning documentation to the new template for ServiceNow.
 
 ---
 
-### Actions:
-
-- **Documentation Updates:**
-  - Remove references to internal model overrides.
-  - Update the "model reliance" field to reflect the proper categorization ("some").
-  - Review and include model assumptions and limitations review processes.
-
-- **Performance Monitoring Plan:**
-  - Compile performance testing data for 2022 and 2023.
-  - Submit future reports annually, with a possible target by the end of 2025 for the next submission.
-
-- **Vendor Data Clarification:**
-  - Gather high-level summaries from vendors regarding data usage and processing.
-
-- **Timeline for Next Steps:**
-  - Team to provide an update by next Friday on progress and the plan for remediation and documentation updates.
-
----
-
-### Next Meeting: [Proposed Date] to review progress and finalize documentation updates.
+**Next Steps:** The team will provide an update on the remediation plan and documentation by [next Friday]. A follow-up meeting will be scheduled to review progress and discuss any outstanding issues.
