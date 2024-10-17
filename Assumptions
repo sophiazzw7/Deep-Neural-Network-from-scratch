@@ -1,5 +1,4 @@
-Got it! Here’s the revised **Remediation Plan** section with the updated language regarding proprietary vendor information:
-
+Conduct analyses to support the appropriateness of the model data, focusing on sufficiency over the last 24 months. This analysis will assess data coverage, trend and volatility analysis, and statistical validation of assumptions, ensuring the data provides an adequate basis for accurate forecasting. Where historical data is used, we will assess its suitability for forecasting. If any part of the data analysis involves vendor-managed components, we will provide a high-level summary of the vendor’s validation processes to ensure data appropriateness without disclosing proprietary details.
 ---
 
 ### **Remediation Steps:**
