@@ -1,4 +1,56 @@
-Certainly! I’ll include the high-level summary portion in the **Data Cleaning Process Documentation** section to reflect the use of vendor data processing, as well as a general approach for providing high-level descriptions where direct access to detailed data is limited. Here’s the updated **Remediation Plan**:
+Got it! Here’s the revised **Remediation Plan** section with the updated language regarding proprietary vendor information:
+
+---
+
+### **Remediation Steps:**
+
+1. **Clarification of Business Overrides and Model Output:**
+   - **Objective:** Ensure that the model documentation accurately reflects that overrides are business-driven and external to the model itself.
+   - **Plan:** We will remove any references to "allowable range of overrides" for the model output and clarify that overrides are made during business decision meetings (e.g., banking executives, regional leaders) based on strategic considerations. A detailed description of this process will be added.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
+
+2. **Data Dictionary (Variable Creation & Statistics):**
+   - **Objective:** Provide a comprehensive data dictionary to enhance transparency.
+   - **Plan:** If the creation of variables, data dictionary, or other processing details are proprietary to the vendor, we will provide a high-level summary. This summary will describe the key variables, their purpose, and any relevant statistics such as mean, median, and standard deviation. This ensures transparency while respecting proprietary information constraints.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
+
+3. **Data Cleaning Process Documentation:**
+   - **Objective:** Fully document the data cleaning process, including vendor-handled processes.
+   - **Plan:**
+     - Outline the complete data cleaning process, covering smoothing, normalization, clustering, and justification for any backfilling or corrections made.
+     - **High-Level Summary:** If the data cleaning and transformation processes are proprietary to the vendor, we will provide a high-level summary. This summary will describe the types of transformations applied to the data and the general methods used to address missing or corrupted data, without exposing vendor-sensitive details.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
+
+4. **Comprehensive Data Quality Assessment:**
+   - **Objective:** Document methods for ensuring data quality.
+   - **Plan:** Provide a detailed assessment addressing outliers, missing values, incomplete data, duplicates, and consistency checks used to validate data accuracy. This will include a discussion of how the vendor ensures data integrity and reliability. Where proprietary processes are involved, a high-level summary will be provided.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
+
+5. **Data Sources Evaluation:**
+   - **Objective:** Verify the reliability and representativeness of the data sources.
+   - **Plan:** Conduct an evaluation of the data sources used in the model, assessing their reliability, consistency, and relevance to the business objectives. If vendor information is proprietary, we will provide a high-level summary explaining the data sources and their relevance without revealing sensitive details.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
+
+6. **Sampling, Re-Sampling, and Partitioning Methodologies:**
+   - **Objective:** Provide transparency around data handling methodologies.
+   - **Plan:** Document any sampling, re-sampling, or partitioning techniques applied during the development and validation stages. If proprietary vendor methodologies are used, we will provide a high-level summary of the general techniques without disclosing sensitive specifics.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
+
+7. **Source Data Code Documentation:**
+   - **Objective:** Ensure transparency in data processing.
+   - **Plan:** Where applicable, document any codes or scripts used to process source data into final model development datasets. If data was processed by a vendor using proprietary code, we will include a high-level summary of the methodologies and key processing steps, without disclosing vendor-sensitive algorithms.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
+
+---
+
+Let me know if this now fits your requirements!Certainly! I’ll include the high-level summary portion in the **Data Cleaning Process Documentation** section to reflect the use of vendor data processing, as well as a general approach for providing high-level descriptions where direct access to detailed data is limited. Here’s the updated **Remediation Plan**:
 
 ---
 
