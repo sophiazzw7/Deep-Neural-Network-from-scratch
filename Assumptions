@@ -1,89 +1,158 @@
-Understood! Here's a revised version that sticks to recording what was discussed without drawing inferences.
+Certainly! I’ll include the high-level summary portion in the **Data Cleaning Process Documentation** section to reflect the use of vendor data processing, as well as a general approach for providing high-level descriptions where direct access to detailed data is limited. Here’s the updated **Remediation Plan**:
 
 ---
 
-### Meeting Minutes
-
-**Date:** [Insert Date]
-
-**Attendees:**
-- [List of Attendees]
-
-**Purpose:** Discuss model overrides, ongoing monitoring (OGM) reporting, Tier 3 and Tier 4 model requirements, and performance metrics.
+### **Proposed Remediation Plan: Development Data Sub-Issue**
+**Sub-Issue ID:** F_0002  
+**Sub-Issue Name:** Development Data Sub-Issue  
+**Sub-Issue Category:** Data Quality & Data Appropriateness  
 
 ---
 
-### Discussion Points
-
-**1. Model Overrides Clarification:**
-- The model does not allow for internal overrides.
-- Business teams can override the model's staffing recommendations in separate meetings, but this is independent of the model itself.
-- Documentation needs to be updated to remove references to internal overrides and clarify that overrides are business decisions, separate from the model's output.
-
-**2. Ongoing Monitoring (OGM) Reporting for Tier 4 Models:**
-- Confusion regarding the requirement for OGM reports. The team was previously told that Tier 4 models did not require OGM reports.
-- Clarified that although a standalone OGM report is not required for Tier 4 models, annual performance testing still needs to be conducted and documented.
-- The governance team will confirm whether specific OGM sections, such as OGM stakeholders, are still required in the documentation.
-
-**3. Performance Testing Results for 2022 and 2023:**
-- The team did not submit performance testing results for 2022 and 2023 due to the misunderstanding of reporting requirements.
-- Agreed to compile and submit the 2022 and 2023 performance data.
-- Moving forward, performance testing results will be submitted annually, with a potential submission target by the end of 2025.
-
-**4. Metrics for Model Stability and Sensitivity:**
-- Stability metrics and sensitivity analysis need to be added.
-- Stability metrics could track monthly prediction variances.
-- Sensitivity analysis would involve adjusting model inputs (e.g., staffing levels) to evaluate the output.
-- The team will explore how to develop and document these metrics.
-
-**5. Assumptions and Limitations Review:**
-- The team needs to regularly review and reassess assumptions and limitations in the model, particularly in response to business changes, such as alterations in branch operating hours.
-- A plan will be developed to review and update assumptions as part of the ongoing monitoring process.
-
-**6. Remediation Plan for Documentation:**
-- A remediation plan is required to close out the review. This plan will include:
-   - Documentation updates for overrides, performance testing, and OGM requirements.
-   - A timeline for completing the updates and submitting performance testing results.
-- The team will draft and share this plan by the end of next week (Friday).
-
-**7. Vendor Model Considerations:**
-- The model relies on third-party vendor software, limiting access to detailed development data.
-- A high-level summary of vendor data sources and data processing steps will be included in the documentation.
-- The team will work with the vendor to provide any available details about data cleaning and preprocessing.
-
-**8. Transition to New Documentation Template:**
-- The team is transitioning to a new model documentation template and will incorporate the discussed updates during this process.
-- The ServiceNow platform will replace Archer for documentation uploads, but the process should remain similar to the current one.
-- Documentation updates will include correcting vendor names and ensuring model version consistency.
+#### **Remediation Plan Overview:**
+In response to the identified data quality and appropriateness issues, we propose a comprehensive remediation plan that addresses gaps in documentation, validation, and monitoring for the model’s development data. This plan includes clear documentation updates, additional validations, and high-level summaries where full access to vendor-managed processes is restricted. Each step will be aligned with regulatory requirements to ensure data compliance and the integrity of the model.
 
 ---
 
-### Action Items:
+#### **Remediation Steps:**
 
-1. **Documentation Updates:**
-   - Remove references to internal overrides.
-   - Clarify that business overrides are separate from the model's output.
-   - Update "model reliance" field to reflect accurate categorization ("some").
+1. **Clarification of Business Overrides and Model Output:**
+   - **Objective:** Ensure that the model documentation accurately reflects that overrides are business-driven and external to the model itself.
+   - **Plan:** We will remove any references to "allowable range of overrides" for the model output and clarify that overrides are made during business decision meetings (e.g., banking executives, regional leaders) based on strategic considerations. A detailed description of this process will be added.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
 
-2. **Performance Testing Results (2022-2023):**
-   - Compile performance data for 2022 and 2023 and submit it.
-   - Submit future results annually, with a tentative submission date by the end of 2025.
+2. **Data Dictionary (Variable Creation & Statistics):**
+   - **Objective:** Provide a comprehensive data dictionary to enhance transparency.
+   - **Plan:** Document variable creation rules, units, decoding logic, and descriptive statistics (mean, median, standard deviation, frequency distribution) to ensure consistent understanding of the dataset used for model development.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
 
-3. **Vendor-Provided Data Summary:**
-   - Work with the vendor to obtain high-level summaries of data sources and processes.
+3. **Data Cleaning Process Documentation:**
+   - **Objective:** Fully document the data cleaning process, including vendor-handled processes.
+   - **Plan:**
+     - Outline the complete data cleaning process, covering smoothing, normalization, clustering, and justification for any backfilling or corrections made.
+     - **High-Level Summary:** In cases where data cleaning is handled by third-party vendors and full access to details is restricted, we will provide a high-level summary of the vendor’s processes. This will include descriptions of the transformations applied to the data, the steps taken to ensure data quality, and the checks performed for missing or corrupted data.
+     - Where applicable, document any known corrections or preprocessing steps performed by the vendor, even if proprietary details are not available.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
 
-4. **Remediation Plan Development:**
-   - Draft a remediation plan and share it by next Friday for review.
+4. **Comprehensive Data Quality Assessment:**
+   - **Objective:** Document methods for ensuring data quality.
+   - **Plan:** Provide a detailed assessment addressing outliers, missing values, incomplete data, duplicates, and consistency checks used to validate data accuracy. This will include a discussion of how the vendor ensures data integrity and reliability.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
 
-5. **Stability and Sensitivity Metrics:**
-   - Develop stability metrics and perform sensitivity analysis to track prediction consistency and input-output sensitivity.
+5. **Data Sources Evaluation:**
+   - **Objective:** Verify the reliability and representativeness of the data sources.
+   - **Plan:** Conduct an evaluation of the data sources used in the model, assessing their reliability, consistency, and relevance to the business objectives. Document findings in the updated model documentation.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
 
-6. **Assumptions and Limitations Review:**
-   - Establish a review process for model assumptions and limitations.
+6. **Sampling, Re-Sampling, and Partitioning Methodologies:**
+   - **Objective:** Provide transparency around data handling methodologies.
+   - **Plan:** Document any sampling, re-sampling, or partitioning techniques applied during the development and validation stages. This step is crucial for ensuring that data used for training and testing is representative and free of bias.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
 
-7. **ServiceNow Transition:**
-   - Begin transitioning documentation to the new template for ServiceNow.
+7. **Source Data Code Documentation:**
+   - **Objective:** Ensure transparency in data processing.
+   - **Plan:** Where applicable, document any codes or scripts used to process source data into final model development datasets. If data was processed manually or by vendors, we will include a high-level summary of the methodologies used.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
 
 ---
 
-**Next Steps:** The team will provide an update on the remediation plan and documentation by [next Friday]. A follow-up meeting will be scheduled to review progress and discuss any outstanding issues.
+### **Compliance and Data Validation:**
+
+8. **Model Data Compliance:**
+   - **Objective:** Confirm that the model data meets all relevant regulatory standards.
+   - **Plan:** Review and update the model documentation to confirm that it adheres to regulatory requirements for data quality and governance. Provide supporting documentation to demonstrate compliance.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
+
+9. **Data Sufficiency & Appropriateness Analysis:**
+   - **Objective:** Validate the appropriateness of the model data for its intended purpose.
+   - **Plan:** Conduct a thorough analysis of the model’s data over a 24-month period to confirm its sufficiency for forecasting. This will include coverage, trend, and volatility analysis, as well as validation of key assumptions. We will also evaluate the historical data's suitability for forecasting.
+     - Assumptions such as branch operating hours will be reassessed and updated where necessary to reflect current business conditions.
+   - **Target Completion:** [Insert Deadline]
+   - **Assigned To:** [Name/Team]
+
+---
+
+### **Stability, Sensitivity, and Early Warning Metrics:**
+
+10. **Stability and Sensitivity Analysis:**
+    - **Objective:** Ensure the model's output is stable and sensitive to input variations.
+    - **Plan:** We will develop and document stability metrics to track prediction variances month-over-month, ensuring consistent performance. Additionally, we will conduct sensitivity analysis by adjusting key inputs (e.g., staffing levels) to assess the impact on model outputs.
+    - **Target Completion:** [Insert Deadline]
+    - **Assigned To:** [Name/Team]
+
+11. **Early Warning Metrics:**
+    - **Objective:** Implement metrics to detect early signs of performance degradation.
+    - **Plan:** We will establish an early warning system that monitors key performance metrics within shorter intervals, providing alerts when significant deviations from expected performance occur.
+    - **Target Completion:** [Insert Deadline]
+    - **Assigned To:** [Name/Team]
+
+---
+
+### **Assumptions and Limitations Review:**
+
+12. **Ongoing Assumptions and Limitations Review:**
+    - **Objective:** Ensure assumptions and limitations remain valid.
+    - **Plan:** Implement a process to review model assumptions and limitations regularly. This review will assess the appropriateness of assumptions (e.g., changes to branch hours or business processes) and update them as needed to reflect changes in operations. This review will be conducted annually and documented in the model’s monitoring plan.
+    - **Target Completion:** [Insert Deadline]
+    - **Assigned To:** [Name/Team]
+
+---
+
+### **Deliverables:**
+- Updated and detailed data dictionary.
+- Comprehensive documentation of data cleaning processes, including high-level vendor summaries.
+- Data quality assessment reports covering consistency checks, outlier detection, and data reliability.
+- Stability and sensitivity metrics to assess the model’s performance.
+- A review of the model’s assumptions and limitations with recommendations for updates.
+
+---
+
+**Target Completion Date:** [Insert Completion Date]
+
+---
+
+This remediation plan is designed to address all identified gaps while incorporating high-level vendor summaries where detailed data is unavailable. Regular progress updates will be provided, and any issues encountered during implementation will be flagged for resolution.
+
+---
+
+Please let me know if this updated version meets your expectations or if further adjustments are needed!
+
+
+==========
+
+Sure! Below is the draft for the email. Feel free to make any adjustments to meet your style or preferences:
+
+---
+
+**Subject:** Proposed Remediation Plan for Development Data Sub-Issue - Review and Next Steps
+
+Dear [Developer Team],
+
+I hope this message finds you well.
+
+Thank you for providing the proposed resolution timeline of April 1. I have attached the **Remediation Plan** for the Development Data Sub-Issue (F_0002), which incorporates the discussions we’ve had around data quality, compliance, and model output clarifications, as well as the inclusion of high-level vendor summaries where appropriate.
+
+Could you please review the attached document and confirm if you are aligned with the proposed remediation steps and timelines? Once you feel good about the plan, we will present it to the MRO leadership for their final approval. Upon receiving leadership approval, we will register the issue in our system and move forward with the remediation process as planned.
+
+Please let me know if you have any questions or if there are any additional points that need to be addressed. We appreciate your continued collaboration and look forward to resolving this together.
+
+Best regards,  
+[Your Name]  
+[Your Job Title]  
+[Your Contact Information]
+
+---
+
+**Attachment:** Remediation Plan for Development Data Sub-Issue (F_0002).docx
+
+---
+
+Let me know if this works for you or if you'd like any changes!
