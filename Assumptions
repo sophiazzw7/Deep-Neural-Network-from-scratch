@@ -28,6 +28,8 @@ In response to the identified data quality and appropriateness issues, we propos
    - **Target Completion:** [Insert Deadline]
    - **Assigned To:** [Name/Team]
 
+If the creation of variables, data dictionary, or other processing details are proprietary to the vendor, we will provide a high-level summary. This summary will describe the key variables, their purpose, and any relevant statistics such as mean, median, and standard deviation. This ensures transparency while respecting proprietary information constraints.
+
 3. **Data Cleaning Process Documentation:**
    - **Objective:** Fully document the data cleaning process, including vendor-handled processes.
    - **Plan:**
