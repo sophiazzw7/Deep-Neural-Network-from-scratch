@@ -1,0 +1,36 @@
+1. Teller Transactions (2021)
+
+Model Document Performance Testing:
+The model document indicated a monthly variance of 3% for February 2021, within the ±5% threshold for teller transactions.
+User Calculated Backtesting:
+Backtesting performed by the user for 2021 teller transactions indicated a variance of -2.07%.
+This aligns with the model’s documented performance, validating the forecast accuracy within tolerance levels.
+OGM Results:
+The OGM report confirmed no threshold breaches for teller transactions in 2021, with ongoing compliance and performance monitoring.
+2. Teller Transactions (2018)
+
+Model Document Performance Testing:
+For the hSTI portfolio in 2018, initial testing showed stable performance, though specific variance details were not provided in the document.
+User Calculated Backtesting:
+The user’s backtesting for 2018 teller transactions revealed a variance of -1.24%, well within the 5% threshold.
+This result demonstrates strong alignment with actuals, confirming accurate forecasting for teller transactions in 2018.
+OGM Results:
+OGM results for 2018 did not report any breaches, confirming that the teller transactions met compliance standards during this period.
+3. Platform Sales and Services (2021)
+
+Model Document Performance Testing:
+Documented performance for platform services in 2021 included a tolerance threshold of 20%. The model document confirmed that February 2021 platform variance was within this threshold.
+User Calculated Backtesting:
+Backtesting for 2021 platform transactions indicated a 6.94% variance, well within the 20% tolerance.
+This backtesting supports the model’s forecast reliability for platform services in the hBBT portfolio.
+OGM Results:
+The OGM report for 2021 showed no breaches in the platform metric, with compliance noted across the monitoring period.
+4. Platform Sales and Services (2018)
+
+Model Document Performance Testing:
+The 2018 platform forecast accuracy was deemed adequate in initial testing, though specific variance details were not provided in the document.
+User Calculated Backtesting:
+The user’s backtesting for 2018 platform transactions yielded a 2.97% variance.
+This value is within the 20% threshold, indicating that the model accurately forecasted platform sales and services for the hSTI portfolio.
+OGM Results:
+The OGM compliance report for 2018 confirmed no breaches in platform metrics, with consistent performance monitoring.
