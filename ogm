@@ -1,7 +1,11 @@
-Based on a comprehensive review, MOD11679 has been rated as Fit for Intended Use, with Conditions. This assessment reflects the model's alignment with its primary purpose in workforce and capacity planning for the Truist RCB branch network, while acknowledging certain limitations that require ongoing monitoring and periodic adjustments.
+Based on the review of MOD11679, the following conclusions were reached regarding model data, methodology/conceptual soundness, and performance:
 
-The rating considers the model's effectiveness in supporting branch-level staffing decisions and its documented limitations in forecasting under specific circumstances. Mitigating controls and updates are in place to address limitations in data assumptions and threshold sensitivity, which help maintain the model’s performance within acceptable bounds. However, further refinements—particularly in monitoring practices and documentation consistency—are recommended to enhance the model's robustness and usability.
+The model is designed and implemented as expected, with relevant input data and acceptable performance boundaries to support staffing recommendations within the Truist RCB branch network. However, MRO has identified several sub-issues that may impact transparency, threshold robustness, and data quality, which should be addressed to maintain the model’s reliability over time. Specifically:
 
-In summary, while the model effectively supports its intended function, these conditions emphasize the need for close monitoring and timely updates to address evolving requirements and ensure long-term sustainability.
+- Limitations exist in tracking certain branch activities, which could potentially impact forecast accuracy if left unaddressed.
+- The absence of documented rationale for specific performance thresholds raises questions regarding threshold robustness and model sensitivity.
+- Documentation gaps in the Model Development Document (MDD) affect transparency and compliance with internal requirements.
 
-Model Rating: Taking into account the sub-issues and their impact on model reliability and usability, MRO assesses the model as Fit for Use with Caution. This rating reflects confidence in the model’s structure and current performance, with a recommendation for periodic review of compensating measures and ongoing updates to address identified limitations.
+Model Rating: Fit for Use with Conditions
+
+Taking into account the identified sub-issues, the assessment of key assumptions, and the current effectiveness of compensating measures, MRO has determined that the model is "Fit for Use with Conditions." While the model is suitable for its intended workforce planning function, it requires ongoing monitoring and remediation actions to address the noted sub-issues and align with Model Risk Management standards.
