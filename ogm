@@ -1,16 +1,5 @@
-Based on the provided information, here is a draft for the "Model Uses, Products, and Exposures" section, incorporating details about the model's role, scope, and coverage:
+MRO engaged with the development team to verify that no significant, undeclared changes have occurred since the last model validation. This confirmation process revealed that the model’s fundamental operations, including its inputs, outputs, and core algorithms, have remained consistent with prior specifications.
 
----
+Although there were no changes impacting model functionality, MRO identified version updates attributed to software enhancements within the CloudCords platform. These updates were not reflected in the model change log, as they did not alter the underlying model structure or performance characteristics.
 
-### 1.1 Model Uses, Products, and Exposures
-
-The model, CloudCords, is used to support workforce or staff planning for the Truist Retail Community Bank (RCB) branch network. The model output provides recommendations to develop branch-level staff plans, with a primary focus on producing a Full-Time Equivalent (FTE) forecast. This forecast helps branches plan staffing levels by recommending full-time versus part-time positions according to projected client-facing requirements.
-
-The model output, however, serves as only one component in the broader decision-making framework for staffing. Final staffing decisions are influenced by multiple factors, including budget constraints, minimum staffing levels, and input from various stakeholders in the retail banking and HR teams. This layered approach ensures that the model is used within a controlled and contextually informed environment.
-
-#### Product Coverage and Portfolio Size
-The model coverage is limited to the Truist RCB branch network. No changes have been made to the model's intended coverage or scope since the last validation.
-
---- 
-
-Let me know if any additional details are needed or if there’s another aspect to emphasize based on your requirements.
+MRO noted that the model version should be appropriately documented in the MDD (Model Development Document) to maintain consistency, as outlined in Sub-issue F_003, Part 3.
