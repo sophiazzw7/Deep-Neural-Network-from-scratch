@@ -1,27 +1,7 @@
-For the **Key Limitations** section, your draft seems to cover the essential points, but it could be refined for clarity. Including the mitigants can be beneficial if they are crucial to addressing the limitations and showing that the risk is actively managed. Here’s a refined version with improved language and the mitigants structured for better readability:
+Based on a comprehensive review, MOD11679 has been rated as Fit for Intended Use, with Conditions. This assessment reflects the model's alignment with its primary purpose in workforce and capacity planning for the Truist RCB branch network, while acknowledging certain limitations that require ongoing monitoring and periodic adjustments.
 
----
+The rating considers the model's effectiveness in supporting branch-level staffing decisions and its documented limitations in forecasting under specific circumstances. Mitigating controls and updates are in place to address limitations in data assumptions and threshold sensitivity, which help maintain the model’s performance within acceptable bounds. However, further refinements—particularly in monitoring practices and documentation consistency—are recommended to enhance the model's robustness and usability.
 
-### 2.4 Key Limitations
+In summary, while the model effectively supports its intended function, these conditions emphasize the need for close monitoring and timely updates to address evolving requirements and ensure long-term sustainability.
 
-This section highlights key limitations of the model that may impact its use and performance. These limitations require compensating measures or ongoing monitoring, as outlined in the OGM plan. These limitations relate to specific model boundaries, beyond which model accuracy may be compromised.
-
-#### Limitation 1:
-Many activities performed in branches are not feasible to track within this model, especially when they involve new or untracked products and services. As a result, there is a risk that the model may either over-forecast or under-forecast branch capacity requirements.
-
-- **Risk:** The inability to account for untracked or newly introduced products/services could lead to inaccuracies in capacity forecasts for specific branches.
-
-#### Mitigants:
-To address this limitation, the following compensating measures and monitoring practices are in place:
-
-1. **Regular Updates and Mapping Adjustments:** The model is updated regularly, and mapping files are adjusted as Workforce Management becomes aware of new activities or products. This process helps maintain the relevance and accuracy of the forecasts.
-
-2. **Monitoring Frequency:** MRO noted the need for frequent monitoring of model assumptions and limitations to ensure they align with evolving branch activities. This is documented under Part 5 of sub-issue F_001.
-
-3. **Forecast Performance Monitoring:** For tracked activities, forecasted volumes are consistently compared against actual volumes to evaluate model performance. Discrepancies or systematic biases are identified through monitoring reports, prompting root cause analyses by business experts before publishing forecasts.
-
-These mitigants ensure that while the model has limitations in tracking new or unanticipated activities, ongoing adjustments and monitoring practices reduce potential forecast inaccuracies.
-
----
-
-This refined version keeps the information clear and organized, explicitly listing the limitations and mitigants. Listing the mitigants is appropriate here, as it reinforces that there are specific controls in place to manage the identified risks.
+Model Rating: Taking into account the sub-issues and their impact on model reliability and usability, MRO assesses the model as Fit for Use with Caution. This rating reflects confidence in the model’s structure and current performance, with a recommendation for periodic review of compensating measures and ongoing updates to address identified limitations.
