@@ -1,42 +1,105 @@
-Based on the template and provided OGM elements, here’s a refined assessment based on the specific sections from the images you've shared and the required template for **11. Review of Ongoing Monitoring (OGM) Plan**. Here is how to document the key OGM Plan review points and an assessment summary for each part:
+**Model Risk Oversight (MRO) Review and Assessment of the Ongoing Monitoring (OGM) Plan Document**
 
 ---
 
-### 11.1 OGM Plan Element Applicability Review
-
-| Ref No. | Monitoring Element                               | Included in OGM Plan | Related Metric No. | MRO Assessment for Excluded Elements                                                                                      |
-|---------|--------------------------------------------------|----------------------|---------------------|-------------------------------------------------------------------------------------------------------|
-| 1       | Limitations Monitoring                           | Yes                  | Metric 1           | N/A                                                                                                   |
-| 2       | Backtesting                                      | No                   | N/A                 | Addressed in Section 7.1 for monthly reviews                                                          |
-| 3       | Benchmarking Analysis                            | No                   | N/A                 | N/A                                                                                                   |
-| 4       | Boundary Conditions associated with Model Stability | Yes              | Metric 1           | N/A                                                                                                   |
-| 5       | Coefficient Stability                            | N/A                  | N/A                 | N/A                                                                                                   |
-| 6       | Early Warning Indicators                         | Yes                  | Metric 1           | Ongoing review based on thresholds                                                                    |
-| 7       | Model Input Monitoring                           | Yes                  | Metric 1           | Monthly data review based on actual vs forecast                                                       |
-| 8       | Overlay / Override / Qualitative Adjustment Tracking | Yes               | Metric 1           | SLA monitored for teller and platform adjustments                                                     |
-| 9       | Scenario / Stress Analysis                       | No                   | N/A                 | Not included in OGM at this time                                                                      |
-| 10      | Sensitivity Analysis                             | No                   | N/A                 | N/A                                                                                                   |
-
-### 11.2 OGM Plan Assessment
-
-#### 11.2.1 OGM Plan Granularity
-The OGM plan is sufficiently granular and covers key components, such as monitoring forecast vs. actual metrics for teller and platform transactions, branch-specific conditions, and escalation procedures. Data quality controls and variance thresholds are well-defined, ensuring detailed monitoring.
-
-#### 11.2.2 Performance Tests and Monitoring Frequency
-Monthly monitoring of actual vs. forecasted transactions and sales is conducted. Variance thresholds are set at ±5% for teller transactions and ±20% for platform services, aligning with business objectives and ensuring effective model performance monitoring.
-
-#### 11.2.3 Performance Metrics and Thresholds
-The sole performance metric is the forecast vs. actual, measured monthly. Thresholds are defined as ±5% for teller transactions and ±20% for platform services, providing a sufficient gauge for model accuracy and triggering corrective actions if breached.
-
-#### 11.2.4 OGM Starting Date
-The OGM process began in 2021 with consistent monthly monitoring of the forecast vs actual metric across branches.
-
-#### 11.2.5 Model Use Limitation
-The model is used to forecast transactions and sales to inform staffing decisions at branches. A key assumption is that CloudCords outputs are aligned with Truist’s internal data, with manual overrides used sparingly and only if variances exceed defined thresholds.
-
-#### 11.2.6 Escalation Plan
-If variances exceed the threshold (±5% for teller, ±20% for platform), the Workforce Planning (WFP) team is notified to investigate and implement necessary adjustments. For severe issues, the vendor may be contacted, with escalation response times based on issue severity.
+Overview:
+MRO conducted a detailed review and assessment of the OGM plan documented in Section XX of the model documentation. This evaluation was carried out to ensure compliance with required OGM guidelines and to verify that all necessary elements are appropriately addressed. The findings of this review are summarized below, categorized by each specified requirement.
 
 ---
 
-This structured format should align with the template requirements for the **OGM Plan Review** section. Let me know if further adjustments are needed!
+1. OGM Plan Support
+
+Requirement: The OGM plan support section should include:
+   - Description of model purpose and scope
+   - List of model stakeholders and their responsibilities
+   - First OGM Due Date and frequency of the OGM
+   - Rationale for selected tests and metrics
+   - Definition and support of the thresholds selected
+   - Escalation actions when thresholds are breached
+   - Assessment of the effect of model overrides or overlays, if applicable
+   - Assessment of model limitations and associated compensating measures (if applicable)
+   - OGM data controls
+
+MRO Assessment:  
+Upon reviewing the OGM Plan Support section, MRO found the following:
+
+   - Description of model purpose and scope: The model purpose is included, specifying the goal of forecasting transactions and sales to aid staffing decisions.
+   - List of model stakeholders and responsibilities: Not found. The document does not include a list of stakeholders or their specific roles and responsibilities in the OGM process.
+   - First OGM Due Date and frequency: Not specified within the document.
+   - Rationale for selected tests and metrics: Not found in the specified sections; no explanation for test selection or metric application.
+   - Definition and support for thresholds: Thresholds (<5% error for teller and <20% error for platform) are defined; however, no rationale or justification for these values is provided.
+   - Escalation actions when thresholds are breached: This element is addressed in Section 7.6, which describes roles and responsibilities for escalation actions.
+   - Assessment of the effect of model overrides or overlays: Not found; there is no documentation of potential model overrides or overlays.
+   - Assessment of model limitations and compensating measures: Not found.
+   - OGM data controls: Not found; no information is provided on data control measures to verify data accuracy and completeness.
+
+2. First OGM Due Date and Frequency
+
+Requirement: The OGM plan must specify the timing and frequency of reporting, including the effective start date and frequency of data collection and OGM reporting.
+
+MRO Assessment:  
+MRO noted that the First OGM Due Date and frequency are not specified in the document. This information is essential to ensure timely and consistent monitoring.
+
+3. Performance Tests and Metrics
+
+Requirement: Performance tests and metrics must align with the business purpose and include:
+   - A metric to measure model precision, accuracy, or discriminative power
+   - A metric to measure model robustness/stability (or justification if not applicable)
+
+MRO Assessment:  
+The OGM plan specifies thresholds for teller and platform accuracy as performance metrics. However, MRO observed that there is no metric or consideration for robustness/stability, nor is there a justification provided for the absence of such a metric.
+
+4. Performance Thresholds and Escalation
+
+Requirement: The OGM plan should include performance thresholds with a rationale and clear escalation processes when these thresholds are breached.
+
+MRO Assessment:  
+Thresholds for teller and platform accuracy are included, though without supporting rationale. The escalation process for breaches is adequately described in Section 7.6. However, the absence of a rationale for the thresholds used does not provide sufficient context to assess their appropriateness.
+
+5. Early Warning Metric and Threshold
+
+Requirement: An early warning metric and threshold should be included, along with associated escalation actions.
+
+MRO Assessment:  
+MRO found that the OGM plan does not include an early warning metric or threshold. Including such a metric would enable proactive monitoring and response before reaching critical thresholds.
+
+6. Model Adjustments
+
+Requirement: If applicable, OGM plans should include the monitoring and assessment of model overrides or overlays related to performance concerns, with considerations for:
+   - The robustness and appropriateness of the methodology
+   - Verification of directional impact on performance
+   - Assessment of the trend and magnitude of overlays
+
+MRO Assessment:  
+No assessment of model overrides or overlays is documented. This element should be considered, as model adjustments might impact the accuracy and stability of the model’s performance.
+
+7. Evaluation of Model Limitations and Compensating Measures
+
+Requirement: The OGM plan should evaluate model limitations and the effectiveness of any associated compensating measures, with specified frequency.
+
+MRO Assessment:  
+MRO noted that the document does not address the evaluation of model limitations or compensating measures. This information is necessary to assess the model’s continued fitness for use.
+
+8. OGM Data Sources and Controls
+
+Requirement: Model developers are responsible for identifying and documenting data sources and control measures to verify data accuracy and completeness.
+
+MRO Assessment:  
+The document partially addresses data sources, mentioning CloudCords and Truist data. However, specific documentation of control measures to verify data accuracy and completeness is missing.
+
+---
+
+Summary of Findings
+
+MRO’s assessment found that the OGM plan addresses some required elements, including model purpose, performance thresholds, and escalation procedures. However, several critical elements are missing or lack sufficient detail, including:
+
+1. Stakeholder responsibilities
+2. First OGM Due Date and reporting frequency
+3. Rationale for selected tests and metrics
+4. Robustness/stability metric (or justification for exclusion)
+5. Early warning metric and threshold
+6. Model overrides and overlays assessment
+7. Evaluation of model limitations and compensating measures
+8. Data control measures for accuracy and completeness
+
+To align fully with OGM requirements, the OGM plan would need to address these gaps, providing detailed documentation where currently omitted. MRO recommends a comprehensive revision of the plan to include these elements for compliance and effective ongoing monitoring.
