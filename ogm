@@ -3,3 +3,20 @@ MRO engaged with the development team to verify that no significant, undeclared 
 Although there were no changes impacting model functionality, MRO identified version updates attributed to software enhancements within the CloudCords platform. These updates were not reflected in the model change log, as they did not alter the underlying model structure or performance characteristics.
 
 MRO noted that the model version should be appropriately documented in the MDD (Model Development Document) to maintain consistency, as outlined in Sub-issue F_003, Part 3.
+
+
+To document the model version history, here’s a summary based on the information available:
+
+**Model Version History and Key Updates**
+
+- **Version 1.0 (Initial Release on June 1, 2018):**
+   - This version marked the first draft of the model documentation. 
+   - Created by Stacey Honea and approved by Curry Lucas, Version 1.0 laid the foundational structure and baseline functionality for the model's documentation.
+
+- **Version 5.2 (Release on May 17, 2021):**
+   - Version 5.2 introduced updates to align with Trust and BB&T information. 
+   - The changes included the addition and clarification of data input sources from both institutions.
+   - Documentation updates were also made around FTE (Full-Time Equivalent) plans and the OGM (Ongoing Monitoring) processes.
+   - This version, updated by Stacey Honea and approved by Curry Lucas, reflects the integration of multiple sources and adjustments for consistency across the updated institutional framework.
+
+These version updates provide a clear trajectory of the model's evolution, ensuring alignment with operational requirements and improved documentation to support workforce planning and staffing projections.
