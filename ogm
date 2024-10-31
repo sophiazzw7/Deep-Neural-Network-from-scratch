@@ -1,22 +1,27 @@
-MRO engaged with the development team to verify that no significant, undeclared changes have occurred since the last model validation. This confirmation process revealed that the model’s fundamental operations, including its inputs, outputs, and core algorithms, have remained consistent with prior specifications.
+For the **Key Limitations** section, your draft seems to cover the essential points, but it could be refined for clarity. Including the mitigants can be beneficial if they are crucial to addressing the limitations and showing that the risk is actively managed. Here’s a refined version with improved language and the mitigants structured for better readability:
 
-Although there were no changes impacting model functionality, MRO identified version updates attributed to software enhancements within the CloudCords platform. These updates were not reflected in the model change log, as they did not alter the underlying model structure or performance characteristics.
+---
 
-MRO noted that the model version should be appropriately documented in the MDD (Model Development Document) to maintain consistency, as outlined in Sub-issue F_003, Part 3.
+### 2.4 Key Limitations
 
+This section highlights key limitations of the model that may impact its use and performance. These limitations require compensating measures or ongoing monitoring, as outlined in the OGM plan. These limitations relate to specific model boundaries, beyond which model accuracy may be compromised.
 
-To document the model version history, here’s a summary based on the information available:
+#### Limitation 1:
+Many activities performed in branches are not feasible to track within this model, especially when they involve new or untracked products and services. As a result, there is a risk that the model may either over-forecast or under-forecast branch capacity requirements.
 
-**Model Version History and Key Updates**
+- **Risk:** The inability to account for untracked or newly introduced products/services could lead to inaccuracies in capacity forecasts for specific branches.
 
-- **Version 1.0 (Initial Release on June 1, 2018):**
-   - This version marked the first draft of the model documentation. 
-   - Created by Stacey Honea and approved by Curry Lucas, Version 1.0 laid the foundational structure and baseline functionality for the model's documentation.
+#### Mitigants:
+To address this limitation, the following compensating measures and monitoring practices are in place:
 
-- **Version 5.2 (Release on May 17, 2021):**
-   - Version 5.2 introduced updates to align with Trust and BB&T information. 
-   - The changes included the addition and clarification of data input sources from both institutions.
-   - Documentation updates were also made around FTE (Full-Time Equivalent) plans and the OGM (Ongoing Monitoring) processes.
-   - This version, updated by Stacey Honea and approved by Curry Lucas, reflects the integration of multiple sources and adjustments for consistency across the updated institutional framework.
+1. **Regular Updates and Mapping Adjustments:** The model is updated regularly, and mapping files are adjusted as Workforce Management becomes aware of new activities or products. This process helps maintain the relevance and accuracy of the forecasts.
 
-These version updates provide a clear trajectory of the model's evolution, ensuring alignment with operational requirements and improved documentation to support workforce planning and staffing projections.
+2. **Monitoring Frequency:** MRO noted the need for frequent monitoring of model assumptions and limitations to ensure they align with evolving branch activities. This is documented under Part 5 of sub-issue F_001.
+
+3. **Forecast Performance Monitoring:** For tracked activities, forecasted volumes are consistently compared against actual volumes to evaluate model performance. Discrepancies or systematic biases are identified through monitoring reports, prompting root cause analyses by business experts before publishing forecasts.
+
+These mitigants ensure that while the model has limitations in tracking new or unanticipated activities, ongoing adjustments and monitoring practices reduce potential forecast inaccuracies.
+
+---
+
+This refined version keeps the information clear and organized, explicitly listing the limitations and mitigants. Listing the mitigants is appropriate here, as it reinforces that there are specific controls in place to manage the identified risks.
