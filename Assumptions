@@ -4,7 +4,19 @@ Here’s a consolidated version of Slide 1 that incorporates content from slides
 
 **Title:** *2023 Transition to Anaconda, Python, and piML for Model Validation*
 
----
+August 2023: Initial Anaconda Training and Onboarding Support
+Action: Registered the team for Anaconda training; however, only the first 10 users were granted access.
+Contribution: Created an Anaconda Navigation Guide to help teammates navigate the platform independently and onboard more smoothly.
+Technical Insight: Addressed common navigation issues and provided hands-on guidance to team members unfamiliar with Anaconda.
+October 2023: Expanded Access and Second Training Round
+Action: Resolved access limitations, allowing full team access to Anaconda. Facilitated hands-on training sessions and helped teammates actively engage with Anaconda’s resources.
+Contribution: Attended additional training sessions and shared learnings with teammates, enabling team-wide skill development.
+Technical Note: Addressed specific troubleshooting needs, enhancing the team’s proficiency with both Anaconda and Python.
+February 2024: Full Team Access and Python Transition
+Action: Registered all teammates for Anaconda training focused on Python skills, specifically targeted at SAS-to-Python transitions.
+Contribution: Led a session on "Learning Python as a SAS User", introducing tools like the SASPy library and a SAS-to-Python converter to help teammates adjust to Python’s syntax and functionalities.
+Technical Insight: Shared detailed setup instructions for Python environments and essential packages (piML, Numpy, Pandas), enhancing readiness for Python use in model validation.
+
 
 **Key Milestones, Team Actions, and Technical Details**
 
