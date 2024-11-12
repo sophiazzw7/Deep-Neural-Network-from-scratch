@@ -1,27 +1,199 @@
-Thank you for the clarification. Here’s an updated section draft to reflect that the override process is external to the model, incorporating the new sub-issue created by the MRO.
+Here’s a consolidated version of Slide 1 that incorporates content from slides 2–5. This version provides a balanced overview of key milestones, team actions, and technical details while highlighting your contributions effectively.
 
 ---
 
-### 12.4 Model Overlay Governance & Control
-
-The Model Development Document (MDD) outlines the governance and control mechanisms for handling model overlays and external overrides. The oversight ensures that any adjustments are controlled, justified, and within defined parameters, especially when they influence model-based decisions.
-
-- **Definition of Overrides**: It was clarified by the developers that overrides are applied outside the model itself. These are adjustments made during strategic business decision meetings, led by banking executives, regional leaders, or other stakeholders, based on specific external factors that may influence model-related decisions.
-
-- **Process for External Overrides**: Overrides, as applied in this context, involve business rule adjustments that occur outside the model structure and are directed by strategic needs. Key situations where external overrides may occur include:
-  - **Unexpected Staffing Adjustments**: For instance, if multiple team members take leave within a year, affecting operational needs.
-  - **Community Developments**: Changes such as new neighborhoods or retirement centers potentially impacting branch activity.
-  - **New Business Growth**: Opening of major new facilities (e.g., convention centers, lifestyle hubs) within a branch’s vicinity that may alter customer traffic.
-
-- **MRO Sub-Issue**: Following clarification from the developers, it was identified that these overrides are external to the model. Consequently, the Model Risk Officer (MRO) issued a sub-issue, **F_0002**:
-  - **Sub-Issue Name**: Development Data Sub-Issue
-  - **Category**: Data Quality & Data Appropriateness
-  - **Description**: The "allowable range of overrides" for model output will be removed from the model documentation. Instead, a description of the external override process, handled through strategic decision-making, will be added.
-  - **Remediation Plan Owner**: Stacey Honea
-  - **Targeted Completion Date**: April 1, 2025
-
-This sub-issue ensures that all stakeholders are clear on the separation of model-based adjustments and external overrides, which are conducted for broader strategic purposes.
+**Title:** *2023 Transition to Anaconda, Python, and piML for Model Validation*
 
 ---
 
-Let me know if you would like further adjustments!
+**Key Milestones, Team Actions, and Technical Details**
+
+1. **April 2023**: piML Training from Wells Fargo
+   - **Objective**: Introduced the team to piML, a powerful tool for model validation and development.
+   - **Sophia’s Action**: Participated in training, establishing foundational knowledge and preparing to support the team’s transition.
+
+2. **May 2023**: Setup Coordination for piML with Info Security  
+   - **Action**: Coordinated with Info Security and Truist support to enable the use of piML, planning a compliant and documented installation process.
+   - **Technical Detail**: Established Anaconda as the primary platform for piML use, aligning with Truist’s adoption.
+   - **Sophia’s Contribution**: Led setup planning, ensuring secure access and documentation of every installation step.
+
+3. **August 2023**: Initial Anaconda Training and Onboarding Support  
+   - **Action**: Registered the team for Anaconda training; however, only the first 10 users were granted access.
+   - **Sophia’s Contribution**: Developed an **Anaconda Navigation Guide** to help teammates navigate the platform independently, empowering them to explore Anaconda and engage in self-paced learning.
+
+4. **October 2023**: Expanded Team Access and Second Training Round  
+   - **Action**: Facilitated team-wide access to Anaconda and conducted additional training sessions.
+   - **Sophia’s Contribution**: Attended training, shared insights with teammates, addressed troubleshooting needs, and guided team members through Anaconda and Python use.
+   - **Technical Note**: Provided practical demonstrations of key packages like Pandas for data manipulation and piML for model validation.
+
+5. **February 2024**: Full Team Python Training and SAS-to-Python Transition  
+   - **Action**: Registered the entire team for comprehensive Anaconda training, emphasizing SAS-to-Python transitions.
+   - **Sophia’s Contribution**: Led a session on **"Learning Python as a SAS User"**, sharing tools like SASPy, an online SAS-to-Python converter, and code examples for common SAS procedures. Also provided guidance on environment setup and package installations (e.g., piML, Numpy, Pandas).
+
+---
+
+**Technical Details and Tools Introduced**  
+
+- **How to Get Started with Python**:
+  - **Python and PyCharm Setup**: Requested Python 3.10.5 and PyCharm through ServiceNow and the Company Portal. Shared a step-by-step guide on configuring virtual environments within PyCharm and installing essential packages.
+  - **Approved Packages**: Gained access to pre-approved packages like piML, Numpy, and Pandas, supporting model validation and data manipulation.
+
+- **Key Python Packages**:
+  - **piML**: Core package for model validation and analysis.
+  - **Pandas**: Used for data manipulation, offering a DataFrame structure similar to SAS datasets.
+  - **NumPy**: Used for numerical computing and array operations.
+  - **Sophia’s Contribution**: Demonstrated practical applications of these packages, including visualizations like feature importance using piML.
+
+- **Getting Started with Anaconda**:
+  - **Why Anaconda**: Enabled efficient management of Python environments and packages, allowing for multi-language programming (Python, R, C++) and bridging the gap from SAS to Python.
+  - **Capabilities**: Transitioned teammates from SAS tools (e.g., SAS Studio) to Jupyter Notebooks/Lab, streamlining model development and validation workflows.
+  - **Sophia’s Guide**: Created a tailored Anaconda Navigation Guide, helping teammates understand and leverage Anaconda’s features.
+
+- **Learning Python as a SAS User**:
+  - **SASPy Library**: Facilitated access to SAS data within Python, easing the transition for SAS users.
+  - **Conversion Tools**: Introduced teammates to an online SAS-to-Python converter, helping bridge syntax differences.
+  - **Sophia’s Contribution**: Provided hands-on support for converting SAS code to Python, shared guided examples, and addressed initial learning challenges.
+
+---
+
+**Sophia’s Key Contributions**:
+- **Leadership in Training and Onboarding**: Spearheaded the Anaconda/Python transition, creating onboarding materials, such as the Anaconda Navigation Guide, and conducting training sessions to support team development.
+- **Technical Expertise and White-Glove Support**: Acted as the primary technical expert, offering one-on-one assistance with environment setup, package installations, and troubleshooting, ensuring teammates were equipped for success.
+- **Documentation and Knowledge Sharing**: Regularly documented processes and shared technical resources, positioning the team for successful adoption of Python and piML.
+
+**Next Steps**:
+- Build upon the team’s Python expertise with further training and integration of piML for ongoing model validation.
+- Continue refining Python-based workflows and providing support for teammates as they transition fully from SAS to Python.
+
+---
+
+This version of Slide 1 balances key milestones with relevant technical details and explicitly highlights your contributions throughout. Let me know if there’s anything more you’d like to add or adjust!
+
+
+
+Here’s an improved and streamlined version of the remaining slides. I’ve combined details where possible for clarity, highlighted your key contributions, and organized the technical details in a more concise manner.
+
+---
+
+**Slide 1: Transition to Anaconda, Python, and piML for Model Validation**
+
+**Overview of 2023-2024 Milestones and Technical Progress**
+
+1. **Team Demo and Move to Anaconda**  
+   - **Demo Project in Local Environment**: Successfully presented a Python-based validation demo in a local environment, showing feasibility for model validation.
+   - **Sophia’s Contribution**: Led efforts to develop a guide for moving from local testing to Anaconda to align with data security best practices for a centralized, secure data environment.
+
+2. **Initiation of Use Case Project in Anaconda**  
+   - **Objective**: Establish connection from Python to the SAS server and read datasets using the SASPy package.
+   - **Technical Note**: Sophia explored SASPy but encountered connection issues due to missing class classifier details.  
+   - **Sophia’s Contribution**: Collaborated with Crystal to troubleshoot and consult Garrett’s team on requirements.
+
+3. **Data Storage and Access Preparation**  
+   - **Action**: Engaged in sessions with team members (Mary, Ping) to outline project needs and define the sandbox setup on EDL.
+   - **Technical Insight**: Need to migrate SAS datasets to Hive tables within EDL and enable Anaconda access to Sandbox.
+   - **Sophia’s Action**: Coordinated sandbox setup and requested a sample OGM dataset for testing.
+
+4. **Exploration and Skill-Building While Awaiting Sandbox Access**  
+   - **Dataset Practice**: Used Taiwan Credit dataset from piML and a diabetes dataset from scikit-learn for practice in Python.
+   - **Team Collaboration**: Initiated weekly meetings to update teammates on Anaconda, Python, and piML skills.
+   - **Sophia’s Contribution**: Maintained a focus on continuous learning, offering guidance on datasets and weekly technical support for teammates.
+
+5. **Sandbox Access Achievements by June 2024**  
+   - **Access Status**: Set up a demo table and assisted Ping and Crystal in troubleshooting access issues.
+   - **Sophia’s Action**: Communicated with the EDL team for manual access adjustments as needed. Sent instructional updates to the team.
+
+6. **Python Regression Model Training in July 2024**  
+   - **Action**: Led team in building a regression model on the diabetes dataset using Python tools (PyCharm, Jupyter).
+   - **Sophia’s Contribution**: Supported teammates through hands-on model-building sessions, helping them apply Python techniques for data analysis and model evaluation.
+
+---
+
+**Technical Details: Transition Process and Tools**
+
+- **Sandbox Access and Data Transfer**  
+   - **MRO Sandbox Setup**: Finalized MRO sandbox setup as an intermediary to connect SAS and Anaconda.
+   - **Steps**: Provided detailed steps for cluster access, AD group requests, and final table access through the Hue Table Browser.
+   - **Sophia’s Action**: Guided team members in submitting necessary requests and verifying setup in the MRO environment.
+
+- **Basic Python Training and Jupyter Setup**  
+   - **LinkedIn Learning**: Recommended LinkedIn’s "Getting Started with Python" course as a foundational tool for beginners.
+   - **Jupyter Notebook**: Decided on Jupyter for its SAS-like interface and accessibility.
+   - **Sophia’s Action**: Assisted teammates with setup and package installations within Jupyter (e.g., Pandas, piML) to ensure smooth operation.
+
+- **Programming with Anaconda (Jupyter Notebook)**  
+   - **Diabetes Dataset Model**: Used the scikit-learn diabetes dataset to train teammates in building a linear regression model in Python.
+   - **Process Steps**: Included importing dataset, exploratory data analysis, train-test split, model building (Backward Elimination), prediction, and evaluation.
+   - **Sophia’s Contribution**: Led the programming session, providing hands-on training for each step in the model-building process.
+
+---
+
+**Next Steps**
+
+- **SAS Data Conversion to Hive Tables**: Work with SWAT team to enable SAS-to-Hive data transfer for secure access in Anaconda.
+- **Sandbox-to-Anaconda Connection**: Establish direct connectivity from EDL Sandbox to Anaconda for efficient data access and analysis.
+- **Explore Additional Machine Learning Models**: Plan to explore advanced models (e.g., XGBoost) and test them on various datasets.
+
+---
+
+This revised version provides a more cohesive summary of key milestones and actions, with a focus on technical steps and your contributions throughout the project. Let me know if there’s anything more you’d like to emphasize!
+
+
+
+Absolutely, here’s the balanced version again, emphasizing your contributions in a subtle, collaborative tone:
+
+---
+
+**Slide 1: Transition to Anaconda, Python, and piML for Model Validation**
+
+**Overview of 2023-2024 Milestones and Technical Progress**
+
+1. **Team Demo and Move to Anaconda**  
+   - **Demo Project in Local Environment**: Successfully presented a Python-based validation demo in a local environment, demonstrating its feasibility.
+   - **Progression to Anaconda**: Developed a guide for moving from local testing to a centralized Anaconda environment for enhanced data security.
+
+2. **Initiation of Use Case Project in Anaconda**  
+   - **Objective**: Establish connection from Python to the SAS server and read datasets using the SASPy package.
+   - **Technical Exploration**: Attempted SASPy configuration, encountered connection challenges, and consulted with Garrett’s team to troubleshoot.
+
+3. **Data Storage and Access Preparation**  
+   - **Project Planning**: Held sessions with team members to define sandbox setup on EDL and outline data storage requirements.
+   - **Technical Insight**: Identified the need to migrate SAS datasets to Hive tables within EDL for efficient Anaconda access.
+
+4. **Exploration and Skill-Building While Awaiting Sandbox Access**  
+   - **Practice with Datasets**: Utilized practice datasets, such as the Taiwan Credit dataset (piML) and a diabetes dataset (scikit-learn), to reinforce Python skills.
+   - **Weekly Team Check-Ins**: Established regular meetings to support onboarding and skill development with Anaconda, Python, and piML.
+
+5. **Sandbox Access Achievements by June 2024**  
+   - **Sandbox Setup Completion**: Set up demo tables and provided support for teammates with access issues.
+   - **Liaison with EDL Team**: Worked with EDL to adjust access permissions as needed and kept the team updated with instructions.
+
+6. **Python Regression Model Training in July 2024**  
+   - **Regression Model Building**: Led a hands-on session using the diabetes dataset, guiding teammates through data analysis and model evaluation techniques in Python.
+
+---
+
+**Technical Details: Transition Process and Tools**
+
+- **Sandbox Access and Data Transfer**  
+   - **MRO Sandbox Setup**: Completed MRO sandbox setup as an intermediary for connecting SAS and Anaconda.
+   - **Access Steps**: Provided detailed guidance on cluster access, AD group requests, and final table access through the Hue Table Browser.
+
+- **Basic Python Training and Jupyter Setup**  
+   - **Python Basics**: Recommended LinkedIn’s "Getting Started with Python" course for foundational skills.
+   - **Jupyter Notebook Adoption**: Set up Jupyter as the preferred interface for Python work due to its similarity to SAS tools.
+
+- **Programming with Anaconda (Jupyter Notebook)**  
+   - **Diabetes Dataset Model**: Used scikit-learn’s diabetes dataset to train teammates on linear regression modeling.
+   - **Steps Covered**: Demonstrated dataset import, exploratory analysis, train-test split, model building, prediction, and evaluation.
+
+---
+
+**Next Steps**
+
+- **SAS Data Conversion to Hive Tables**: Coordinate with SWAT team to enable SAS-to-Hive data transfer.
+- **Sandbox-to-Anaconda Connection**: Establish direct connectivity from EDL Sandbox to Anaconda for efficient data access and analysis.
+- **Explore Additional Machine Learning Models**: Plan to explore advanced models (e.g., XGBoost) and test them on various datasets.
+
+---
+
+This version highlights your role while keeping the tone focused on the team’s achievements and technical milestones. Let me know if you’d like to adjust anything else!
