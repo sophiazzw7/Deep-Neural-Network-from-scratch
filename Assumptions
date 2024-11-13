@@ -1,22 +1,94 @@
-Here's a slightly more natural version while maintaining the formal structure:
+Certainly! Here’s a refined version with more cohesive flow, maintaining a clear focus on your contributions and technical details as presented in each slide.
 
-**2023 Transition to Anaconda, Python, and piML for Model Validation**
+---
 
-**Key Milestones, Team Actions, and Technical Details**
+### **Slide 1: Transition to Anaconda, Python, and piML for Model Validation**
 
-1. **August 2023: Initial Anaconda Training and Onboarding Support**
-   - We launched our Anaconda journey with initial training sessions, though we were limited to just 10 team members at first. To bridge this gap, I developed a comprehensive **Anaconda Navigation Guide** to support everyone who couldn't attend.
-   - The guide walked team members through Anaconda's key features and functionality, ensuring everyone could work independently regardless of their training status.
-   - Throughout this phase, I provided hands-on support to help teammates overcome common challenges they encountered while getting familiar with the platform.
+- **April 2023**: Team received piML training from Wells Fargo.
+  - **May 2023**: Sophia collaborated with InfoSec to clear piML notebooks for use, detailing the installation steps with Truist support. She emphasized that piML is versatile for model validation and development, extending beyond machine learning models.
 
-2. **October 2023: Expanded Access and Second Training Round**
-   - After resolving our access constraints, we were able to open up Anaconda to the entire team. This paved the way for a second round of training sessions where we focused on practical, hands-on learning.
-   - I deepened my own expertise in Anaconda and Python through additional training, which allowed me to share more advanced insights with the team.
-   - Our focus shifted to targeted troubleshooting support, addressing specific challenges that emerged as team members began working more extensively with both Anaconda and Python.
+- **August 2023**: Team registered for Anaconda training, but only the first 10 users received access.
+  - **Sophia’s Contribution**: Created an Anaconda Navigation Guide to support teammates without prior experience. Assisted teammates, including Amy and Crystal, in navigating Anaconda, ensuring they could engage with the platform effectively.
 
-3. **February 2024: Full Team Access and Python Transition**
-   - Building on our progress, we secured comprehensive Anaconda training for the full team, with special attention to supporting those transitioning from SAS to Python.
-   - I developed and led a targeted session called **"Learning Python as a SAS User,"** introducing valuable resources like the SASPy library and a SAS-to-Python converter to ease the transition.
-   - To ensure smooth implementation, I provided detailed documentation for setting up Python environments and installing critical packages (piML, Numpy, Pandas), giving the team the technical foundation needed for effective model validation.
+- **October 2023**: Faced limited access to training materials and signed up for a second Anaconda training.
+  - **Sophia’s Contribution**: Actively resolved access issues, participated in additional training to acquire knowledge, and shared resources to ensure that teammates received comprehensive support.
 
-Let me know if you'd like any adjustments to the tone or content!
+- **February 2024**: Alex registered the entire team for Anaconda training.
+  - **Sophia’s Contribution**: Led a group session on transitioning to Python from SAS, introducing a converter tool to help teammates adapt to Python syntax. She provided technical guidance, assisting with software installation and access requests, facilitating the team's transition process.
+
+---
+
+### **Slide 2: Onboarding the First Python Project**
+
+- **February 2024**: After training, Crystal and Sophia collaborated on the first Python project, utilizing Crystal’s 4Q 2023 Ongoing Monitoring Dataset for ReMars.
+  - **Sophia’s Contribution**: Configured the dataset in PyCharm, converting Crystal’s SAS code (metrics like PSI and Somers’ D) to Python. Verified accuracy by comparing outputs to Crystal’s SAS results.
+
+- **March 2024**: Sophia and Crystal presented the Python project to the team.
+  - Covered Python environment setup, essential packages (piML, Pandas), and demonstrated a test case with a built-in dataset on credit card clients. This interactive session allowed teammates to follow along and ask questions.
+  - **Outcome**: Shared SAS-to-Python conversion examples and additional learning resources with the team to deepen their understanding.
+
+---
+
+### **Slide 3: Shift to Anaconda for Data Storage and Access**
+
+- **Project Transition to Anaconda**: After a successful local Python demo, Sophia and the team began planning the transition to Anaconda for better data handling.
+  - **Use Case Project in Anaconda**: Sophia worked on establishing a connection from Python to the SAS server using SASPy, troubleshooting class classifier issues needed for workspace setup.
+  - **Collaboration with Garrett’s Team**: Met with Garrett’s team to discuss technical requirements and access needs, ensuring that the team could proceed efficiently.
+
+- **Data Migration to Hive Tables**: The team learned that to fully utilize Anaconda, SAS datasets would need migration to Hive tables with an EDL Sandbox for secure storage.
+  - **Next Steps by Sophia**: Updated the Anaconda project list, coordinated sandbox setup by reaching out to Cameron from Debarry’s team, and planned with Mary and Ping for necessary data storage and access configurations.
+
+---
+
+### **Slide 4: Ongoing Skill Development and Sandbox Access**
+
+- **Python Practice During Sandbox Approval**: While waiting for sandbox access, the team practiced using the Taiwan Credit dataset in piML and the diabetes dataset from scikit-learn to enhance their Python skills.
+- **April 2024**: Began weekly meetings to track progress and provide onboarding support on Anaconda, Python, PyCharm, and piML.
+
+- **June 2024**: Sandbox setup completion, allowing access to demo tables.
+  - **Sophia’s Role**: Managed team access, coordinating with EDL group for manual approvals where needed. Shared setup instructions with teammates, like Ping and Crystal, ensuring everyone could work in the sandbox smoothly.
+
+---
+
+### **Slide 5: Advanced Team Training and Demonstration**
+
+- **July 2024**: Sophia, Ping, Crystal, and Mary conducted a team meeting on MRO Sandbox access and basic Python training.
+  - Demonstrated building a regression model, guiding teammates through AD group access requests, and Python usage with PyCharm and Jupyter for hands-on learning.
+
+- **August 2024**: Continued training with additional demonstrations, covering data analysis and a sample project in Python.
+  - **August–September 2024**: Successfully transferred SAS data into Hive tables and stored it in the MRO sandbox. Team connected from EDL to Anaconda for efficient data analysis.
+  - **October–November 2024**: Submitted IAM requests to secure workspace in Anaconda, now awaiting final setup for seamless operation.
+
+---
+
+Incorporating the details from the additional slides, here is an enriched version of **Slide 2: Onboarding the First Python Project**, with added specifics from the February 2024 group session:
+
+---
+
+**Slide 2: Onboarding the First Python Project**
+
+- **February 2024**: After the team received Anaconda training, Crystal and Sophia collaborated on launching the first Python project, utilizing Crystal's 4Q 2023 Ongoing Monitoring Dataset for ReMars.
+  - **Sophia’s Contribution**: Sophia worked extensively with Crystal to convert Crystal's existing SAS code into Python, focusing on key metrics such as Population Stability Index (PSI) and Somers' D. By setting up the dataset in PyCharm and demonstrating package installation and setup in Anaconda, Sophia ensured a smooth transition into Python.
+  
+- **Group Training Session Highlights**:
+  - **Getting Started with Python**:
+    - **Setup and Access**: Sophia led the team through the steps to request and install Python 3.10.5 via Service Now and set up PyCharm through the Company Portal. She shared a custom guide on configuring virtual environments and installing necessary packages, using approved resources such as PiML, Numpy, and Pandas.
+    - **Working with Python Packages**: Sophia explained Python’s modularity and introduced packages like PiML for model validation, Pandas for data handling, and NumPy for numerical computations. She used practical examples, including feature importance analysis, to illustrate the functionality of each package, relating them to familiar SAS libraries.
+  
+  - **Transitioning from SAS to Python**:
+    - **SASPy Integration**: Sophia guided the team through SASPy, a Python package allowing Python-based access to SAS datasets. She also introduced the SAS-to-Python converter tool to help teammates familiarize themselves with Python syntax by translating their existing SAS code.  
+    - **Live Coding and Comparison**: Sophia demonstrated converting Crystal's SAS code to Python by running sample analyses on the PSI and comparison metrics. Using side-by-side examples, she highlighted Python’s equivalent commands, showing team members the similarities and differences in syntax.
+  
+  - **Hands-On Example**:
+    - **Python Test Case**: Sophia showcased a sample test case for credit card clients, walking the team through data import, exploratory analysis, model building, and performance evaluation. She utilized visual aids like ROC and Precision-Recall curves to discuss model results, making the session interactive and encouraging teammates to try each step.
+  
+  - **Python Packages Overview**:
+    - **Detailed Breakdown**: Sophia highlighted Python packages commonly used in model validation, including PiML for advanced modeling, data analysis with Pandas, and array operations with NumPy. She explained how Python’s DataFrame structures are similar to SAS datasets, aiding teammates in adapting to Python workflows.
+  
+- **March 2024**: Sophia and Crystal presented their completed Python project to the team in a hands-on session.
+  - **Topics Covered**: They demonstrated setting up the Python environment, loading packages, running analyses on default datasets, and comparing results with SAS outputs. By providing step-by-step explanations and resources, Sophia fostered an interactive learning environment.
+  - **Outcome**: The team left with a foundational understanding of SAS-to-Python transitions, equipped with examples, tools, and resources shared by Sophia and Crystal.
+
+---
+
+This revision incorporates specific guidance provided by Sophia during the February 2024 session, highlighting her technical support in setup, package usage, and code translation to facilitate her team’s transition from SAS to Python. Let me know if this captures the detail you’re aiming for or if there’s more to include!
