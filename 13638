@@ -185,3 +185,45 @@ options obs=max; /* Process all rows */
 1. Replace `"path_to_output/archer_prep_debug.csv"` with your actual output directory.
 2. Run the script and verify the outputs.
 3. Let me know if further refinements or adjustments are needed!
+
+
+
+
+/* Step 1: Import and Check Metadata */
+proc contents data=work.<dataset_name>; /* Replace <dataset_name> with your dataset */
+run;
+
+/* Step 2: Distribution of Variables */
+/* Continuous Variables */
+proc means data=work.<dataset_name> mean median std p25 p50 p75;
+    var <continuous_vars>; /* Replace <continuous_vars> with numeric variables */
+run;
+
+/* Categorical Variables */
+proc freq data=work.<dataset_name>;
+    tables <categorical_vars>; /* Replace <categorical_vars> with categorical variables */
+run;
+
+/* Step 3: Outlier Detection */
+/* Using IQR Method */
+proc univariate data=work.<dataset_name> noprint;
+    var <continuous_vars>; /* Replace <continuous_vars> with numeric variables */
+    output out=outliers pctlpts=25 75 pctlpre=P_;
+run;
+
+data work.outliers_flagged;
+    set work.<dataset_name>;
+    lower_bound = P_25 - 1.5 * (P_75 - P_25);
+    upper_bound = P_75 + 1.5 * (P_75 - P_25);
+    if <continuous_var> < lower_bound or <continuous_var> > upper_bound then outlier_flag = 1;
+    else outlier_flag = 0;
+run;
+
+/* Step 4: Missing Values */
+proc means data=work.<dataset_name> nmiss;
+    var _numeric_; /* Check for missing numeric variables */
+run;
+
+proc freq data=work.<dataset_name>;
+    tables _character_ / missing; /* Check for missing categorical variables */
+run;
