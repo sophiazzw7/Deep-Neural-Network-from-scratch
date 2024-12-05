@@ -227,3 +227,45 @@ run;
 proc freq data=work.<dataset_name>;
     tables _character_ / missing; /* Check for missing categorical variables */
 run;
+
+
+
+
+
+=================
+
+
+/* Table 1: EF_MODEL_DATA */
+/* Continuous Variables: Check Distribution */
+proc means data=work.ef_model_data mean median std min max p25 p50 p75 nmiss;
+    var Consumer_Credit Consumer_Credit_lag1 DOWJ_TOTAL DOWJ_Total_qoq
+        Fin_Act_Employment Fin_Act_Employment_qoq GDP_Real GDP_Real_lag2
+        SP500_Vol_MAVG SP500_Vol_MAVG_Ydiff actual_frequency;
+run;
+
+/* Categorical Variable: Check Frequency */
+proc freq data=work.ef_model_data;
+    tables 'Basel Event Type Level 1'n;
+run;
+
+/* Date Variable: Check Range */
+proc means data=work.ef_model_data min max;
+    var data_date;
+run;
+
+/* Table 2: Add the second table if available */
+/* Continuous Variables: Add your second dataset and variables */
+proc means data=work.<second_table> mean median std min max p25 p50 p75 nmiss;
+    var <numeric_variable_list>; /* Replace with actual variables */
+run;
+
+/* Categorical Variable: Add Frequency Check */
+proc freq data=work.<second_table>;
+    tables <categorical_variable>;
+run;
+
+/* Date Variable: Check Range (if applicable) */
+proc means data=work.<second_table> min max;
+    var <date_variable>;
+run;
+
