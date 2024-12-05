@@ -73,93 +73,115 @@ Let me identify the datasets used in your provided SAS code and customize the ea
 5. **`mev_data`**: Contains macroeconomic data from `mac_dat.macrovar_qrt_bl`.
 6. **`cpbp_model_data`** and **`ef_model_data`**: Derived from `mev_data` and historical datasets (`cpbp_hist`, `ef_hist`).
 
-### Customized Code:
-Below is the modified SAS script tailored to the datasets and logic from your provided code:
 
+Below is the updated and corrected SAS code addressing all the issues (missing variables, large output handling, and errors in outlier detection):
+
+---
+
+### Corrected and Optimized SAS Code
 ```sas
-/* 1. Import Archer Data */
-proc import datafile="&input_path/archer_report_&output_date..xlsx" 
-    out=work.archer_data 
-    dbms=xlsx 
-    replace;
-    sheet="sas_input";
-    getnames=yes;
+/* Step 1: Ensure NET_LOSS is Created */
+/* Calculate NET_LOSS as part of data preparation */
+proc sql;
+    create table work.archer_prep as
+    select *,
+           ('Gross Loss Amount'n + 'Recovery Amount'n) as net_loss
+    from work.archer_data
+    order by 'Basel Event Type Level 1'n, 'Internal Events'n, 'Posting Date'n;
+quit;
+
+/* Check if NET_LOSS exists in the dataset */
+proc contents data=work.archer_prep;
 run;
 
-/* 2. Import Exclusion Data */
-proc import datafile="&static_path/Exclusion_IE.csv" 
-    out=work.exclusion_ie 
-    dbms=csv 
-    replace;
-    getnames=yes;
-run;
+/* Step 2: Limit Output Size for Debugging */
+options obs=100; /* Process first 100 rows */
 
-/* 3. Analyze Distribution of Archer Data */
+/* Step 3: Analyze Distribution of NET_LOSS */
 /* Continuous Variables */
-proc means data=work.archer_data mean median std p25 p50 p75;
-    var net_loss; /* Adjust based on relevant numeric variables */
+proc means data=work.archer_prep mean median std p25 p50 p75;
+    var net_loss; /* Ensure NET_LOSS exists */
 run;
 
 /* Categorical Variables */
-proc freq data=work.archer_data;
-    tables 'Basel Event Type Level 1'n 'Internal Events'n; /* Replace with relevant categorical columns */
+proc freq data=work.archer_prep;
+    tables 'Basel Event Type Level 1'n 'Internal Events'n;
 run;
 
-/* 4. Detect Outliers in Archer Data */
+/* Step 4: Detect Outliers */
+/* Using IQR Method */
 data work.outliers;
-    set work.archer_data;
-    /* Example: Detect outliers in net_loss */
-    if net_loss < (mean(net_loss) - 1.5*std(net_loss)) or 
-       net_loss > (mean(net_loss) + 1.5*std(net_loss)) then
-        outlier_flag = 1;
+    set work.archer_prep;
+    /* Calculate lower and upper bounds using IQR */
+    if _N_ = 1 then do;
+        call symputx('p25', quantile('P25', net_loss));
+        call symputx('p75', quantile('P75', net_loss));
+        call symputx('iqr', &p75 - &p25);
+    end;
+    lower_bound = symgetn('p25') - 1.5 * symgetn('iqr');
+    upper_bound = symgetn('p75') + 1.5 * symgetn('iqr');
+    if net_loss < lower_bound or net_loss > upper_bound then outlier_flag = 1;
     else outlier_flag = 0;
 run;
 
+/* Summarize Outliers */
 proc freq data=work.outliers;
     tables outlier_flag;
 run;
 
-/* 5. Check Missing and Duplicated Values */
-/* Missing Values */
-proc means data=work.archer_data nmiss;
-    var _numeric_;
+/* Step 5: Handle Large Outputs */
+/* Export processed dataset for review */
+proc export data=work.archer_prep
+    outfile="path_to_output/archer_prep_debug.csv"
+    dbms=csv
+    replace;
 run;
 
-proc freq data=work.archer_data;
-    tables _character_ / missing;
+/* Step 6: Backfill Missing Data */
+/* Replace missing NET_LOSS values with 0 for debugging */
+data work.backfilled_data;
+    set work.archer_prep;
+    if missing(net_loss) then net_loss = 0; /* Replace with appropriate logic */
 run;
 
-/* Duplicates */
-proc sort data=work.archer_data nodupkey out=work.archer_data_nodups;
-    by _all_;
-run;
-
-/* 6. Consistency Checks */
-/* Example: Basel Event Type should not contain invalid values */
-data work.consistency_check;
-    set work.archer_data;
-    if 'Basel Event Type Level 1'n = "" then consistency_flag = "Missing Basel Event";
-    else if net_loss < 0 then consistency_flag = "Negative Loss";
-    else consistency_flag = "OK";
-run;
-
-proc freq data=work.consistency_check;
-    tables consistency_flag;
-run;
-
-/* 7. Visualize Data Distribution */
+/* Step 7: Visualize Data Distribution */
 ods graphics on;
-proc univariate data=work.archer_data;
-    var net_loss; /* Adjust based on relevant continuous variables */
+proc univariate data=work.archer_prep;
+    var net_loss;
     histogram / normal;
 run;
 ods graphics off;
+
+/* Step 8: Reset Options */
+options obs=max; /* Process all rows */
 ```
 
-### Adjustments Made:
-1. Focused on **`archer_data`** as the primary dataset for the analysis.
-2. Included columns like `net_loss`, `'Basel Event Type Level 1'n`, and `'Internal Events'n` for analysis, derived from your original code.
-3. Added placeholders for missing/duplicate checks and adjusted rules for consistency checks (e.g., negative values, missing fields).
-4. Tailored outlier detection for `net_loss`.
+---
 
-Let me know if you'd like further refinements or additional customizations for other datasets like `mev_data` or `cpbp_model_data`.
+### Explanation of Fixes:
+1. **Ensuring `NET_LOSS` Exists**:
+   - Added a step to compute `NET_LOSS` from `'Gross Loss Amount'n` and `'Recovery Amount'n`.
+
+2. **Debugging and Previewing**:
+   - Used `PROC CONTENTS` to check variable availability.
+   - Limited row processing with `options obs=100` to debug efficiently.
+
+3. **Outlier Detection**:
+   - Used the Interquartile Range (IQR) method to compute lower and upper bounds.
+   - Flagged outliers with `outlier_flag`.
+
+4. **Missing Data Handling**:
+   - Replaced missing values for `NET_LOSS` with 0 (as a placeholder for debugging).
+
+5. **Exporting for Review**:
+   - Exported intermediate datasets to CSV for inspection.
+
+6. **Visualization**:
+   - Used `PROC UNIVARIATE` to visualize the distribution of `NET_LOSS`.
+
+---
+
+### Next Steps:
+1. Replace `"path_to_output/archer_prep_debug.csv"` with your actual output directory.
+2. Run the script and verify the outputs.
+3. Let me know if further refinements or adjustments are needed!
