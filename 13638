@@ -462,3 +462,37 @@ proc export data=consistency_results
 run;
 
 
++++++
+/* Outlier check */
+data work.outliers;
+    set work.archer_prep;
+    if _N_ = 1 then do;
+        call symputx('p25', quantile('25', net_loss));
+        call symputx('p75', quantile('75', net_loss));
+    end;
+    retain lower_bound upper_bound iqr;
+    if _N_ = 1 then do;
+        iqr = symget('p75') - symget('p25');
+        lower_bound = symget('p25') - 1.5 * iqr;
+        upper_bound = symget('p75') + 1.5 * iqr;
+    end;
+    if net_loss < lower_bound or net_loss > upper_bound then is_outlier = 1;
+    else is_outlier = 0;
+run;
+
+proc freq data=work.outliers;
+    tables is_outlier;
+run;
+
+/* Visualize net_loss */
+ods graphics on;
+proc univariate data=work.archer_prep;
+    var net_loss;
+    histogram / normal;
+run;
+ods graphics off;
+
+options obs=max;
+
+
+
