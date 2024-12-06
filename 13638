@@ -496,3 +496,25 @@ options obs=max;
 
 
 
+/////
+
+proc univariate data=work.archer_prep noprint;
+    var net_loss;
+    output out=percentile_results pctlpts=25 75 pctlpre=P_;
+run;
+
+/* Step 2: Set IQR, lower bound, and upper bound for outlier detection */
+data work.outliers;
+    if _N_ = 1 then set percentile_results;
+    set work.archer_prep;
+    
+    iqr = P_75 - P_25;
+    lower_bound = P_25 - 1.5 * iqr;
+    upper_bound = P_75 + 1.5 * iqr;
+
+    if net_loss < lower_bound or net_loss > upper_bound then is_outlier = 1;
+    else is_outlier = 0;
+run;
+
+
+
