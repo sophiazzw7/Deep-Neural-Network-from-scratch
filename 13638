@@ -365,3 +365,100 @@ proc means data=work.<second_table> min max;
     var <date_variable>;
 run;
 
+
+=====
+/* Step 1: Check Distribution of Continuous Variables */
+proc means data=work.<dataset_name> n mean median std min max p25 p50 p75 nmiss;
+    var GL_Amount Gross_Loss_Amount Recovery_Amount net_loss 
+        year_event qtr_event month_event;
+    title "Summary Statistics for Continuous Variables";
+run;
+
+/* Step 2: Frequency Distribution for Categorical Variables */
+proc freq data=work.<dataset_name>;
+    tables 'Basel Event Type Level 1'n 'Basel Event Type Level 3'n
+           'Event Status'n 'Internal Events'n 'Type of Impact'n 
+           'Assigned Group'n / missing nocum;
+    title "Frequency Distribution for Categorical Variables";
+run;
+
+/* Step 3: Count Missing Values for Numeric Variables */
+proc means data=work.<dataset_name> nmiss;
+    var GL_Amount Gross_Loss_Amount Recovery_Amount net_loss 
+        year_event qtr_event month_event;
+    title "Missing Value Check for Numeric Variables";
+run;
+
+/* Step 4: Detect Outliers Using IQR */
+proc univariate data=work.<dataset_name> noprint;
+    var GL_Amount Gross_Loss_Amount Recovery_Amount net_loss;
+    output out=outlier_bounds pctlpts=25 75 pctlpre=Q_;
+run;
+
+data flagged_outliers;
+    set work.<dataset_name>;
+    if _n_ = 1 then set outlier_bounds;
+    array vars[*] GL_Amount Gross_Loss_Amount Recovery_Amount net_loss;
+    do i = 1 to dim(vars);
+        lower_bound = Q_25 - 1.5 * (Q_75 - Q_25);
+        upper_bound = Q_75 + 1.5 * (Q_75 - Q_25);
+        if vars[i] < lower_bound or vars[i] > upper_bound then outlier_flag = 1;
+        else outlier_flag = 0;
+    end;
+run;
+
+proc freq data=flagged_outliers;
+    tables outlier_flag / missing;
+    title "Outlier Detection Summary";
+run;
+
+/* Step 5: Validate Date Range */
+proc means data=work.<dataset_name> min max;
+    var Event_Creation_Date Event_Start_Date Posting_Date data_date;
+    title "Date Range Validation";
+run;
+
+/* Step 6: Identify and Remove Duplicate Records */
+proc sort data=work.<dataset_name> out=unique_records nodupkey;
+    by _all_;
+run;
+
+data duplicates_removed;
+    set unique_records;
+    /* You can include additional logic here if needed */
+run;
+
+title "Duplicate Records Removed";
+
+/* Step 7: Consistency Check */
+data consistency_results;
+    set work.<dataset_name>;
+    if GL_Amount < 0 or Recovery_Amount < 0 then consistency_issue = "Yes";
+    else consistency_issue = "No";
+run;
+
+proc freq data=consistency_results;
+    tables consistency_issue / missing;
+    title "Consistency Check Summary";
+run;
+
+/* Step 8: Export Results for Review */
+proc export data=flagged_outliers
+    outfile="path_to_output/flagged_outliers.csv"
+    dbms=csv
+    replace;
+run;
+
+proc export data=duplicates_removed
+    outfile="path_to_output/duplicates_removed.csv"
+    dbms=csv
+    replace;
+run;
+
+proc export data=consistency_results
+    outfile="path_to_output/consistency_results.csv"
+    dbms=csv
+    replace;
+run;
+
+
