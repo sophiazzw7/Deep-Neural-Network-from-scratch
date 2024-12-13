@@ -1,0 +1,42 @@
+Here’s the revised version without inferences:
+
+---
+
+1. First bullet of FND-17134827:  
+The reasoning behind the expected frequency under the BHC Adverse scenario being higher than the frequency rates under the BHC Severe and FRB Severe scenarios for CPBP Basel is not documented. While the updated text states, "The predicted frequencies are a function of macroeconomic variations, and it’s not necessary that the Adverse scenario frequencies are less than the FRB and BHC Severe," could you add more elaborative evidence in Section 6.3 to address this finding? Also, could you clarify why the ranking reversal is only in CPBP and not in EF?
+
+2. Do you have the backtesting results of frequency for all segments for development, stress, and the most recent 9 quarters?
+
+3. Section 6.1.1 of MDD states, "The model owners are aware of the variance and agree that it is within the tolerance limits." Could you clarify what the tolerance limit mentioned here is and provide the proof of model owner acceptance or discussion?
+
+4. Could you share the data quality testing and data appropriateness testing for OGM data?
+
+5. Could you clarify the backtesting results for EDPM, IF, DPA, and EPWS in Section 6.1.1 of MDD? Is it based on the historical average approach?
+
+---
+
+Let me know if you need further adjustments.
+
+
+Here’s a draft email based on your colleague's example, tailored to share your questions and request a reply by December 23:
+
+---
+
+**Subject:** Questions Regarding [Model Name or Validation Task]  
+
+Hi [Recipient's Name],  
+
+Thank you for your support on this review process. I have compiled a few questions regarding [specific task or model validation], which require clarification to ensure we can complete the review efficiently.  
+
+Please find the attached document with the questions. Could you kindly review them and provide your responses by December 23, 2024? If there are any uncertainties or additional information needed, we’d be happy to schedule a call to discuss further.  
+
+Let me know if you have any doubts or need assistance regarding these questions. I appreciate your cooperation and look forward to your response.  
+
+Best regards,  
+[Your Full Name]  
+[Your Job Title]  
+[Your Contact Information]  
+
+---
+
+Feel free to adjust it as needed to align with your style. Let me know if you want any refinements.
