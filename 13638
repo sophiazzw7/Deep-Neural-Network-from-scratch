@@ -1,1 +1,70 @@
-Since FND-17134827 is partially resolved, the remaining concerns have been designated as Sub-Issue MR1, as they represent gaps in processes and documentation that require further remediation but do not meet the definition of a full Issue per the criteria outlined in Section 2.2.3.6.
+/* Merge macroeconomic data with historical data */
+data cpbp_model_data;
+    merge mev_data cpbp_hist;
+    by data_date;
+run;
+
+data ef_model_data;
+    merge mev_data ef_hist;
+    by data_date;
+run;
+
+/* Define macro variables for sensitivity factors and deviations */
+%let factors = SP500_Vol_MAVG_Ydiff GDP_Real_Lag2 Consumer_Credit_lag1 DOWJ_Total_qoq;
+%let deviations = -4 -3 -2 -1 0 1 2 3 4;
+
+/* Macro to perform sensitivity analysis */
+%macro sensitivity_analysis(dataset=, output=);
+    /* Placeholder for results */
+    data &output;
+        length Factor $50 Deviation 8 Avg_Predicted_Frequency 8;
+        stop;
+    run;
+
+    /* Loop over each factor */
+    %do i=1 %to %sysfunc(countw(&factors, %str( )));
+        %let factor = %scan(&factors, &i, %str( ));
+
+        /* Loop over each deviation */
+        %do j=1 %to %sysfunc(countw(&deviations, %str( )));
+            %let deviation = %scan(&deviations, &j, %str( ));
+
+            /* Adjust the factor by the deviation */
+            data temp;
+                set &dataset;
+                /* Adjust the factor */
+                adjusted_factor = &factor + &deviation;
+
+                /* Recalculate predicted frequency */
+                predicted_frequency = exp(
+                    estimate_intercept + 
+                    estimate_sp500 * SP500_Vol_MAVG_Ydiff + 
+                    estimate_gdp * GDP_Real_Lag2 + 
+                    estimate_consumer * Consumer_Credit_lag1 + 
+                    estimate_dowj * DOWJ_Total_qoq
+                );
+            run;
+
+            /* Calculate average predicted frequency */
+            proc means data=temp mean;
+                var predicted_frequency;
+                output out=avg_freq mean=Avg_Predicted_Frequency;
+            run;
+
+            /* Append results */
+            data &output;
+                set &output avg_freq;
+                Factor = "&factor";
+                Deviation = &deviation;
+            run;
+        %end;
+    %end;
+
+    /* Display final results */
+    proc print data=&output;
+    run;
+%mend;
+
+/* Perform sensitivity analysis for CPBP and EF models */
+%sensitivity_analysis(dataset=cpbp_model_data, output=cpbp_sensitivity_results);
+%sensitivity_analysis(dataset=ef_model_data, output=ef_sensitivity_results);
