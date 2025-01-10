@@ -1,12 +1,3 @@
-/*****************************************************************************
- * 0. FIT & STORE THE MODELS (CPBP & EF)
- *
- *    - You already have the fitting code, but we’ll add the “store out=...”
- *      statement so we can easily score new data later via PROC PLM.
- *****************************************************************************/
-
-options mprint mlogic symbolgen;
-
 data cpbp_model_data;
     merge mev_data cpbp_hist;
     by data_date;
@@ -17,100 +8,69 @@ data ef_model_data;
     by data_date;
 run;
 
-title1 "Fit & Store CPBP Negative Binomial Model";
 proc genmod data=cpbp_model_data;
-    model actual_frequency = SP500_Vol_MAVG_Ydiff GDP_Real_Lag2 
+    model actual_frequency = SP500_Vol_MAVG_Ydiff GDP_Real_Lag2
         / dist=NEGBIN link=log;
     output out=NEGBINFIT_CPBP p=lambda reschi=reschi;
     ods output ParameterEstimates = WORK.CPBP_PE
                Obstats            = WORK.CPBP_OBS_QTR
                ModelFit           = WORK.CPBP_P_MODELFIT;
-    store out=cpbp_nbmodel;  /* <--- store model for scoring later */
+    store out=cpbp_nbmodel;
 run;
 
-title1 "Fit & Store EF Negative Binomial Model";
 proc genmod data=ef_model_data;
     model actual_frequency = Fin_Act_Employment_qoq 
-                             Consumer_Credit_lag1 
+                             Consumer_Credit_lag1
                              DOWJ_Total_qoq
         / dist=NEGBIN link=log;
     output out=NEGBINFIT_EF p=lambda reschi=reschi;
     ods output ParameterEstimates = WORK.EF_PE
                Obstats            = WORK.EF_OBS_QTR
                ModelFit           = WORK.EF_P_MODELFIT;
-    store out=ef_nbmodel;    /* <--- store model for scoring later */
+    store out=ef_nbmodel;
 run;
 
-/*****************************************************************************
- * 1. COMPUTE MEANS & STDS FOR EACH MODEL’S MACRO DRIVERS
- *****************************************************************************/
-title1 "Means & Stds for CPBP Drivers";
 proc means data=cpbp_model_data noprint;
-   var SP500_Vol_MAVG_Ydiff 
-       GDP_Real_Lag2;
-   output out=cpbp_meanstd
-          mean= mean_sp500 mean_gdp
-          std=  std_sp500  std_gdp;
+    var SP500_Vol_MAVG_Ydiff 
+        GDP_Real_Lag2;
+    output out=cpbp_meanstd
+           mean= mean_sp500 mean_gdp
+           std=  std_sp500  std_gdp;
 run;
 
-title1 "Means & Stds for EF Drivers";
 proc means data=ef_model_data noprint;
-   var Fin_Act_Employment_qoq 
-       Consumer_Credit_lag1
-       DOWJ_Total_qoq;
-   output out=ef_meanstd
-          mean= mean_Fin mean_Credit mean_Dow
-          std=  std_Fin  std_Credit  std_Dow;
+    var Fin_Act_Employment_qoq
+        Consumer_Credit_lag1
+        DOWJ_Total_qoq;
+    output out=ef_meanstd
+           mean= mean_Fin mean_Credit mean_Dow
+           std=  std_Fin  std_Credit  std_Dow;
 run;
 
-/*****************************************************************************
- * 2. BUILD +/-4 STD SHOCK SCENARIO DATASETS
- *
- *    - CPBP drivers: SP500_Vol_MAVG_Ydiff, GDP_Real_Lag2
- *    - EF drivers: Fin_Act_Employment_qoq, Consumer_Credit_lag1, DOWJ_Total_qoq
- *
- *    - For each model segment, create:
- *        1) Baseline scenario (all variables at mean)
- *        2) ±1..±4 STD scenarios for each driver, holding others at mean
- *****************************************************************************/
-
-/*--- CPBP Scenarios -----------------------------------------------*/
 data cpbp_scenarios;
-    set cpbp_meanstd;  /* mean_sp500, mean_gdp, std_sp500, std_gdp */
+    set cpbp_meanstd;
     length scenario $50;
-
-    /* (A) Baseline row */
     scenario = 'CPBP_Baseline';
     SP500_Vol_MAVG_Ydiff = mean_sp500;
     GDP_Real_Lag2        = mean_gdp;
     output;
-
-    /* (B) ±1..4 STD shocks for SP500_Vol_MAVG_Ydiff */
     array spShocks[4] (1,2,3,4);
     do i=1 to 4;
-        /* Negative shock */
         scenario = cats('SP500_-', spShocks[i], 'STD');
         SP500_Vol_MAVG_Ydiff = mean_sp500 - spShocks[i]*std_sp500;
         GDP_Real_Lag2        = mean_gdp;
         output;
-
-        /* Positive shock */
         scenario = cats('SP500_+', spShocks[i], 'STD');
         SP500_Vol_MAVG_Ydiff = mean_sp500 + spShocks[i]*std_sp500;
         GDP_Real_Lag2        = mean_gdp;
         output;
     end;
-
-    /* (C) ±1..4 STD shocks for GDP_Real_Lag2 */
     array gdpShocks[4] (1,2,3,4);
     do j=1 to 4;
-        /* Negative shock */
         scenario = cats('GDP_-', gdpShocks[j], 'STD');
         SP500_Vol_MAVG_Ydiff = mean_sp500;
         GDP_Real_Lag2        = mean_gdp - gdpShocks[j]*std_gdp;
         output;
-
-        /* Positive shock */
         scenario = cats('GDP_+', gdpShocks[j], 'STD');
         SP500_Vol_MAVG_Ydiff = mean_sp500;
         GDP_Real_Lag2        = mean_gdp + gdpShocks[j]*std_gdp;
@@ -118,65 +78,45 @@ data cpbp_scenarios;
     end;
 run;
 
-/*--- EF Scenarios -------------------------------------------------*/
 data ef_scenarios;
-    set ef_meanstd;  /* mean_Fin, mean_Credit, mean_Dow, std_Fin, ... */
+    set ef_meanstd;
     length scenario $50;
-
-    /* (A) Baseline row */
     scenario = 'EF_Baseline';
     Fin_Act_Employment_qoq = mean_Fin;
     Consumer_Credit_lag1   = mean_Credit;
     DOWJ_Total_qoq         = mean_Dow;
     output;
-
-    /* ±1..4 STD array */
     array myShocks[4] (1,2,3,4);
-
-    /* (B) Fin_Act_Employment_qoq shocks */
     do i=1 to 4;
-        /* Negative */
         scenario = cats('Fin_-', myShocks[i], 'STD');
         Fin_Act_Employment_qoq = mean_Fin - myShocks[i]*std_Fin;
         Consumer_Credit_lag1   = mean_Credit;
         DOWJ_Total_qoq         = mean_Dow;
         output;
-
-        /* Positive */
         scenario = cats('Fin_+', myShocks[i], 'STD');
         Fin_Act_Employment_qoq = mean_Fin + myShocks[i]*std_Fin;
         Consumer_Credit_lag1   = mean_Credit;
         DOWJ_Total_qoq         = mean_Dow;
         output;
     end;
-
-    /* (C) Consumer_Credit_lag1 shocks */
     do i=1 to 4;
-        /* Negative */
         scenario = cats('Credit_-', myShocks[i], 'STD');
         Fin_Act_Employment_qoq = mean_Fin;
         Consumer_Credit_lag1   = mean_Credit - myShocks[i]*std_Credit;
         DOWJ_Total_qoq         = mean_Dow;
         output;
-
-        /* Positive */
         scenario = cats('Credit_+', myShocks[i], 'STD');
-        Fin_Act_Employment_qoq = mean_Fin + myShocks[i]*std_Credit;
+        Fin_Act_Employment_qoq = mean_Fin;
         Consumer_Credit_lag1   = mean_Credit + myShocks[i]*std_Credit;
         DOWJ_Total_qoq         = mean_Dow;
         output;
     end;
-
-    /* (D) DOWJ_Total_qoq shocks */
     do i=1 to 4;
-        /* Negative */
         scenario = cats('DOW_-', myShocks[i], 'STD');
         Fin_Act_Employment_qoq = mean_Fin;
         Consumer_Credit_lag1   = mean_Credit;
         DOWJ_Total_qoq         = mean_Dow - myShocks[i]*std_Dow;
         output;
-
-        /* Positive */
         scenario = cats('DOW_+', myShocks[i], 'STD');
         Fin_Act_Employment_qoq = mean_Fin;
         Consumer_Credit_lag1   = mean_Credit;
@@ -185,33 +125,14 @@ data ef_scenarios;
     end;
 run;
 
-/*****************************************************************************
- * 3. SCORE EACH MODEL ON ITS RESPECTIVE SCENARIO DATASET
- *
- *    We'll use PROC PLM with the stored model objects:
- *      - store=cpbp_nbmodel
- *      - store=ef_nbmodel
- *****************************************************************************/
-title1 "Scoring CPBP Scenario Data";
 proc plm restore=cpbp_nbmodel;
-    score data=cpbp_scenarios out=cpbp_scored
-          predicted=pred_freq / ilink;
+    score data=cpbp_scenarios out=cpbp_scored predicted=pred_freq / ilink;
 run;
 
-title1 "Scoring EF Scenario Data";
 proc plm restore=ef_nbmodel;
-    score data=ef_scenarios out=ef_scored
-          predicted=pred_freq / ilink;
+    score data=ef_scenarios out=ef_scored predicted=pred_freq / ilink;
 run;
 
-/*****************************************************************************
- * 4. COMPARE EACH SHOCK SCENARIO TO THE BASELINE
- *
- *    - We'll create "cpbp_sens" and "ef_sens" that includes:
- *         scenario, the shock variable(s), scenario_pred, baseline_pred,
- *         difference, and % difference vs. baseline
- *****************************************************************************/
-/*--- CPBP Compare vs Baseline ---*/
 proc sql;
     create table cpbp_sens as
     select a.scenario,
@@ -220,14 +141,12 @@ proc sql;
            a.pred_freq as scenario_pred,
            b.pred_freq as baseline_pred,
            (a.pred_freq - b.pred_freq) as diff_freq,
-           ( (a.pred_freq - b.pred_freq)/b.pred_freq ) as pct_diff format=percent8.2
+           ((a.pred_freq - b.pred_freq)/b.pred_freq) as pct_diff format=percent8.2
     from cpbp_scored as a
     left join cpbp_scored as b
-         on b.scenario = 'CPBP_Baseline'
-    ;
+         on b.scenario = 'CPBP_Baseline';
 quit;
 
-/*--- EF Compare vs Baseline ---*/
 proc sql;
     create table ef_sens as
     select a.scenario,
@@ -237,52 +156,37 @@ proc sql;
            a.pred_freq as scenario_pred,
            b.pred_freq as baseline_pred,
            (a.pred_freq - b.pred_freq) as diff_freq,
-           ( (a.pred_freq - b.pred_freq)/b.pred_freq ) as pct_diff format=percent8.2
+           ((a.pred_freq - b.pred_freq)/b.pred_freq) as pct_diff format=percent8.2
     from ef_scored as a
     left join ef_scored as b
-         on b.scenario = 'EF_Baseline'
-    ;
+         on b.scenario = 'EF_Baseline';
 quit;
 
-/*****************************************************************************
- * 5. PRODUCE A TABLE & EXPORT TO EXCEL FOR EACH MODEL SEGMENT
- *****************************************************************************/
-
-/* (A) CPBP: Show in SAS table */
-title1 "CPBP Sensitivity Analysis Results";
 proc print data=cpbp_sens noobs label;
-    var scenario SP500_Vol_MAVG_Ydiff GDP_Real_Lag2 
-        scenario_pred baseline_pred diff_freq pct_diff;
-    label scenario_pred  = "Scenario Pred Freq"
-          baseline_pred  = "Baseline Pred Freq"
-          diff_freq      = "Absolute Difference"
-          pct_diff       = "% Diff vs Baseline";
+    var scenario SP500_Vol_MAVG_Ydiff GDP_Real_Lag2 scenario_pred baseline_pred diff_freq pct_diff;
+    label scenario_pred = "Scenario Pred Freq"
+          baseline_pred = "Baseline Pred Freq"
+          diff_freq     = "Absolute Difference"
+          pct_diff      = "% Diff vs Baseline";
 run;
 
-/* (A) CPBP: Export to Excel */
-%let output_path = /your/preferred/path;  /* Update to your actual path */
+%let output_path = /your/path/here;
 proc export data=cpbp_sens
     outfile="&output_path/cpbp_sensitivity.xlsx"
     dbms=xlsx replace;
     sheet="CPBP_Sens";
 run;
 
-/* (B) EF: Show in SAS table */
-title1 "EF Sensitivity Analysis Results";
 proc print data=ef_sens noobs label;
-    var scenario Fin_Act_Employment_qoq Consumer_Credit_lag1 DOWJ_Total_qoq
-        scenario_pred baseline_pred diff_freq pct_diff;
-    label scenario_pred  = "Scenario Pred Freq"
-          baseline_pred  = "Baseline Pred Freq"
-          diff_freq      = "Absolute Difference"
-          pct_diff       = "% Diff vs Baseline";
+    var scenario Fin_Act_Employment_qoq Consumer_Credit_lag1 DOWJ_Total_qoq scenario_pred baseline_pred diff_freq pct_diff;
+    label scenario_pred = "Scenario Pred Freq"
+          baseline_pred = "Baseline Pred Freq"
+          diff_freq     = "Absolute Difference"
+          pct_diff      = "% Diff vs Baseline";
 run;
 
-/* (B) EF: Export to Excel */
 proc export data=ef_sens
     outfile="&output_path/ef_sensitivity.xlsx"
     dbms=xlsx replace;
     sheet="EF_Sens";
 run;
-
-title1;
