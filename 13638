@@ -1,192 +1,53 @@
-data cpbp_model_data;
-    merge mev_data cpbp_hist;
-    by data_date;
-run;
+Below is a **factual** excerpt table illustrating **specific lines** that raised questions or appeared inconsistent between the **developer** and **validator (OGM)** analyses. We’ve **bolded** the relevant entries (rows or values) that seem “strange” or inconsistent. 
 
-data ef_model_data;
-    merge mev_data ef_hist;
-    by data_date;
-run;
+> **Important**: These bolded items are **only** the lines/values that stand out; no assumptions or inferences are provided about root causes.
 
-proc genmod data=cpbp_model_data;
-    model actual_frequency = SP500_Vol_MAVG_Ydiff GDP_Real_Lag2
-        / dist=NEGBIN link=log;
-    output out=NEGBINFIT_CPBP p=lambda reschi=reschi;
-    ods output ParameterEstimates = WORK.CPBP_PE
-               Obstats            = WORK.CPBP_OBS_QTR
-               ModelFit           = WORK.CPBP_P_MODELFIT;
-    store out=cpbp_nbmodel;
-run;
+---
 
-proc genmod data=ef_model_data;
-    model actual_frequency = Fin_Act_Employment_qoq 
-                             Consumer_Credit_lag1
-                             DOWJ_Total_qoq
-        / dist=NEGBIN link=log;
-    output out=NEGBINFIT_EF p=lambda reschi=reschi;
-    ods output ParameterEstimates = WORK.EF_PE
-               Obstats            = WORK.EF_OBS_QTR
-               ModelFit           = WORK.EF_P_MODELFIT;
-    store out=ef_nbmodel;
-run;
+## EF Model Discrepancies
 
-proc means data=cpbp_model_data noprint;
-    var SP500_Vol_MAVG_Ydiff 
-        GDP_Real_Lag2;
-    output out=cpbp_meanstd
-           mean= mean_sp500 mean_gdp
-           std=  std_sp500  std_gdp;
-run;
+| **Scenario**             | **Consumer_Credit_lag1**<br>(Baseline ~3.37) | **Scenario_pred** | **Pct_diff**  | **Observation**                                                                               |
+|--------------------------|----------------------------------------------|-------------------|---------------|-------------------------------------------------------------------------------------------------|
+| EF_Baseline (Dev)        | 3.37                                         | 241.31            | 0%            | Developer baseline                                                                              |
+| EF_Baseline (Val.)       | 3.37                                         | 241.31            | 0%            | Validator baseline                                                                              |
+| **Credit_-1STD (Val.)**  | **4.14**                                     | **428.71**        | **+77.65%**   | **“\-1STD” is higher than baseline (3.37); unusual label vs. numeric value**                    |
+| **Credit_-4STD (Val.)**  | **4.93**                                     | **717.66**        | **+197.42%**  | **Validator result far exceeds developer max (~+88%); label suggests negative shock, but value is larger** |
 
-proc means data=ef_model_data noprint;
-    var Fin_Act_Employment_qoq
-        Consumer_Credit_lag1
-        DOWJ_Total_qoq;
-    output out=ef_meanstd
-           mean= mean_Fin mean_Credit mean_Dow
-           std=  std_Fin  std_Credit  std_Dow;
-run;
+<br>
 
-data cpbp_scenarios;
-    set cpbp_meanstd;
-    length scenario $50;
-    scenario = 'CPBP_Baseline';
-    SP500_Vol_MAVG_Ydiff = mean_sp500;
-    GDP_Real_Lag2        = mean_gdp;
-    output;
-    array spShocks[4] (1,2,3,4);
-    do i=1 to 4;
-        scenario = cats('SP500_-', spShocks[i], 'STD');
-        SP500_Vol_MAVG_Ydiff = mean_sp500 - spShocks[i]*std_sp500;
-        GDP_Real_Lag2        = mean_gdp;
-        output;
-        scenario = cats('SP500_+', spShocks[i], 'STD');
-        SP500_Vol_MAVG_Ydiff = mean_sp500 + spShocks[i]*std_sp500;
-        GDP_Real_Lag2        = mean_gdp;
-        output;
-    end;
-    array gdpShocks[4] (1,2,3,4);
-    do j=1 to 4;
-        scenario = cats('GDP_-', gdpShocks[j], 'STD');
-        SP500_Vol_MAVG_Ydiff = mean_sp500;
-        GDP_Real_Lag2        = mean_gdp - gdpShocks[j]*std_gdp;
-        output;
-        scenario = cats('GDP_+', gdpShocks[j], 'STD');
-        SP500_Vol_MAVG_Ydiff = mean_sp500;
-        GDP_Real_Lag2        = mean_gdp + gdpShocks[j]*std_gdp;
-        output;
-    end;
-run;
+| **Scenario**             | **Fin_Act_Employment_qoq**<br>(Baseline ~0.0016) | **Scenario_pred** | **Pct_diff**   | **Observation**                                                                    |
+|--------------------------|---------------------------------------------------|-------------------|----------------|-------------------------------------------------------------------------------------|
+| EF_Baseline (Dev)        | 0.0016                                           | 241.31            | 0%             | Developer baseline                                                                  |
+| EF_Baseline (Val.)       | 0.0016                                           | 241.31            | 0%             | Validator baseline                                                                  |
+| **Fin_+4STD (Val.)**     | **0.0226**                                       | **474.48**        | **+96.64%**    | **Developer’s +4STD showed ~+40%, while validator sees nearly +100%**               |
+| **Fin_+4STD (Val., 2024Q1)** | **0.03275**                                 | **2404.10**       | **+847.11%**   | **Extremely large jump not reflected in developer’s tables**                       |
 
-data ef_scenarios;
-    set ef_meanstd;
-    length scenario $50;
-    scenario = 'EF_Baseline';
-    Fin_Act_Employment_qoq = mean_Fin;
-    Consumer_Credit_lag1   = mean_Credit;
-    DOWJ_Total_qoq         = mean_Dow;
-    output;
-    array myShocks[4] (1,2,3,4);
-    do i=1 to 4;
-        scenario = cats('Fin_-', myShocks[i], 'STD');
-        Fin_Act_Employment_qoq = mean_Fin - myShocks[i]*std_Fin;
-        Consumer_Credit_lag1   = mean_Credit;
-        DOWJ_Total_qoq         = mean_Dow;
-        output;
-        scenario = cats('Fin_+', myShocks[i], 'STD');
-        Fin_Act_Employment_qoq = mean_Fin + myShocks[i]*std_Fin;
-        Consumer_Credit_lag1   = mean_Credit;
-        DOWJ_Total_qoq         = mean_Dow;
-        output;
-    end;
-    do i=1 to 4;
-        scenario = cats('Credit_-', myShocks[i], 'STD');
-        Fin_Act_Employment_qoq = mean_Fin;
-        Consumer_Credit_lag1   = mean_Credit - myShocks[i]*std_Credit;
-        DOWJ_Total_qoq         = mean_Dow;
-        output;
-        scenario = cats('Credit_+', myShocks[i], 'STD');
-        Fin_Act_Employment_qoq = mean_Fin;
-        Consumer_Credit_lag1   = mean_Credit + myShocks[i]*std_Credit;
-        DOWJ_Total_qoq         = mean_Dow;
-        output;
-    end;
-    do i=1 to 4;
-        scenario = cats('DOW_-', myShocks[i], 'STD');
-        Fin_Act_Employment_qoq = mean_Fin;
-        Consumer_Credit_lag1   = mean_Credit;
-        DOWJ_Total_qoq         = mean_Dow - myShocks[i]*std_Dow;
-        output;
-        scenario = cats('DOW_+', myShocks[i], 'STD');
-        Fin_Act_Employment_qoq = mean_Fin;
-        Consumer_Credit_lag1   = mean_Credit;
-        DOWJ_Total_qoq         = mean_Dow + myShocks[i]*std_Dow;
-        output;
-    end;
-run;
+---
 
-proc plm restore=cpbp_nbmodel;
-    score data=cpbp_scenarios out=cpbp_scored predicted=pred_freq / ilink;
-run;
+## CPBP Model Discrepancies
 
-proc plm restore=ef_nbmodel;
-    score data=ef_scenarios out=ef_scored predicted=pred_freq / ilink;
-run;
+| **Scenario**           | **GDP_Real_Lag2**<br>(Baseline ~9.82) | **Scenario_pred**  | **Pct_diff**   | **Observation**                                                                                            |
+|------------------------|---------------------------------------|--------------------|----------------|-------------------------------------------------------------------------------------------------------------|
+| CPBP_Baseline (Dev)    | 9.82                                  | 15.44             | 0%             | Developer baseline                                                                                          |
+| CPBP_Baseline (Val.)   | 9.82                                  | 15.44             | 0%             | Validator baseline                                                                                          |
+| **GDP_+4STD (Dev.)**   | ~10.30                                |  ~70–80 range?    | **Up to +354%**| **Developer indicates +354% at +4STD (per doc). Much higher than validator’s +164–181%**                    |
+| **GDP_+4STD (Val.)**   | **10.21**                              | **40.82 → 43.95** | **+164% → +181%**| **Validator sees large increase, but still below the +354% in dev analysis**                                 |
 
-proc sql;
-    create table cpbp_sens as
-    select a.scenario,
-           a.SP500_Vol_MAVG_Ydiff,
-           a.GDP_Real_Lag2,
-           a.pred_freq as scenario_pred,
-           b.pred_freq as baseline_pred,
-           (a.pred_freq - b.pred_freq) as diff_freq,
-           ((a.pred_freq - b.pred_freq)/b.pred_freq) as pct_diff format=percent8.2
-    from cpbp_scored as a
-    left join cpbp_scored as b
-         on b.scenario = 'CPBP_Baseline';
-quit;
+<br>
 
-proc sql;
-    create table ef_sens as
-    select a.scenario,
-           a.Fin_Act_Employment_qoq,
-           a.Consumer_Credit_lag1,
-           a.DOWJ_Total_qoq,
-           a.pred_freq as scenario_pred,
-           b.pred_freq as baseline_pred,
-           (a.pred_freq - b.pred_freq) as diff_freq,
-           ((a.pred_freq - b.pred_freq)/b.pred_freq) as pct_diff format=percent8.2
-    from ef_scored as a
-    left join ef_scored as b
-         on b.scenario = 'EF_Baseline';
-quit;
+| **Scenario**          | **SP500_Vol_MAVG_Ydiff**<br>(Baseline ~0.012–0.036) | **Scenario_pred** | **Pct_diff**  | **Observation**                                                            |
+|-----------------------|-----------------------------------------------------|-------------------|---------------|----------------------------------------------------------------------------|
+| CPBP_Baseline (Dev)   | 0.012–0.036                                        | 15.44            | 0%            | Developer baseline                                                         |
+| CPBP_Baseline (Val.)  | 0.012–0.036                                        | 15.44            | 0%            | Validator baseline                                                         |
+| **SP500_+4STD (Dev.)**| ~3.45                                              | ~31.00           | **+106%**     | **Developer analysis (Figure 45) → +106%**                                 |
+| **SP500_+4STD (Val.)**| **3.41 → 4.31**                                    | **29.96 → 31.93**| **+94% → +107%**| **Similar range, but baseline standard deviations differ slightly**         |
 
-proc print data=cpbp_sens noobs label;
-    var scenario SP500_Vol_MAVG_Ydiff GDP_Real_Lag2 scenario_pred baseline_pred diff_freq pct_diff;
-    label scenario_pred = "Scenario Pred Freq"
-          baseline_pred = "Baseline Pred Freq"
-          diff_freq     = "Absolute Difference"
-          pct_diff      = "% Diff vs Baseline";
-run;
+---
 
-%let output_path = /your/path/here;
-proc export data=cpbp_sens
-    outfile="&output_path/cpbp_sensitivity.xlsx"
-    dbms=xlsx replace;
-    sheet="CPBP_Sens";
-run;
+### Key “Strange” or Inconsistent Entries (Bolded Above)
+1. **“-1STD” or “-4STD”** scenarios where **raw values exceed** the baseline.  
+2. **Extremely large** percentage changes in validator’s results (e.g., +197%, +847%) **vs.** lower or different extremes in developer’s tables.  
+3. **GDP** +4STD mismatch (+354% developer vs. +164–181% validator).  
+4. **Significant difference** in Fin_+4STD changes (+40% vs. +96% or even +800%).  
 
-proc print data=ef_sens noobs label;
-    var scenario Fin_Act_Employment_qoq Consumer_Credit_lag1 DOWJ_Total_qoq scenario_pred baseline_pred diff_freq pct_diff;
-    label scenario_pred = "Scenario Pred Freq"
-          baseline_pred = "Baseline Pred Freq"
-          diff_freq     = "Absolute Difference"
-          pct_diff      = "% Diff vs Baseline";
-run;
-
-proc export data=ef_sens
-    outfile="&output_path/ef_sensitivity.xlsx"
-    dbms=xlsx replace;
-    sheet="EF_Sens";
-run;
+These bolded lines **do not** imply causes or errors—only that they **stand out** when comparing developer vs. validator sensitivity analyses.
