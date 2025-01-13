@@ -1,5 +1,8 @@
 Below are two CSV files—one for **EF** model discrepancies and one for **CPBP** model discrepancies—containing the same “strange” or inconsistent results that were bolded previously. You can copy each CSV block into a plain text file (e.g., `EF_model_discrepancies.csv`, `CPBP_model_discrepancies.csv`) and open them in Excel.
-
+“-1STD” or “-4STD” scenarios that use a higher raw credit or GDP value than baseline.
+Large magnitude differences (developer’s max +88% vs. validator’s +197% for Consumer Credit).
+Sign or scale inconsistency (developer indicates ~+40% for a 4STD on Fin_Employment; validator sees +96% or even +800% in certain quarters).
+GDP +4STD goes as high as +354% in one developer table vs. +164–181% in validator tables.
 ---
 
 ## 1) EF Model Discrepancies: `EF_model_discrepancies.csv`
