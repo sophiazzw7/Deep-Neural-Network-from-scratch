@@ -1,53 +1,48 @@
-Below is a **factual** excerpt table illustrating **specific lines** that raised questions or appeared inconsistent between the **developer** and **validator (OGM)** analyses. We’ve **bolded** the relevant entries (rows or values) that seem “strange” or inconsistent. 
-
-> **Important**: These bolded items are **only** the lines/values that stand out; no assumptions or inferences are provided about root causes.
+Below are two CSV files—one for **EF** model discrepancies and one for **CPBP** model discrepancies—containing the same “strange” or inconsistent results that were bolded previously. You can copy each CSV block into a plain text file (e.g., `EF_model_discrepancies.csv`, `CPBP_model_discrepancies.csv`) and open them in Excel.
 
 ---
 
-## EF Model Discrepancies
+## 1) EF Model Discrepancies: `EF_model_discrepancies.csv`
 
-| **Scenario**             | **Consumer_Credit_lag1**<br>(Baseline ~3.37) | **Scenario_pred** | **Pct_diff**  | **Observation**                                                                               |
-|--------------------------|----------------------------------------------|-------------------|---------------|-------------------------------------------------------------------------------------------------|
-| EF_Baseline (Dev)        | 3.37                                         | 241.31            | 0%            | Developer baseline                                                                              |
-| EF_Baseline (Val.)       | 3.37                                         | 241.31            | 0%            | Validator baseline                                                                              |
-| **Credit_-1STD (Val.)**  | **4.14**                                     | **428.71**        | **+77.65%**   | **“\-1STD” is higher than baseline (3.37); unusual label vs. numeric value**                    |
-| **Credit_-4STD (Val.)**  | **4.93**                                     | **717.66**        | **+197.42%**  | **Validator result far exceeds developer max (~+88%); label suggests negative shock, but value is larger** |
+```csv
+Scenario,Consumer_Credit_lag1 (Baseline ~3.37),Fin_Act_Employment_qoq (Baseline ~0.0016),Scenario_pred,Pct_diff,Observation
+EF_Baseline (Dev),3.37,,241.31,0%,Developer baseline
+EF_Baseline (Val.),3.37,,241.31,0%,Validator baseline
+Credit_-1STD (Val.),4.14,,428.71,+77.65%,"“-1STD” is higher than baseline (3.37); unusual label vs. numeric value"
+Credit_-4STD (Val.),4.93,,717.66,+197.42%,"Validator result far exceeds dev (~+88%); label says negative shock but value is larger"
+Fin_+4STD (Val.),,0.0226,474.48,+96.64%,"Developer’s +4STD saw ~+40%, validator sees nearly +100%"
+Fin_+4STD (Val., 2024Q1),,0.03275,2404.10,+847.11%,"Extremely large jump not in developer’s tables"
+```
 
-<br>
-
-| **Scenario**             | **Fin_Act_Employment_qoq**<br>(Baseline ~0.0016) | **Scenario_pred** | **Pct_diff**   | **Observation**                                                                    |
-|--------------------------|---------------------------------------------------|-------------------|----------------|-------------------------------------------------------------------------------------|
-| EF_Baseline (Dev)        | 0.0016                                           | 241.31            | 0%             | Developer baseline                                                                  |
-| EF_Baseline (Val.)       | 0.0016                                           | 241.31            | 0%             | Validator baseline                                                                  |
-| **Fin_+4STD (Val.)**     | **0.0226**                                       | **474.48**        | **+96.64%**    | **Developer’s +4STD showed ~+40%, while validator sees nearly +100%**               |
-| **Fin_+4STD (Val., 2024Q1)** | **0.03275**                                 | **2404.10**       | **+847.11%**   | **Extremely large jump not reflected in developer’s tables**                       |
+**Notes**:  
+- Columns “Consumer_Credit_lag1 (Baseline ~3.37)” and “Fin_Act_Employment_qoq (Baseline ~0.0016)” may be empty when the row pertains to the **other** variable.  
+- `Observation` contains the factual note about what’s “strange” or inconsistent—no root causes inferred.
 
 ---
 
-## CPBP Model Discrepancies
+## 2) CPBP Model Discrepancies: `CPBP_model_discrepancies.csv`
 
-| **Scenario**           | **GDP_Real_Lag2**<br>(Baseline ~9.82) | **Scenario_pred**  | **Pct_diff**   | **Observation**                                                                                            |
-|------------------------|---------------------------------------|--------------------|----------------|-------------------------------------------------------------------------------------------------------------|
-| CPBP_Baseline (Dev)    | 9.82                                  | 15.44             | 0%             | Developer baseline                                                                                          |
-| CPBP_Baseline (Val.)   | 9.82                                  | 15.44             | 0%             | Validator baseline                                                                                          |
-| **GDP_+4STD (Dev.)**   | ~10.30                                |  ~70–80 range?    | **Up to +354%**| **Developer indicates +354% at +4STD (per doc). Much higher than validator’s +164–181%**                    |
-| **GDP_+4STD (Val.)**   | **10.21**                              | **40.82 → 43.95** | **+164% → +181%**| **Validator sees large increase, but still below the +354% in dev analysis**                                 |
+```csv
+Scenario,GDP_Real_Lag2 (Baseline ~9.82),SP500_Vol_MAVG_Ydiff (Baseline ~0.012–0.036),Scenario_pred,Pct_diff,Observation
+CPBP_Baseline (Dev),9.82,,15.44,0%,"Developer baseline"
+CPBP_Baseline (Val.),9.82,,15.44,0%,"Validator baseline"
+GDP_+4STD (Dev.),~10.30,,~70–80 range,Up to +354%,"Developer indicates +354% at +4STD; higher than validator’s +164–181%"
+GDP_+4STD (Val.),10.21,,40.82 → 43.95,+164% → +181%,"Validator sees large increase but below dev’s +354%"
+SP500_+4STD (Dev.),,~3.45,~31.00,+106%,"Developer analysis (Figure 45) → +106%"
+SP500_+4STD (Val.),,3.41 → 4.31,29.96 → 31.93,+94% → +107%,"Similar range, but baseline standard deviations differ slightly"
+```
 
-<br>
-
-| **Scenario**          | **SP500_Vol_MAVG_Ydiff**<br>(Baseline ~0.012–0.036) | **Scenario_pred** | **Pct_diff**  | **Observation**                                                            |
-|-----------------------|-----------------------------------------------------|-------------------|---------------|----------------------------------------------------------------------------|
-| CPBP_Baseline (Dev)   | 0.012–0.036                                        | 15.44            | 0%            | Developer baseline                                                         |
-| CPBP_Baseline (Val.)  | 0.012–0.036                                        | 15.44            | 0%            | Validator baseline                                                         |
-| **SP500_+4STD (Dev.)**| ~3.45                                              | ~31.00           | **+106%**     | **Developer analysis (Figure 45) → +106%**                                 |
-| **SP500_+4STD (Val.)**| **3.41 → 4.31**                                    | **29.96 → 31.93**| **+94% → +107%**| **Similar range, but baseline standard deviations differ slightly**         |
+**Notes**:  
+- The rows specific to GDP do not have an S&P 500 value, and vice versa.  
+- Ranges (e.g., “~70–80 range”) are taken verbatim from the summarized “strange” data.  
+- `Observation` is a short factual description only.
 
 ---
 
-### Key “Strange” or Inconsistent Entries (Bolded Above)
-1. **“-1STD” or “-4STD”** scenarios where **raw values exceed** the baseline.  
-2. **Extremely large** percentage changes in validator’s results (e.g., +197%, +847%) **vs.** lower or different extremes in developer’s tables.  
-3. **GDP** +4STD mismatch (+354% developer vs. +164–181% validator).  
-4. **Significant difference** in Fin_+4STD changes (+40% vs. +96% or even +800%).  
+### How to Use These CSVs
 
-These bolded lines **do not** imply causes or errors—only that they **stand out** when comparing developer vs. validator sensitivity analyses.
+1. **Copy** each CSV code block (including headers) into a separate plain-text file.  
+2. **Save** each as, for example, `EF_model_discrepancies.csv` and `CPBP_model_discrepancies.csv`.  
+3. **Open** these files in Excel (or any spreadsheet tool).  
+
+You will then have two clean tables highlighting the rows of concern.
