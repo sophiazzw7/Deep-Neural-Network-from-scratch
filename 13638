@@ -1,51 +1,82 @@
-Below are two CSV files—one for **EF** model discrepancies and one for **CPBP** model discrepancies—containing the same “strange” or inconsistent results that were bolded previously. You can copy each CSV block into a plain text file (e.g., `EF_model_discrepancies.csv`, `CPBP_model_discrepancies.csv`) and open them in Excel.
-“-1STD” or “-4STD” scenarios that use a higher raw credit or GDP value than baseline.
-Large magnitude differences (developer’s max +88% vs. validator’s +197% for Consumer Credit).
-Sign or scale inconsistency (developer indicates ~+40% for a 4STD on Fin_Employment; validator sees +96% or even +800% in certain quarters).
-GDP +4STD goes as high as +354% in one developer table vs. +164–181% in validator tables.
----
-
-## 1) EF Model Discrepancies: `EF_model_discrepancies.csv`
-
-```csv
-Scenario,Consumer_Credit_lag1 (Baseline ~3.37),Fin_Act_Employment_qoq (Baseline ~0.0016),Scenario_pred,Pct_diff,Observation
-EF_Baseline (Dev),3.37,,241.31,0%,Developer baseline
-EF_Baseline (Val.),3.37,,241.31,0%,Validator baseline
-Credit_-1STD (Val.),4.14,,428.71,+77.65%,"“-1STD” is higher than baseline (3.37); unusual label vs. numeric value"
-Credit_-4STD (Val.),4.93,,717.66,+197.42%,"Validator result far exceeds dev (~+88%); label says negative shock but value is larger"
-Fin_+4STD (Val.),,0.0226,474.48,+96.64%,"Developer’s +4STD saw ~+40%, validator sees nearly +100%"
-Fin_+4STD (Val., 2024Q1),,0.03275,2404.10,+847.11%,"Extremely large jump not in developer’s tables"
-```
-
-**Notes**:  
-- Columns “Consumer_Credit_lag1 (Baseline ~3.37)” and “Fin_Act_Employment_qoq (Baseline ~0.0016)” may be empty when the row pertains to the **other** variable.  
-- `Observation` contains the factual note about what’s “strange” or inconsistent—no root causes inferred.
+Below is a **verbatim-based** summary of the main points from the conversation. No additional details or interpretations have been added beyond what appears in the transcript provided.
 
 ---
 
-## 2) CPBP Model Discrepancies: `CPBP_model_discrepancies.csv`
+## Meeting Title
+**MOD13638 Discussion**
 
-```csv
-Scenario,GDP_Real_Lag2 (Baseline ~9.82),SP500_Vol_MAVG_Ydiff (Baseline ~0.012–0.036),Scenario_pred,Pct_diff,Observation
-CPBP_Baseline (Dev),9.82,,15.44,0%,"Developer baseline"
-CPBP_Baseline (Val.),9.82,,15.44,0%,"Validator baseline"
-GDP_+4STD (Dev.),~10.30,,~70–80 range,Up to +354%,"Developer indicates +354% at +4STD; higher than validator’s +164–181%"
-GDP_+4STD (Val.),10.21,,40.82 → 43.95,+164% → +181%,"Validator sees large increase but below dev’s +354%"
-SP500_+4STD (Dev.),,~3.45,~31.00,+106%,"Developer analysis (Figure 45) → +106%"
-SP500_+4STD (Val.),,3.41 → 4.31,29.96 → 31.93,+94% → +107%,"Similar range, but baseline standard deviations differ slightly"
-```
+## Participants
+- Rashmi  
+- Sophia  
+- Jane  
+- Kuldeep  
+- (Mentions of Alex, Rami, and others occur but they did not provide extensive input in the transcript)
 
-**Notes**:  
-- The rows specific to GDP do not have an S&P 500 value, and vice versa.  
-- Ranges (e.g., “~70–80 range”) are taken verbatim from the summarized “strange” data.  
-- `Observation` is a short factual description only.
+## Discussion Points
+
+1. **Metric 2 (Stability Testing) & Potential Additional Metric**  
+   - Rashmi explained Metric 2 focuses on p-values for re-estimated coefficients to assess predictive power.  
+   - Sophia mentioned a suggestion from MRO to track the *magnitude* of the coefficients (e.g., if they double).  
+   - Rashmi clarified that they already watch for large coefficient changes, but no formal threshold exists yet.  
+
+2. **New OGM Plan in Annual Review**  
+   - Sophia stated the new OGM Plan is part of the annual review (RP2).  
+   - Rashmi noted initial confusion, as they had not been told the new OGM was part of the annual review.  
+   - Jane said the intention is for the model to have a compliant OGM plan while also satisfying annual review requirements.
+
+3. **Suggestion to Add a Magnitude-Based Metric**  
+   - Jane viewed it as a *good suggestion* but not a requirement to meet compliance.  
+   - Rashmi agreed that adding a metric with a specific threshold would require more time for testing.  
+   - It was stated they could include this as part of the new OGM or as a future improvement.
+
+4. **Archer Finding 126202126**  
+   - Sophia indicated this finding and the annual review are on the same timeline.  
+   - Discussion noted that the Archer finding involves testing and possible concerns about model stability.  
+   - Jane said some points might remain open if further analysis is needed.  
+   - The governance team may categorize any concerns as an issue, sub-issue, or suggestion.
+
+5. **Concern About Model Stability**  
+   - Kuldeep pointed out discrepancies (over-prediction, differences from development estimates) in certain segments (e.g., CTEP, EF).  
+   - Rashmi acknowledged data shifts and said actions are taken depending on whether changes are permanent or transitory.  
+   - Jane and Rashmi reiterated that implementing a new stability metric would require extensive work.
+
+6. **Code Changes & Backtesting**  
+   - Sophia mentioned noticing code changes in certain folders and asked who made them and why.  
+   - Kuldeep tried replicating Metric 3 values using the available code and saw a mismatch with OGM report aggregates.  
+   - Rashmi noted older OGM plans only showed aggregate values. The new OGM plan will break down baseline vs. severely adverse values per segment.  
+
+7. **Annual Review Timeline & Next Steps**  
+   - The annual review ends on February 7.  
+   - Rashmi and Sophia will coordinate with Jane and possibly Alex on providing responses to question lists and Archer findings.  
+   - Rashmi will check the code changes and send clarifications.  
+   - Rashmi will share how Metric 3 is calculated; Sophia will share their Excel approach to isolate any discrepancies.
 
 ---
 
-### How to Use These CSVs
+## Action Items (Exact Wording from the Conversation)
 
-1. **Copy** each CSV code block (including headers) into a separate plain-text file.  
-2. **Save** each as, for example, `EF_model_discrepancies.csv` and `CPBP_model_discrepancies.csv`.  
-3. **Open** these files in Excel (or any spreadsheet tool).  
+1. **Written Response & Documentation**  
+   - Rashmi will write up how they track coefficient changes and include it as part of the response.  
+   - The plan is to document concerns about model stability and potential data shifts in the limitations section.  
 
-You will then have two clean tables highlighting the rows of concern.
+2. **Exchange Calculation Details**  
+   - Sophia will share the Excel sheet with Rashmi.  
+   - Rashmi will provide the breakdown on how the team arrived at certain Metric 3 values.  
+
+3. **Follow-Up with Governance Team**  
+   - The group will decide if the suggested stability metric becomes an issue, sub-issue, or suggestion.  
+   - Whether or not it can be included in the OGM plan depends on the timeline and the governance team’s direction.
+
+4. **Address Archer Finding**  
+   - The team will handle Archer Finding 126202126 in the annual review.  
+   - Any unresolved points will be documented by the February 7 deadline.
+
+5. **Clarify Code Changes**  
+   - Rashmi will investigate who made the code updates in the folder and confirm if they were routine or unplanned.
+
+6. **Coordinate Timelines**  
+   - A separate discussion with Alex will confirm final timelines for providing question-list answers and Archer Finding updates.
+
+---
+
+*End of Meeting Minutes*
