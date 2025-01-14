@@ -1,82 +1,121 @@
-Below is a **verbatim-based** summary of the main points from the conversation. No additional details or interpretations have been added beyond what appears in the transcript provided.
+Below is a consolidated set of **meeting minutes** based on the transcribed discussion regarding **MOD13638**. These minutes are organized to capture the key points, decisions, and action items from your conversation.
 
 ---
 
 ## Meeting Title
-**MOD13638 Discussion**
+**MOD13638 Review: OGM Plan, Stability Testing, and Archer Finding**
 
-## Participants
-- Rashmi  
-- Sophia  
-- Jane  
-- Kuldeep  
-- (Mentions of Alex, Rami, and others occur but they did not provide extensive input in the transcript)
+## Date
+[Add the meeting date here]
 
-## Discussion Points
+## Attendees
+- **Rashmi**
+- **Sophia**
+- **Jane**
+- **Kuldeep**
+- **Rami** (briefly mentioned)
+- **(Others as appropriate, e.g., Alex mentioned later)**
 
-1. **Metric 2 (Stability Testing) & Potential Additional Metric**  
-   - Rashmi explained Metric 2 focuses on p-values for re-estimated coefficients to assess predictive power.  
-   - Sophia mentioned a suggestion from MRO to track the *magnitude* of the coefficients (e.g., if they double).  
-   - Rashmi clarified that they already watch for large coefficient changes, but no formal threshold exists yet.  
-
-2. **New OGM Plan in Annual Review**  
-   - Sophia stated the new OGM Plan is part of the annual review (RP2).  
-   - Rashmi noted initial confusion, as they had not been told the new OGM was part of the annual review.  
-   - Jane said the intention is for the model to have a compliant OGM plan while also satisfying annual review requirements.
-
-3. **Suggestion to Add a Magnitude-Based Metric**  
-   - Jane viewed it as a *good suggestion* but not a requirement to meet compliance.  
-   - Rashmi agreed that adding a metric with a specific threshold would require more time for testing.  
-   - It was stated they could include this as part of the new OGM or as a future improvement.
-
-4. **Archer Finding 126202126**  
-   - Sophia indicated this finding and the annual review are on the same timeline.  
-   - Discussion noted that the Archer finding involves testing and possible concerns about model stability.  
-   - Jane said some points might remain open if further analysis is needed.  
-   - The governance team may categorize any concerns as an issue, sub-issue, or suggestion.
-
-5. **Concern About Model Stability**  
-   - Kuldeep pointed out discrepancies (over-prediction, differences from development estimates) in certain segments (e.g., CTEP, EF).  
-   - Rashmi acknowledged data shifts and said actions are taken depending on whether changes are permanent or transitory.  
-   - Jane and Rashmi reiterated that implementing a new stability metric would require extensive work.
-
-6. **Code Changes & Backtesting**  
-   - Sophia mentioned noticing code changes in certain folders and asked who made them and why.  
-   - Kuldeep tried replicating Metric 3 values using the available code and saw a mismatch with OGM report aggregates.  
-   - Rashmi noted older OGM plans only showed aggregate values. The new OGM plan will break down baseline vs. severely adverse values per segment.  
-
-7. **Annual Review Timeline & Next Steps**  
-   - The annual review ends on February 7.  
-   - Rashmi and Sophia will coordinate with Jane and possibly Alex on providing responses to question lists and Archer findings.  
-   - Rashmi will check the code changes and send clarifications.  
-   - Rashmi will share how Metric 3 is calculated; Sophia will share their Excel approach to isolate any discrepancies.
+## Agenda
+1. Discussion of Metric 2 (Stability Testing) and potential additional metrics.  
+2. Clarification on the New OGM Plan and its inclusion in the annual review.  
+3. Handling of Archer Finding \[126202126\] and next steps.  
+4. Review of pending items: code changes, question lists, timelines.  
 
 ---
 
-## Action Items (Exact Wording from the Conversation)
+## Key Discussion Points
 
-1. **Written Response & Documentation**  
-   - Rashmi will write up how they track coefficient changes and include it as part of the response.  
-   - The plan is to document concerns about model stability and potential data shifts in the limitations section.  
+### 1. Metric 2 & Stability Testing
+- **Rashmi** explained that Metric 2 currently looks at *p-values* to determine stability, i.e., whether coefficients have predictive power.  
+- **Sophia** (on behalf of MRO) suggested introducing a **new metric** to also track the *magnitude* of re-estimated coefficients (e.g., a threshold for how much a coefficient can change before it raises concerns about model stability).  
+- **Jane** pointed out this is a **good suggestion** but would require *significant analysis* and more time for development.  
+- **Rashmi** clarified that while no explicit numeric threshold is in place today, the team does examine large coefficient changes to determine if data shifts are **permanent** or **transitory** and then decides whether to re-estimate.  
 
-2. **Exchange Calculation Details**  
-   - Sophia will share the Excel sheet with Rashmi.  
-   - Rashmi will provide the breakdown on how the team arrived at certain Metric 3 values.  
+**Outcome/Decision**:  
+- The group agreed to **document** these concerns in the **limitation** section of the OGM or model documentation, ensuring stakeholders are aware of potential stability issues.  
+- Potentially adding a new stability metric will be **treated as a longer-term improvement** rather than something to finalize in the current annual review.
 
-3. **Follow-Up with Governance Team**  
-   - The group will decide if the suggested stability metric becomes an issue, sub-issue, or suggestion.  
-   - Whether or not it can be included in the OGM plan depends on the timeline and the governance team’s direction.
+### 2. New OGM Plan & Annual Review Scope
+- **Sophia** clarified that the new OGM plan is **part of the annual review** (RP2) and that these timelines overlap.  
+- **Rashmi** noted there was earlier confusion: the team initially understood the new OGM plan might not be in scope for this annual review.  
+- **Jane** emphasized a desire to ensure the OGM plan is compliant and meets annual review requirements.  
 
-4. **Address Archer Finding**  
-   - The team will handle Archer Finding 126202126 in the annual review.  
-   - Any unresolved points will be documented by the February 7 deadline.
+**Outcome/Decision**:  
+- All parties agreed that the **new OGM plan** will be **reviewed as part of the annual review** process.  
+- If some of the desired enhancements (e.g., new metrics) are not ready, they can be documented as **pending or suggested improvements** for future updates.
 
-5. **Clarify Code Changes**  
-   - Rashmi will investigate who made the code updates in the folder and confirm if they were routine or unplanned.
+### 3. Archer Finding \[126202126\]
+- **Sophia** and **Kuldeep** highlighted concerns about *over-prediction* or large discrepancies in some segments (e.g., CTEP, EF) when re-estimated.  
+- The Archer Finding is tied to *testing* and *validation.*  
+- **Jane** recognized the overlap with *model stability concerns* but noted some items may remain open until the next cycle if they require more development.  
+- The governance team will decide whether these concerns rise to the level of an **issue** or **sub-issue** or if they should be handled as a **suggestion**.
 
-6. **Coordinate Timelines**  
-   - A separate discussion with Alex will confirm final timelines for providing question-list answers and Archer Finding updates.
+**Outcome/Decision**:  
+- The team will **address the Archer Finding** within the **annual review** window (ending February 7).  
+- If any items remain unresolved, they will be flagged for **ongoing or future governance** consideration.
+
+### 4. Code Changes & Backtesting Questions
+- **Sophia** raised a question about **unplanned code changes** in the folders and asked who made them and why.  
+- **Rashmi** will investigate the code changes, as they may have been *minor or routine updates,* but they still fall under the scope of the annual validation.  
+- **Kuldeep** described replication efforts for Metric 3 calculations and found **discrepancies** between the OGM report’s aggregated results and their own breakdown.  
+- **Rashmi** explained that older OGM reports don’t include the breakdown (only aggregations), but future OGM reports **will** provide separate breakdowns.  
+
+**Outcome/Decision**:  
+- **Rashmi** will review the code changes and **clarify** why and when they were made.  
+- **Both sides** will **exchange** the breakdown calculations (Excel files, etc.) to pinpoint any discrepancy and ensure alignment.
+
+### 5. Timeline & Next Steps
+- **Sophia** and **Rashmi** discussed the various deliverables:  
+  1. *Response to the second question list* (10 questions, some have been removed/merged).  
+  2. *Archer Finding* responses.  
+  3. *OGM documentation updates,* including any mention of limitations and potential sub-issues.  
+- **Jane** suggested meeting with **Alex** to coordinate the final timeline.  
+
+**Outcome/Decision**:  
+- The team will set a **follow-up meeting** with Alex to solidify *delivery dates* for question lists and Archer Finding responses.  
+- Written responses to the question lists and a plan for next steps will be shared **shortly** after internal reviews.
 
 ---
 
-*End of Meeting Minutes*
+## Action Items
+
+1. **Document Limitation**  
+   - **Owner**: Jane / Rashmi  
+   - **Task**: Add explicit mention of potential stability concerns (coefficient changes) in the limitations section of the model documentation.  
+   - **Due**: By the next draft of OGM documentation.
+
+2. **Investigate Code Changes**  
+   - **Owner**: Rashmi  
+   - **Task**: Determine who made changes in the code folders, why, and confirm they are *routine or authorized.*  
+   - **Due**: Provide an update at the next meeting.
+
+3. **Share Calculation Breakdowns**  
+   - **Owner**: Rashmi (with Sophia & Kuldeep)  
+   - **Task**: Exchange the Excel sheets / breakdown logic used for Metric 3 to reconcile any discrepancies between the OGM report and the replication exercises.  
+   - **Due**: ASAP, ideally before the next session.
+
+4. **Coordinate Archer Finding & Next Steps**  
+   - **Owner**: Rashmi / Jane / Sophia  
+   - **Task**: Finalize how the Archer Finding \[126202126\] feedback will be incorporated or documented within the annual review timeframe.  
+   - **Due**: Before the February 7 deadline.
+
+5. **Discuss Proposed Additional Metric**  
+   - **Owner**: All participants + Governance Team  
+   - **Task**: Consider developing a new coefficient-magnitude metric for stability testing in the longer term; evaluate feasibility and approach.  
+   - **Due**: Longer-term; no immediate date set.
+
+6. **Meet with Alex**  
+   - **Owner**: Rashmi / Jane / Sophia  
+   - **Task**: Clarify final timeline for question-list deliverables, Archer Finding, and OGM documentation updates.  
+   - **Due**: Scheduled for this afternoon’s session (or whenever Alex is available).
+
+---
+
+### Additional Notes
+- The **annual review** is set to **conclude by February 7**. Any outstanding items may be documented as suggested improvements or pending sub-issues in the governance process.  
+- The **Archer Finding** specifically addresses some testing concerns; however, if not fully resolved in this cycle, it will carry forward as a known item for the next review.
+
+---
+
+**End of Meeting Minutes**
