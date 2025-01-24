@@ -1,17 +1,1 @@
-
-In the updated OGM plan, the Scenario Rank Ordering metric is now treated as a “secondary” measure that does not feed directly into the overall model rating. Previously, this metric contributed to the rating. Given the policy’s requirement for a holistic model performance assessment, can you explain the rationale behind removing Rank Ordering from the rating criteria? Specifically:
-* How does excluding the Rank Ordering metric from the rating still satisfy the requirement for a holistic assessment of model performance?
-* What factors influenced the decision to categorize Rank Ordering as a secondary metric, rather than incorporating it into the final “Performing as Intended,” “Performing with Caution,” or “Not Performing as Intended” classification?
-
-
-The plan notes that Archer data controls are still “in progress” and will be completed before 2025. Could you clarify the timeline for finalizing these controls and the interim measures ensuring Archer data quality until then?
-
-The OGM plan references non-permanent overlays (and potential overrides) when forecasts seem unintuitive or if macro inputs exceed the model’s development range. Could you clarify:
-1. Robustness & Directionality: How do you ensure each overlay is methodologically sound, directionally sensible, and applied consistently across similar scenarios?
-2. Trigger for Recalibration: At what point do persistent or large overlays indicate that the model should be recalibrated or redeveloped, rather than relying on continuous adjustments?
-3. Effective Challenge: The plan mentions oversight by the Capital Committee and Income Statement Challenge. Which body (e.g., BURC) formally provides effective challenge, and how is that challenge documented in the OGM?
-
-
-
-
-"The prior OGM reports only reported Total Loss (Metric 3) at the aggregate level across all segments (EF, CPBP, and non-regression segments) rather than monitoring loss at each segment level. Does the current OGM plan explicitly include segment-level monitoring for Metric 3, or is it still reported in aggregate? If it remains aggregated, can you clarify the rationale for not segmenting this metric?"
+"The self-assessment model rating categorizes performance at the overall model level, but does it consider segment-level deviations? For instance, if one segment underperforms significantly while others remain stable, how does that impact the final rating?" "The OGM table classifies a Metric 2 (Model Stability) breach as 'Performing as Intended,' while the OGM procedure suggests any performance metric breach should be factored into the rating. Given that a stability breach indicates potential model degradation, shouldn’t it be classified as 'Performing with Caution'? Additionally, how does the OGM plan ensure proper escalation and investigation of such breaches?"
