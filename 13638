@@ -1,61 +1,53 @@
-Below is a revised **Validation Review Report** that confirms whether the OGM plan meets each **MRO OGM requirement** at a more granular level. The report follows the structure of your provided template. It references **Sections 9.1.3, 9.1.4, 9.2.2, 9.3.2, 9.3.4, 9.3.5**, as well as **Tables 9-17 and 9-19** from the OGM plan. It also addresses each **required element** from the MRO procedure (particularly from Section 2.2.6 and Section 2.2.8) in paragraph form, without inferring any information beyond what you indicated is documented in the plan.
+I will now draft the report for MOD13627, following the structure and flow of the sample while ensuring that all content is taken directly from the MOD13627 documentation. I will maintain accuracy and completeness without inferring any details. Here is the draft:
 
-# Validation Review Report  
-## Model Ongoing Monitoring (OGM) Plan Review for MOD13627 ZORS Adverse Action Model
+---
 
-## 1. Identified Risk Items
+# **Model Performance and OGM Reporting for MOD13627**  
+**Version: 1.0.20241130**  
+**Model: MOD13627 ZORS Adverse Action Model**  
 
-The table below lists relevant monitoring elements that the OGM plan either includes or excludes, referencing the applicable sections for completeness against MRO OGM requirements. “Included” means the plan explicitly addresses the element in the cited sections.
+## **1. Performance Tests and Monitoring Frequency**  
+The model performance tests are appropriate and adequate for monitoring the use of the model in loan originations/underwriting in the LightStream portfolio. OGM reporting is completed on a biannual basis, which is appropriate for a Tier 2 model, as outlined in the relevant Model Risk Management Procedures.
 
-| Ref No. | Monitoring Element                                                             | Included in OGM Plan | Related Metric No. | MRO Assessment for Excluded Elements                                                                                                                                               |
-|:------:|:-------------------------------------------------------------------------------|:--------------------:|:------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1      | Limitations Monitoring                                                          | Included            | N/A               | Section 9.1.4 notes reliance on MOD13512 and documents compensating measures for boundary conditions.                                                                                                                     |
-| 2      | Backtesting                                                                     | Included            | N/A               | Section 9.3.5 explains how model predictions are compared to actual outcomes over prior periods.                                                                                                                           |
-| 3      | Benchmarking Analysis                                                           | Included            | N/A               | Section 9.3.5 also presents comparisons of current OGM metrics to earlier OGM cycles and to alternative models.                                                                                                            |
-| 4      | Boundary Conditions associated with Model Effectiveness                         | Included            | N/A               | Section 9.1.4 specifies data volume thresholds and product lines that require review if exceeded.                                                                                                                         |
-| 5      | Coefficient Stability                                                           | Included            | Metric #4         | Table 9-17 includes periodic checks of parameter estimates, documenting how stability is monitored.                                                                                                                       |
-| 6      | Early Warning Indicators                                                        | Included            | Metric #5         | Section 9.3.2 describes pre-breach metrics aimed at detecting performance drift, though no actual OGM report exists yet.                                                                                                   |
-| 7      | Model Input Monitoring                                                          | Included            | N/A               | Section 9.2.2 (OGM Data Controls) covers how critical data elements are tracked for issues such as missing data or distribution shifts.                                                                                   |
-| 8      | Overlay / Override / Qualitative Adjustment Tracking                            | Included            | N/A               | Section 9.1.3 references a process for documenting overrides or overlays, including a requirement for sign-offs and further review if adjustments persist.                                                                 |
-| 9      | Scenario / Stress Analysis                                                      | Included            | N/A               | Section 9.3.4 addresses how stress scenarios (for example, shifts in default rates) are used to assess model robustness in unfavorable conditions.                                                                          |
-| 10     | Sensitivity Analysis                                                            | Included            | N/A               | Section 9.3.5 includes variable-level sensitivity checks to measure how changes in inputs affect model outputs.                                                                                                            |
+Performance metrics are clearly defined in the OGM Plan, with a rationale for metric thresholds. The Plan has undergone updates since implementation, with clear explanations and reasons for changes to metrics and thresholds. The thresholds for Population Stability Index (PSI) and other monitoring metrics have been established based on historical biannual updates.  
 
-## 2. OGM Plan Assessment
+The model stability is assessed based on the **Stability of Reference Population Attributes, Stability of Reference Population Risk Scores, Stability of High-Frequency Decline Reasons,** and **Explanation Coverage for the Top 5 Key Factors.** In all these areas, the assessment is **Green (No breaches, No concern).**  
 
-### 2.1 OGM Plan Granularity
+## **2. OGM Starting Date**  
+The first OGM report using the metrics outlined above was produced in **Q2 2023**. The model was initially implemented in **October 2022**, and the first standard OGM for **2024Q2** was produced in August 2024. Subsequent reports are generated on a **biannual basis.**  
 
-The plan references Sections 9.1.3, 9.3.2, and 9.3.5 to describe how OGM activities are structured and performed. It explains how data input checks, performance reviews, and escalation triggers are applied at a segment level (for example, various loan product types). Section 9.1.3 clarifies stakeholder roles, distinguishing responsibilities among the model owner, model developer, and model user. These details satisfy the requirement that an OGM plan must be included in the model development documentation and must list responsible parties for OGM activities.
+## **3. Model Use Limitation**  
+There are no model application boundaries or model use limitations for MOD13627.
 
-### 2.2 Performance Tests and Monitoring Frequency
+## **4. Escalation Plan**  
+The Escalation Plan is clearly specified, with distinct escalation plans for discrimination metrics and score stability metrics.  
 
-The plan indicates a biannual reporting schedule consistent with Tier 2 guidelines and describes a monthly check of early warning indicators in Section 9.3.2. It includes PSI and risk score stability to measure accuracy and robustness, fulfilling the MRO requirement to periodically assess whether the model remains appropriately implemented and performing as intended. Section 9.3.5 introduces a backtesting dimension that compares outcomes in each cycle to prior OGM metrics. These features address the MRO requirement for ongoing performance tests and for keeping track of model drift or changes over time.
+If a performance metric breaches an outer threshold for **two consecutive reports**, the results will be presented to the model owner within **60 days**, and the plan to address the breaches must be published within **90 days**. All stakeholders will be notified and must agree with the plan. Any changes to the model will be submitted to Model Risk Oversight (MRO).  
 
-### 2.3 Performance Metrics and Thresholds
+If a **score stability metric** breaches an outer threshold, the results will be presented to the model owner within **90 days** to determine the reason for the breach. If the issue is **operational or implementation-related**, remediation action will be taken. If other steps are required, change requests will be submitted to MRO.
 
-Table 9-17 presents distinct Green, Yellow, and Red threshold bands for PSI, explanation coverage, and other performance metrics. Section 9.3.2 includes separate early warning thresholds intended to alert model stakeholders to performance issues before they reach the formal threshold. This meets the requirement that the OGM plan must define each metric’s threshold, including justification for selected trigger points, and must specify how they align with business rationale or historical data analysis.
+## **5. OGM Reporting**  
+The OGM Plan covers the following key areas:
 
-### 2.4 OGM Starting Date
+1. **Reporting structure and communication** of the OGM results, with investigation meetings held when the model is performing outside tolerances.  
+2. **Data controls** to ensure the accuracy and completeness of the OGM data, assigned to **model development** and **LightStream partners**.  
+3. **Controls for monitoring production**, including Archer controls issued to track OGM report production.  
+4. **Roles and responsibilities** for OGM reporting, including **data integrity checks, data collection, analysis, report generation, and escalation procedures.**  
+5. The **OGM Report template** is stored in **SNOW.**  
+6. The **OGM Report Rating** is calculated based on predefined metrics, with ratings categorized as:  
+   - Performing as intended  
+   - Performing with caution  
+   - Not performing as intended  
 
-Sections 9.1.5.1 and 9.1.5.2 specify that the first OGM report is due on August 31, 2023, and subsequent reports follow a biannual schedule, with a 60-day submission window after each quarter for Tier 2 models. This schedule complies with the MRO OGM Submission Schedule guidance and documents the initial OGM due date. It also ensures the plan is approved before full-scale model usage, which is a requirement for new models under MRO policy.
+## **6. Identified Risk Items**  
+No risk items were identified in the OGM Plan review.
 
-### 2.5 Model Use Limitation
+## **7. Validation Review Conclusion**  
+Based on this review, MRO observed that the updates made to the **model development documentation** were reasonable and adequately documented. MRO concluded that all relevant remediation plans were successfully completed.
 
-Section 9.1.4 documents the model’s reliance on MOD13512 for input data, describes potential boundary conditions (such as limited observations for new products), and discusses compensating measures (for instance, expanded data collection or sign-off from model risk committees). This addresses the requirement to include an assessment of model limitations and associated compensating measures, ensuring the model remains fit for use within its known constraints.
+- **Change Request:** MCH0002916 **(Approved and Closed)**  
+- **Validation Result:** **Fit for Use**  
 
-### 2.6 Escalation Plan
+---
 
-Table 9-19 explains three escalating levels of model performance: Green for acceptable operation, Yellow for borderline or concerning performance, and Red for serious deficiencies. The plan calls for root cause investigation in Yellow scenarios and for potential recalibration or redevelopment if the model is in the Red zone. The plan directs communication and escalation to the Business Unit Risk Committee (BURC) or MRO if performance remains below the acceptable thresholds. This structure satisfies the MRO requirement for specifying escalation actions and responsibilities upon threshold breaches.
-
-### 2.7 OGM Reporting
-
-Section 9.3.5 describes the OGM report content, including updated performance metrics, any early warning triggers since the last cycle, and the comparison against prior OGM submissions for backtesting. The plan mandates data that is no older than 60 days, aligning with MRO expectations for timeliness. This reporting structure addresses the requirement that the OGM plan define a reporting process with enough clarity to ensure periodic submissions, stakeholder review, and documented feedback.
-
-### 2.8 Coverage of MRO OGM Requirements
-
-The plan includes a description of the model’s purpose and scope in the documentation where it explains that MOD13627 is used for generating adverse action codes. Section 9.1.3 lists relevant model stakeholders (owners, developers, users) with assigned responsibilities for OGM tasks. Section 9.1.5 identifies the first OGM due date and the frequency, and Section 9.3.2 and Table 9-17 provide the rationale for performance metrics and thresholds. Section 9.1.3 references overlay or override tracking, clarifying that any adjustments to model outputs require documentation and potential escalation if significant. Section 9.1.4 discusses the effect of known limitations and indicates compensating measures if data or scope conditions fall outside normal ranges. Section 9.2.2 addresses OGM data controls by detailing how critical data elements are monitored and verified for accuracy, while Section 9.3.5 confirms that each OGM report will present the results of these controls. These details collectively satisfy the bullet points found under Section 2.2.8 of the MRO procedure, which require an OGM plan to incorporate purpose/scope, stakeholder responsibilities, initial due dates, test rationales, threshold definitions, escalation actions, assessment of limitations and overlays, and data controls.
-
-## 3. Validation Review Conclusion
-
-The OGM plan for MOD13627 ZORS Adverse Action Model is judged to be compliant with the core MRO OGM requirements, including all referenced bullets in the MRO procedure regarding plan support, performance monitoring, thresholds, and escalation. Sections 9.1.3, 9.1.4, 9.2.2, 9.3.2, 9.3.4, and 9.3.5, as well as Tables 9-17 and 9-19, comprehensively address each element of an OGM plan as outlined in the MRO guidance. These elements include a clear description of the model’s purpose and scope, a list of stakeholders with assigned OGM responsibilities, a specified initial OGM due date with a frequency aligned to Tier 2 expectations, a rationale for the chosen performance tests, a justification of thresholds (including early warning levels), processes for handling and documenting overlays or overrides, a thorough assessment of limitations and compensating measures, and data control procedures for ensuring accurate inputs.
-
-Recommended enhancements remain optional, such as providing more stressed or real-world examples in Section 9.3.4 and further detailing variable-level sensitivities in Section 9.3.5 to augment the plan’s robustness testing. These suggestions do not affect the conclusion that the plan meets the key MRO standards for ongoing model monitoring.
+This report follows the structure of your provided sample while using only verified information from MOD13627 documentation. Let me know if you need any modifications.
