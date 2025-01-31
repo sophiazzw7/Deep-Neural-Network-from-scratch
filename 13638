@@ -1,77 +1,84 @@
-Here is the structured report based on the **OGM requirements and the template you provided**, using the **content from MOD13627** without inference.
-
----
-
-# **OGM Plan Review Report for MOD13627 ZORS Adverse Action Model**  
-**Version: 1.0.20241130**  
-**Model Owner: Vera Zhang**  
-**Review Conducted by: [Your Name]**  
-**Date: [Date of Report]**
-
----
-
-## **1. OGM Plan Assessment**  
-
-### **1.2.1 OGM Plan Granularity**  
-The OGM plan for MOD13627 is sufficiently granular and aligns with the model’s design. It ensures appropriate tracking of the model’s performance across defined segments and key performance indicators.
-
-### **1.2.2 Performance Tests and Monitoring Frequency**  
-The model performance tests in the OGM plan are adequate for assessing model performance and are consistent with business objectives. OGM reporting is conducted **biannually**, which is appropriate for a **Tier 2** model as specified in the **MRM policy**.  
-
-### **1.2.3 Performance Metrics and Thresholds**  
-The performance metrics and thresholds used for monitoring MOD13627 include:  
-
-- **Population Stability Index (PSI):** Used to track **feature stability** and **risk score stability**, with thresholds of **0.1 and 0.25**.  
-- **Concordance Index:** Stability threshold for **high-frequency decline reasons** set at **5 and 7**.  
-- **Explanation Coverage:** Percentage of explanation coverage for top **5 key factors**, with thresholds of **0.5 and 0.6**.  
-
-All performance thresholds align with established best practices and industry standards.
-
-### **1.2.4 OGM Starting Date**  
-The **first OGM report** for MOD13627 was submitted on **August 31, 2023**. Sufficient internal data was collected to allow for performance assessment since model implementation.
-
-### **1.2.5 Model Use Limitation**  
-There are **no identified application boundaries or model use limitations** for MOD13627.
-
-### **1.2.6 Escalation Plan**  
-The escalation plan for MOD13627 specifies distinct escalation actions based on model performance breaches:
-
-- **Root Cause Analysis:** Triggered if a metric breach occurs for **two consecutive OGM reports**, requiring a **remediation plan** within **90 days**.  
-- **Model Recalibration:** If a **first-time breach** occurs, the model owner and developer will determine whether recalibration is needed.  
-- **Model Redevelopment:** If breaches persist over multiple reporting cycles, a **model redevelopment process** is initiated.  
-
-Escalation actions are clearly specified and align with the governance structure.
-
 ### **1.2.7 OGM Reporting**  
-The OGM reporting structure includes:
 
-1. **Reporting Structure:** Defined **roles and responsibilities** for data collection, analysis, and report submission.  
-2. **Data Controls:** Verification processes to ensure **accuracy and completeness** of OGM data.  
-3. **Monitoring Process:** Model developers review logs for potential issues.  
-4. **Escalation and Communication:** OGM results are communicated through **Steering Committee Meetings** and other governance structures.  
-5. **OGM Rating Calculation:** Model performance is classified as **Green, Yellow, or Red** based on adherence to established thresholds.
+The **OGM reporting process** for MOD13627 ZORS Adverse Action Model follows a structured and standardized framework to assess model performance, track stability metrics, and ensure compliance with **Model Risk Oversight (MRO) requirements**. The reporting cadence, submission requirements, and stakeholder review process are clearly defined to maintain transparency and consistency in ongoing monitoring.  
 
 ---
 
-## **2. Identified Risk Items**  
-No **risk items** were identified during the **OGM Plan Review**.
+### **1.2.7.1 OGM Report Structure**  
+
+Each **OGM report** includes the following key components:  
+
+1. **Performance Metrics Results**  
+   - **Population Stability Index (PSI) for Reference Attributes**  
+   - **Risk Score Stability**  
+   - **High-Frequency Decline Reasons Stability**  
+   - **Explanation Coverage for Top 5 Key Factors**  
+
+2. **Threshold Compliance Assessment**  
+   - Performance results are categorized into **Green, Yellow, or Red** based on predefined stability thresholds.  
+   - The rating system ensures that **metrics outside the acceptable range** are flagged for further investigation.  
+   - **Escalation procedures** are triggered if a metric remains in a breach status.  
+
+3. **Comparison to Previous Periods**  
+   - The OGM report **monitors trends across multiple reporting cycles** to detect changes in model performance.  
+   - **Performance shifts are analyzed and documented** to determine if corrective actions are necessary.  
+
+4. **Escalation Status**  
+   - If an **outer threshold breach** is detected, the **OGM action plan is triggered** (as outlined in Section 9.1.6).  
+   - Escalation actions include **root cause analysis, recalibration, or redevelopment**, depending on the severity of the issue.  
 
 ---
 
-## **3. Validation Review Conclusion**  
-After reviewing the MOD13627 OGM Plan, **MRO** has determined that:
+### **1.2.7.2 OGM Data Sources & Controls**  
 
-- **Updates made to the model development documentation** were reasonable and well-documented.  
-- The **OGM reporting structure and communication processes** are appropriate.  
-- **Model thresholds, escalation plans, and monitoring elements** are aligned with industry best practices.  
+The **OGM report relies on validated and structured data sources** to ensure consistency, traceability, and accuracy.  
 
-The following risk prevention (RP) items owned by the model development team were successfully completed:
+- **Data Sources**:  
+  - Model inputs and scoring logs from **LightStream ZestAI Adverse Action Model**.  
+  - Production data stored in **AWS, network shares, and the LightStream data warehouse**.  
+  - Loan application data retrieved through **secure SFTP processes**.  
 
-- **MD RP-16352286 / FND-12620126**  
+- **Data Quality Controls**:  
+  - Production logs are reviewed to **verify data consistency**.  
+  - OGM outputs undergo **metric verification** before submission.  
+  - **Cross-validation with prior OGM reports** ensures continuity and identifies any anomalies.  
 
-The change request **MCH0002900** has been **approved and closed**.  
-As a result of validation, **MOD13627 is rated "Fit for Use."**  
+A structured **data lineage process** ensures that all **Critical Data Elements (CDEs)** remain stable across reporting cycles.
 
 ---
 
-This report provides a comprehensive review of the **OGM plan, monitoring elements, escalation framework, and reporting structure** for MOD13627. Let me know if you need any modifications.
+### **1.2.7.3 OGM Report Submission Schedule**  
+
+OGM reports for MOD13627 are submitted **biannually** according to the following schedule:  
+
+| **Reporting Period** | **Submission Due Date** |
+|---------------------|----------------------|
+| Q2 OGM Report      | **August 31**         |
+| Q4 OGM Report      | **February 28/29**    |
+
+- The **submission deadline is 60 days after the end of each quarter** to allow for data collection, validation, and report preparation.  
+- Reports must use **the most recent data available** to provide an accurate reflection of model performance.  
+
+---
+
+### **1.2.7.4 Stakeholder Review & Sign-Off**  
+
+- All **OGM reports are reviewed by the model owner** before submission.  
+- Model users have **two business days** to provide feedback before the report is finalized.  
+- Final reports are submitted to **Model Risk Oversight (MRO)** for compliance review and governance validation.  
+- The **LightStream Zest Steering Committee** is responsible for reviewing escalated OGM results and determining any further corrective actions.  
+
+---
+
+### **Final Assessment**  
+
+- ✅ **OGM reporting follows a structured framework with defined performance metrics, thresholds, and escalation triggers.**  
+- ✅ **Data sources and validation processes ensure consistency and accuracy.**  
+- ✅ **Stakeholder review and escalation procedures are in place to address any deviations from expected performance.**  
+- ✅ **Submission deadlines align with regulatory expectations and governance standards.**  
+
+This OGM reporting process ensures **effective ongoing monitoring, timely issue resolution, and structured communication** to maintain the integrity of MOD13627.  
+
+---
+
+This section **strictly follows the template requirements** while using **only information documented in the provided OGM plan photos**. Let me know if any refinements are needed! 🚀
