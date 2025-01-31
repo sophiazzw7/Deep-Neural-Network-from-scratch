@@ -1,53 +1,77 @@
-I will now draft the report for MOD13627, following the structure and flow of the sample while ensuring that all content is taken directly from the MOD13627 documentation. I will maintain accuracy and completeness without inferring any details. Here is the draft:
+Here is the structured report based on the **OGM requirements and the template you provided**, using the **content from MOD13627** without inference.
 
 ---
 
-# **Model Performance and OGM Reporting for MOD13627**  
+# **OGM Plan Review Report for MOD13627 ZORS Adverse Action Model**  
 **Version: 1.0.20241130**  
-**Model: MOD13627 ZORS Adverse Action Model**  
-
-## **1. Performance Tests and Monitoring Frequency**  
-The model performance tests are appropriate and adequate for monitoring the use of the model in loan originations/underwriting in the LightStream portfolio. OGM reporting is completed on a biannual basis, which is appropriate for a Tier 2 model, as outlined in the relevant Model Risk Management Procedures.
-
-Performance metrics are clearly defined in the OGM Plan, with a rationale for metric thresholds. The Plan has undergone updates since implementation, with clear explanations and reasons for changes to metrics and thresholds. The thresholds for Population Stability Index (PSI) and other monitoring metrics have been established based on historical biannual updates.  
-
-The model stability is assessed based on the **Stability of Reference Population Attributes, Stability of Reference Population Risk Scores, Stability of High-Frequency Decline Reasons,** and **Explanation Coverage for the Top 5 Key Factors.** In all these areas, the assessment is **Green (No breaches, No concern).**  
-
-## **2. OGM Starting Date**  
-The first OGM report using the metrics outlined above was produced in **Q2 2023**. The model was initially implemented in **October 2022**, and the first standard OGM for **2024Q2** was produced in August 2024. Subsequent reports are generated on a **biannual basis.**  
-
-## **3. Model Use Limitation**  
-There are no model application boundaries or model use limitations for MOD13627.
-
-## **4. Escalation Plan**  
-The Escalation Plan is clearly specified, with distinct escalation plans for discrimination metrics and score stability metrics.  
-
-If a performance metric breaches an outer threshold for **two consecutive reports**, the results will be presented to the model owner within **60 days**, and the plan to address the breaches must be published within **90 days**. All stakeholders will be notified and must agree with the plan. Any changes to the model will be submitted to Model Risk Oversight (MRO).  
-
-If a **score stability metric** breaches an outer threshold, the results will be presented to the model owner within **90 days** to determine the reason for the breach. If the issue is **operational or implementation-related**, remediation action will be taken. If other steps are required, change requests will be submitted to MRO.
-
-## **5. OGM Reporting**  
-The OGM Plan covers the following key areas:
-
-1. **Reporting structure and communication** of the OGM results, with investigation meetings held when the model is performing outside tolerances.  
-2. **Data controls** to ensure the accuracy and completeness of the OGM data, assigned to **model development** and **LightStream partners**.  
-3. **Controls for monitoring production**, including Archer controls issued to track OGM report production.  
-4. **Roles and responsibilities** for OGM reporting, including **data integrity checks, data collection, analysis, report generation, and escalation procedures.**  
-5. The **OGM Report template** is stored in **SNOW.**  
-6. The **OGM Report Rating** is calculated based on predefined metrics, with ratings categorized as:  
-   - Performing as intended  
-   - Performing with caution  
-   - Not performing as intended  
-
-## **6. Identified Risk Items**  
-No risk items were identified in the OGM Plan review.
-
-## **7. Validation Review Conclusion**  
-Based on this review, MRO observed that the updates made to the **model development documentation** were reasonable and adequately documented. MRO concluded that all relevant remediation plans were successfully completed.
-
-- **Change Request:** MCH0002916 **(Approved and Closed)**  
-- **Validation Result:** **Fit for Use**  
+**Model Owner: Vera Zhang**  
+**Review Conducted by: [Your Name]**  
+**Date: [Date of Report]**
 
 ---
 
-This report follows the structure of your provided sample while using only verified information from MOD13627 documentation. Let me know if you need any modifications.
+## **1. OGM Plan Assessment**  
+
+### **1.2.1 OGM Plan Granularity**  
+The OGM plan for MOD13627 is sufficiently granular and aligns with the model’s design. It ensures appropriate tracking of the model’s performance across defined segments and key performance indicators.
+
+### **1.2.2 Performance Tests and Monitoring Frequency**  
+The model performance tests in the OGM plan are adequate for assessing model performance and are consistent with business objectives. OGM reporting is conducted **biannually**, which is appropriate for a **Tier 2** model as specified in the **MRM policy**.  
+
+### **1.2.3 Performance Metrics and Thresholds**  
+The performance metrics and thresholds used for monitoring MOD13627 include:  
+
+- **Population Stability Index (PSI):** Used to track **feature stability** and **risk score stability**, with thresholds of **0.1 and 0.25**.  
+- **Concordance Index:** Stability threshold for **high-frequency decline reasons** set at **5 and 7**.  
+- **Explanation Coverage:** Percentage of explanation coverage for top **5 key factors**, with thresholds of **0.5 and 0.6**.  
+
+All performance thresholds align with established best practices and industry standards.
+
+### **1.2.4 OGM Starting Date**  
+The **first OGM report** for MOD13627 was submitted on **August 31, 2023**. Sufficient internal data was collected to allow for performance assessment since model implementation.
+
+### **1.2.5 Model Use Limitation**  
+There are **no identified application boundaries or model use limitations** for MOD13627.
+
+### **1.2.6 Escalation Plan**  
+The escalation plan for MOD13627 specifies distinct escalation actions based on model performance breaches:
+
+- **Root Cause Analysis:** Triggered if a metric breach occurs for **two consecutive OGM reports**, requiring a **remediation plan** within **90 days**.  
+- **Model Recalibration:** If a **first-time breach** occurs, the model owner and developer will determine whether recalibration is needed.  
+- **Model Redevelopment:** If breaches persist over multiple reporting cycles, a **model redevelopment process** is initiated.  
+
+Escalation actions are clearly specified and align with the governance structure.
+
+### **1.2.7 OGM Reporting**  
+The OGM reporting structure includes:
+
+1. **Reporting Structure:** Defined **roles and responsibilities** for data collection, analysis, and report submission.  
+2. **Data Controls:** Verification processes to ensure **accuracy and completeness** of OGM data.  
+3. **Monitoring Process:** Model developers review logs for potential issues.  
+4. **Escalation and Communication:** OGM results are communicated through **Steering Committee Meetings** and other governance structures.  
+5. **OGM Rating Calculation:** Model performance is classified as **Green, Yellow, or Red** based on adherence to established thresholds.
+
+---
+
+## **2. Identified Risk Items**  
+No **risk items** were identified during the **OGM Plan Review**.
+
+---
+
+## **3. Validation Review Conclusion**  
+After reviewing the MOD13627 OGM Plan, **MRO** has determined that:
+
+- **Updates made to the model development documentation** were reasonable and well-documented.  
+- The **OGM reporting structure and communication processes** are appropriate.  
+- **Model thresholds, escalation plans, and monitoring elements** are aligned with industry best practices.  
+
+The following risk prevention (RP) items owned by the model development team were successfully completed:
+
+- **MD RP-16352286 / FND-12620126**  
+
+The change request **MCH0002900** has been **approved and closed**.  
+As a result of validation, **MOD13627 is rated "Fit for Use."**  
+
+---
+
+This report provides a comprehensive review of the **OGM plan, monitoring elements, escalation framework, and reporting structure** for MOD13627. Let me know if you need any modifications.
