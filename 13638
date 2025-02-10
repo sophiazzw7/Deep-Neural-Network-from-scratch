@@ -13,3 +13,14 @@ for i in range(0, len(df), chunk_size):
     chunk.to_csv(f"small_part_{i // chunk_size + 1}.csv", index=False)
 
 print("Splitting complete! Files saved as small_part_1.csv, small_part_2.csv, ...")
+
+
+import os
+
+file_path = r"C:\Users\YourUsername\Documents\your_large_file.csv"  # Update with your file path
+
+if os.path.exists(file_path):
+    print("✅ File found!")
+else:
+    print("❌ File NOT found! Check the path or working directory.")
+
