@@ -1,3 +1,86 @@
-The documentation has adequately addressed bullet 7 by clarifying that attributes with a missing rate above 50% were filtered out due to the smaller sample size and PSI’s sensitivity to missing rates during the UAT period. This explicitly confirms that the calculation of Metric 1 accounted for missingness thresholds, ensuring that only sufficiently populated features were included in the PSI computation. Given this clarification, the concern regarding whether features with >50% missingness were removed has been resolved. If further details on the baseline calculation of Metric 1 are needed, additional documentation may be referenced.
+To **split your large file into smaller parts** (each under **10MB**) and upload them separately into SAS Studio, follow these steps:
 
-The documentation and email from Zijian Wu effectively resolve the finding by providing a clear explanation of the discrepancies between the reported and MRO-obtained OGM results. The discrepancies arose because the OGM process initially flagged applicants as suspicious or fraudulent based on updated files from Trust each quarter. However, applicants deemed acceptable in one quarter could later be flagged as suspicious in subsequent quarters (or vice versa), leading to inconsistencies in results when re-running old analyses. To address this, the OGM notebooks were updated to pull data from quarterly snapshots instead of relying on the latest data, ensuring that results remain consistent across analyses. Additionally, a bug in the AA_OGM notebook affecting the "Measure of Explanation Coverage for Top 5 Key Factors" was identified and fixed, with only minor effects observed at the third or fourth decimal place. MRO reviewed the email from Zest dated August 12, 2024, which detailed the root cause of these discrepancies, and confirmed that the updated OGM reports have been uploaded to ServiceNow. With these changes, the discrepancies have been fully explained and resolved, and the finding is now remediated.
+---
+
+## **Step 1: Split the File on Your Local Machine**
+### **Using Python (Recommended)**
+If you have Python installed, you can use **pandas** to split your large dataset into smaller chunks.
+
+```python
+import pandas as pd
+
+# Load the full dataset
+file_path = "your_large_file.csv"  # Replace with your file path
+chunk_size = 50000  # Adjust based on file size; try different values if needed
+
+df = pd.read_csv(file_path, chunksize=chunk_size)
+
+# Save smaller files
+for i, chunk in enumerate(df):
+    chunk.to_csv(f"small_part_{i+1}.csv", index=False)  # Saves small CSV files
+```
+
+This will generate **small_part_1.csv, small_part_2.csv, ..., small_part_n.csv** files.
+
+---
+
+### **Alternative: Use a Command Line Tool (Mac/Linux)**
+If you are using Mac or Linux, you can split the CSV using the **split** command:
+
+```sh
+split -l 50000 your_large_file.csv part_
+```
+This will create `part_aa`, `part_ab`, `part_ac`, etc. Rename them to `.csv` files before uploading.
+
+---
+
+## **Step 2: Upload the Smaller Files to SAS Studio**
+1. **Go to SAS Studio** → Click on **Server Files and Folders**.
+2. **Upload each smaller CSV file**.
+
+---
+
+## **Step 3: Read and Merge the Files in SAS**
+Once you have uploaded the files, merge them using **DATA step**.
+
+```sas
+data final_dataset;
+    set small_part_1 small_part_2 small_part_3; /* Add all uploaded dataset names */
+run;
+```
+
+If you use `PROC IMPORT`, make sure each dataset is created first:
+
+```sas
+proc import datafile="/home/user/small_part_1.csv"
+    out=small_part_1 dbms=csv replace;
+    getnames=yes;
+run;
+
+proc import datafile="/home/user/small_part_2.csv"
+    out=small_part_2 dbms=csv replace;
+    getnames=yes;
+run;
+
+data final_dataset;
+    set small_part_1 small_part_2;  /* Include all files */
+run;
+```
+
+---
+
+## **Step 4: Verify the Data**
+After merging, check if everything is loaded properly:
+
+```sas
+proc contents data=final_dataset; run;
+proc print data=final_dataset (obs=10); run;  /* Print first 10 rows */
+```
+
+---
+
+### **Next Steps**
+- If your dataset has a **header row**, ensure it appears only once in the final dataset.
+- If SAS complains about **column mismatches**, check the imported datasets (`proc contents`) and make sure column names match.
+
+Would you like help adjusting the split size or checking for any merging issues? 🚀
