@@ -1,9 +1,25 @@
-file_path = r"C:\Users\607267\PycharmProjects\pythonProject6\your_large_file.csv"
-output_file = r"C:\Users\607267\PycharmProjects\pythonProject6\cleaned_file.csv"
+LIBNAME mylib "/sasuser/home/"; /* Adjust path based on your SAS environment */
 
-with open(file_path, "rb") as f_in, open(output_file, "wb") as f_out:
-    for line in f_in:
-        f_out.write(line.decode("utf-8", errors="ignore").encode("utf-8"))
+* Step 1: Import Both Excel Files;
+PROC IMPORT OUT=mylib.part1
+    DATAFILE="/sasuser/home/part1.xlsx"
+    DBMS=XLSX REPLACE;
+    GETNAMES=YES;
+RUN;
 
-print("File cleaned! Try reading cleaned_file.csv now.")
-df = pd.read_csv(output_file, encoding="utf-8")
+PROC IMPORT OUT=mylib.part2
+    DATAFILE="/sasuser/home/part2.xlsx"
+    DBMS=XLSX REPLACE;
+    GETNAMES=YES;
+RUN;
+
+* Step 2: Merge the Two Datasets;
+DATA mylib.merged_data;
+    SET mylib.part1 mylib.part2;
+RUN;
+
+* Step 3: Export the Merged Dataset Back to Excel;
+PROC EXPORT DATA=mylib.merged_data
+    OUTFILE="/sasuser/home/merged_file.xlsx"
+    DBMS=XLSX REPLACE;
+RUN;
