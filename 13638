@@ -1,6 +1,6 @@
-LIBNAME mylib "/sasuser/home/"; /* Adjust path based on your SAS environment */
+LIBNAME mylib "/sasuser/home/"; /* Adjust path if needed */
 
-* Step 1: Import Both Excel Files;
+* Step 1: Import Excel Files;
 PROC IMPORT OUT=mylib.part1
     DATAFILE="/sasuser/home/part1.xlsx"
     DBMS=XLSX REPLACE;
@@ -13,12 +13,39 @@ PROC IMPORT OUT=mylib.part2
     GETNAMES=YES;
 RUN;
 
-* Step 2: Merge the Two Datasets;
-DATA mylib.merged_data;
-    SET mylib.part1 mylib.part2;
+* Step 2: Check Column Consistency;
+PROC CONTENTS DATA=mylib.part1;
 RUN;
 
-* Step 3: Export the Merged Dataset Back to Excel;
+PROC CONTENTS DATA=mylib.part2;
+RUN;
+
+* Step 3: Standardize Column Types (Fix Character/Numeric Issues);
+DATA mylib.part1_fixed;
+    SET mylib.part1;
+    GL_Amount_char = PUT(GL_Amount, $15.); /* Convert numeric to character if mismatched */
+    DROP GL_Amount;
+    RENAME GL_Amount_char = GL_Amount;
+RUN;
+
+DATA mylib.part2_fixed;
+    SET mylib.part2;
+    GL_Amount_char = PUT(GL_Amount, $15.);
+    DROP GL_Amount;
+    RENAME GL_Amount_char = GL_Amount;
+RUN;
+
+* Step 4: Merge Both Datasets;
+DATA mylib.merged_data;
+    SET mylib.part1_fixed mylib.part2_fixed;
+RUN;
+
+* Step 5: Count the Number of Rows in the Merged Dataset;
+PROC SQL;
+    SELECT COUNT(*) AS row_count FROM mylib.merged_data;
+QUIT;
+
+* Step 6: Export the Merged Dataset Back to Excel;
 PROC EXPORT DATA=mylib.merged_data
     OUTFILE="/sasuser/home/merged_file.xlsx"
     DBMS=XLSX REPLACE;
