@@ -289,3 +289,141 @@ Use of this data is subject to internal governance, data security, and regulator
 ---
 
 **End of Report**
+
+
+
+2. SAS Code for Data Testing (Output Columns for All Segments)
+
+Below is some SAS code that checks the same final aggregated datasets. Suppose in your SAS environment you have these final tables created by your %prep_data macro calls:
+
+input.IF_dataset2
+input.EF_dataset2
+input.EPWS_dataset2
+etc.
+Each table has (at least) these three columns:
+
+gl_date (the quarter end date)
+freq (frequency of events that quarter)
+severity (sum of net losses)
+We can loop over each dataset (or do them individually) to perform:
+
+Missing & descriptive stats
+Duplicate checks
+Outlier checks
+2.1 Checking Missing Values, Basic Stats
+%macro check_output_data(segment_ds=, seg_name=);
+
+  title "Data Quality Checks for &seg_name (Dataset: &segment_ds)";
+
+  /* 1) Simple numeric summary for freq and severity */
+  proc means data=&segment_ds n nmiss mean std min max;
+    var freq severity;
+    title2 "Missing Value & Descriptive Stats (freq, severity)";
+  run;
+
+  /* 2) Frequencies or missing check for gl_date as well */
+  proc freq data=&segment_ds;
+    tables gl_date / missing;
+    title2 "Check for Missing or Duplicated gl_date";
+  run;
+
+  /* 3) Look for duplicates on gl_date (one quarter row expected) */
+  proc sort data=&segment_ds out=_sorted_ dupout=_duplicates_ nodupkey;
+    by gl_date;
+  run;
+
+  %let dsid = %sysfunc(open(_duplicates_));
+  %let num_obs_dup = %sysfunc(attrn(&dsid, nobs));
+  %let rc = %sysfunc(close(&dsid));
+
+  %put Found &num_obs_dup. duplicates in &segment_ds by gl_date;
+
+  /* If needed, print them if any duplicates found */
+  %if &num_obs_dup. > 0 %then %do;
+    proc print data=_duplicates_;
+      title2 "Duplicates by gl_date in &segment_ds";
+    run;
+  %end;
+
+  /* 4) Basic outlier detection for severity using a simple approach:
+         e.g., severity > some threshold or Z-score approach */
+
+  proc univariate data=&segment_ds noprint;
+    var severity;
+    output out=_stats_ pctlpts=25,75 pctlpre=P_ ;
+  run;
+
+  data _null_;
+    set _stats_;
+    iqr = P_75 - P_25;
+    lower = P_25 - 1.5*iqr;
+    upper = P_75 + 1.5*iqr;
+    call symputx('low_cut', lower);
+    call symputx('high_cut', upper);
+  run;
+
+  %put IQR-based outlier range for severity: (&low_cut, &high_cut);
+
+  data _outliers_;
+    set &segment_ds;
+    if severity < &low_cut or severity > &high_cut then outlier_flag=1;
+    else outlier_flag=0;
+  run;
+
+  proc print data=_outliers_ (where=(outlier_flag=1));
+    title2 "Potential Severity Outliers in &segment_ds (IQR Method)";
+    var gl_date freq severity;
+  run;
+
+%mend;
+
+
+/* Now call the macro for each final dataset: */
+%check_output_data(segment_ds=input.IF_dataset2, seg_name=Internal_Fraud);
+%check_output_data(segment_ds=input.EF_dataset2, seg_name=External_Fraud);
+%check_output_data(segment_ds=input.EPWS_dataset2, seg_name=Employment_Practices);
+%check_output_data(segment_ds=input.CPBP_dataset2, seg_name=Clients_Products);
+/* ... and so on for all segments. */
+Explanation of Key Steps
+
+proc means: Summarizes the numeric variables freq and severity, showing how many are missing, plus min, max, mean, etc.
+proc freq: Checks if any rows have gl_date missing or if gl_date appears more than once.
+Duplicate Check (nodupkey): Sorts by gl_date and writes duplicates to _duplicates_.
+Outlier Check (IQR):
+We compute Q1 and Q3 from proc univariate.
+Calculate the typical “outlier range” as [Q1 - 1.5*IQR, Q3 + 1.5*IQR].
+Print any rows that lie outside this range in _outliers_.
+2.2 Checking Quarter Coverage
+If you want to verify that each dataset covers the same continuous set of quarter‐end dates, you might do something like:
+
+/* Suppose you have a master 'qtr_range' with all quarter ends from earliest to latest. */
+%macro check_quarter_coverage(segment_ds=, seg_name=);
+
+  proc sql;
+     create table _missing_qtrs_ as
+     select t1.qtr as quarter_date
+     from qtr_range t1
+     left join &segment_ds t2
+        on t1.qtr = t2.gl_date
+     where t2.gl_date is missing;
+  quit;
+
+  proc sql noprint;
+    select count(*) into :num_missing from _missing_qtrs_;
+  quit;
+
+  %put &seg_name: &num_missing quarters have no record in &segment_ds.;
+
+  %if &num_missing > 0 %then %do;
+    proc print data=_missing_qtrs_;
+      title2 "Missing Quarters in &segment_ds (Should freq=0 but not found).";
+    run;
+  %end;
+
+%mend;
+
+/* Then call it for each segment: */
+%check_quarter_coverage(segment_ds=input.IF_dataset2, seg_name=Internal_Fraud);
+%check_quarter_coverage(segment_ds=input.EF_dataset2, seg_name=External_Fraud);
+...
+This ensures your final dataset indeed has one row per quarter in the defined date range. If rows are truly missing, you might find them in _missing_qtrs_.
