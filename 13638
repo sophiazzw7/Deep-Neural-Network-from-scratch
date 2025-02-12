@@ -1,52 +1,291 @@
-LIBNAME mylib "/sasuser/home/"; /* Adjust path if needed */
+Below is a **sample “Data Quality & Appropriateness Report”** that you can adapt to meet your documentation requirements. It describes the **purpose**, **source data**, **checks performed**, **data cleaning and transformation steps**, and **final assessment**. Throughout, I’ve included **SAS code snippets** you might use to demonstrate how you performed (or could perform) each quality check. Feel free to tailor the details for your specific project, departmental guidelines, or any additional validations you performed.
 
-* Step 1: Import Excel Files;
-PROC IMPORT OUT=mylib.part1
-    DATAFILE="/sasuser/home/part1.xlsx"
-    DBMS=XLSX REPLACE;
-    GETNAMES=YES;
-RUN;
+---
 
-PROC IMPORT OUT=mylib.part2
-    DATAFILE="/sasuser/home/part2.xlsx"
-    DBMS=XLSX REPLACE;
-    GETNAMES=YES;
-RUN;
+# Data Quality & Appropriateness Report
 
-* Step 2: Check Column Consistency;
-PROC CONTENTS DATA=mylib.part1;
-RUN;
+**Model/Project Name:** Operational Risk Model (Basel Event Types)  
+**Date:** *[Insert Date]*  
+**Author:** *[Your Name or Team]*  
+**Institution:** Truist Financial (Confidential)
 
-PROC CONTENTS DATA=mylib.part2;
-RUN;
+---
 
-* Step 3: Standardize Column Types (Fix Character/Numeric Issues);
-DATA mylib.part1_fixed;
-    SET mylib.part1;
-    GL_Amount_char = PUT(GL_Amount, $15.); /* Convert numeric to character if mismatched */
-    DROP GL_Amount;
-    RENAME GL_Amount_char = GL_Amount;
-RUN;
+## 1. Introduction
 
-DATA mylib.part2_fixed;
-    SET mylib.part2;
-    GL_Amount_char = PUT(GL_Amount, $15.);
-    DROP GL_Amount;
-    RENAME GL_Amount_char = GL_Amount;
-RUN;
+This report documents the **data quality** and **data appropriateness** checks conducted on the raw Archer operational‐loss event data used for the Basel Event Type frequency‐severity modeling. The goal is to ensure the data is:
 
-* Step 4: Merge Both Datasets;
-DATA mylib.merged_data;
-    SET mylib.part1_fixed mylib.part2_fixed;
-RUN;
+- Free from significant errors or omissions,  
+- Relevant and representative of the underlying operational‐risk universe, and  
+- Properly transformed for subsequent modeling steps.
 
-* Step 5: Count the Number of Rows in the Merged Dataset;
-PROC SQL;
-    SELECT COUNT(*) AS row_count FROM mylib.merged_data;
-QUIT;
+---
 
-* Step 6: Export the Merged Dataset Back to Excel;
-PROC EXPORT DATA=mylib.merged_data
-    OUTFILE="/sasuser/home/merged_file.xlsx"
-    DBMS=XLSX REPLACE;
-RUN;
+## 2. Data Sources and Scope
+
+1. **Data Source:** 
+   - We imported raw event‐level loss data from Archer (Excel file named `Model_Report_2022_7152022226PM.xlsx`), which contains columns such as:
+     - **Gross Loss Amount**  
+     - **Recovery Amount**  
+     - **Internal Events**  
+     - **Basel Event Type Level 1** / Level 2 / Level 3  
+     - **Posting Date**  
+     - **Event Record Type**  
+     - Other metadata fields (e.g., references, GL accounts, etc.).
+
+2. **Data Extraction & Initial Read‐In:**  
+   - The file was read into SAS with `proc import`, assigning numeric/character types as appropriate. We verified correct column alignment and no truncation in character fields.
+
+3. **Time Period Covered:** 
+   - The earliest event date is approximately *[Earliest Date]* and the latest is *[Latest Date]*.  
+   - All events within this date range were included unless specifically excluded by the business rules described below.
+
+---
+
+## 3. Data Quality Checks
+
+We performed standard data‐quality checks, focusing on the **distribution of variables**, **missing or duplicate records**, **outliers**, and **consistency** with business definitions.  
+
+### 3.1 Missing Value Analysis
+
+**Purpose:** Identify the percentage of missing values for key fields (Gross Loss, Recovery, Event Dates, Basel Levels, etc.).
+
+<details>
+<summary><strong>SAS Example: Checking Missing Values</strong></summary>
+
+```sas
+/* 1) Quick numeric missing summary */
+proc means data=archer_data n nmiss mean std min max;
+    var Gross_Loss_Amount Recovery_Amount;
+    title "Numeric Variables Missing Value Check";
+run;
+
+/* 2) Frequency of missing for categorical fields */
+proc freq data=archer_data;
+    tables Basel_Event_Type_Level_1 Internal_Events / missing;
+    title "Categorical Variables Missing Value Check";
+run;
+```
+</details>
+
+**Findings:**  
+- Missing values for `Gross_Loss_Amount` were **X%** of total records.  
+- `Basel Event Type Level 1` was populated in **100%** of records.  
+- No systematic or unusual patterns in missingness were identified.
+
+**Actions Taken (if any):**  
+- Where `Recovery_Amount` was missing, we treated it as zero if that was consistent with the business logic (i.e., no recovery occurred).
+
+---
+
+### 3.2 Duplicate / Irrelevant Records
+
+**Purpose:** Detect repeated event IDs or “test/placeholder” records.  
+
+<details>
+<summary><strong>SAS Example: Checking Duplicates</strong></summary>
+
+```sas
+/* Identify potential duplicates by Internal_Events or combination of keys */
+proc sort data=archer_data out=archer_data_sorted;
+    by Internal_Events Posting_Date;
+run;
+
+data duplicates;
+    set archer_data_sorted;
+    by Internal_Events Posting_Date;
+    if not (first.Posting_Date and last.Posting_Date) then output;
+run;
+
+proc print data=duplicates;
+    title "Potential Duplicate Records";
+run;
+```
+</details>
+
+**Findings:**  
+- A small set of duplicates existed (e.g., same `Internal_Events` ID repeated).  
+- Some events flagged as “Event with GL Impact 10K+” or other record types might not be relevant for final modeling.
+
+**Actions Taken:**  
+- Duplicates were **removed** or combined, retaining the first instance, if they referred to the same actual event.  
+- Irrelevant events (test records, boundary cases) were flagged in the code’s `exclusion_event` step.
+
+---
+
+### 3.3 Outlier and Extreme Value Checks
+
+**Purpose:** Detect extremely large or negative `Gross_Loss_Amount` or inconsistent data entries.  
+
+<details>
+<summary><strong>SAS Example: Outlier Analysis</strong></summary>
+
+```sas
+/* Basic distribution and outlier detection */
+proc univariate data=archer_data nextrobs=5;
+    var Gross_Loss_Amount net_loss;
+    histogram;
+    inset mean median min max;
+    title "Univariate Statistics and Distribution for Key Loss Variables";
+run;
+```
+</details>
+
+**Findings:**  
+- A few very large net losses were identified, but they aligned with genuine, known large operational events (i.e., they were valid “extreme” but real data points).
+- No negative `Gross_Loss_Amount` values found, consistent with the definition. Some negative net losses occurred only where the “Recovery_Amount” exceeded “Gross_Loss_Amount,” which was verified as correct for partial or full recovery events.
+
+**Actions Taken:**  
+- We did **not** remove large losses or outliers if they reflected real events.  
+- However, the code **excluded** certain events if they fell into business‐ruled categories (e.g., test or boundary events, or events that do not belong to the standard scope).
+
+---
+
+### 3.4 Data Consistency Checks
+
+**Purpose:** Ensure each variable’s range is sensible (e.g., no “FICO = Yes” or “−200”).  
+
+- **Posting Date** was successfully interpreted as a SAS date; min date: *[Earliest]*, max date: *[Latest]*.  
+- **Basel Event Type** fields match valid enumerations: “ET1 – Internal Fraud,” “ET2 – External Fraud,” etc.
+
+No mismatch or nonsensical values (e.g., “N/A” for numeric fields) were found.
+
+---
+
+## 4. Data Cleaning & Transformation
+
+### 4.1 Exclusion Logic
+
+After quality checks, certain records were **excluded** based on business rules:
+
+1. `Event_Record_Type` in (“Event with GL Impact 10K+”) – if the event was outside scope.  
+2. `Basel_Event_Type_Level_1` in (ET2 – External Fraud) with certain date constraints, etc.  
+3. Other boundary or test events flagged in the code.
+
+These events were removed using an `exclusion_event` table in SAS, ensuring they did not feed into final frequency‐severity aggregates.
+
+### 4.2 Computing Net Loss
+
+```sas
+proc sql;
+    create table archer_prep as
+    select *,
+           (Gross_Loss_Amount + Recovery_Amount) as net_loss
+    from archer_data
+    order by Basel_Event_Type_Level_1, Internal_Events, Posting_Date;
+quit;
+```
+
+We validated that adding recovery amounts (which are typically negative or zero for real recoveries) yields the correct net value.  
+   
+### 4.3 Aggregation & Time‐Series Creation
+
+1. **Aggregating by Quarter:** We used `INTNX('qtr', ...)` to assign each posting date to a quarter end (e.g., 31‐Mar, 30‐Jun, 30‐Sep, 31‐Dec).  
+2. **Summarizing Frequency & Severity:**  
+   - Frequency = `count(distinct Internal_Events)`  
+   - Severity = `sum(net_loss)`  
+3. **Filling Missing Quarters:**  
+   - We built a `qtr_range` dataset from the earliest to the latest quarter in the data.  
+   - Performed a left join to ensure quarters with no events have 0 frequency and 0 severity, so we have a continuous time series.
+
+<details>
+<summary><strong>SAS Example: Final Aggregation & Fill‐in</strong></summary>
+
+```sas
+proc sql;
+    create table event_w_exclusion_agg as
+    select Basel_Event_Type_Level_1,
+           year_event,
+           qtr_event,
+           min(Posting_Date) as gl_date format=date9.,
+           count(distinct Internal_Events) as freq,
+           sum(net_loss) as severity
+    from event_w_exclusion
+    group by 1,2,3
+    ;
+quit;
+
+/* Generate full range of quarters */
+data qtr_range;
+    format qtr date9.;
+    n_qtr = intck('qtr', "&qtr_begin"d, "&qtr_end"d);
+    do i=0 to n_qtr;
+       qtr = intnx('qtr', "&qtr_begin"d, i, 'E');
+       output;
+    end;
+    drop i n_qtr;
+run;
+
+/* Merge to ensure missing freq or severity are set to 0 */
+%macro prep_data(et, et2);
+    proc sql;
+        create table &et2._dataset as
+        select qtr_event, freq, severity
+        from event_w_exclusion_agg
+        where Basel_Event_Type_Level_1 = "&et";
+    quit;
+
+    proc sql;
+        create table &et2._dataset2 as
+        select t1.qtr as gl_date,
+               coalesce(t2.freq, 0) as freq,
+               coalesce(t2.severity, 0) as severity
+        from qtr_range t1
+        left join &et2._dataset t2
+        on t1.qtr = t2.qtr_event;
+    quit;
+%mend;
+
+%prep_data("ET1 - Internal Fraud",IF);
+%prep_data("ET2 - External Fraud",EF);
+...
+```
+</details>
+
+---
+
+## 5. Data Appropriateness
+
+### 5.1 Relevance to Modeling Objectives
+
+- The final quarterly series of frequency and severity for each Basel Event Type directly supports the operational‐risk quantification model, which forecasts potential losses for regulatory capital and/or risk management.
+
+### 5.2 Coverage & Representativeness
+
+- The dataset includes all internal events from *[Earliest]* to *[Latest]* (with valid postings). We confirm it aligns with the bank’s operational‐risk event data universe.  
+- Excluded events are justifiably out of scope or flagged as non‐representative (e.g., test data).
+
+### 5.3 Data Transformation & Sampling
+
+- We performed a straightforward transformation: from **row‐by‐row events** to **quarterly aggregated** counts and sums.  
+- No random sampling or re‐sampling was applied. All relevant events remained in the final dataset (minus documented exclusions).
+
+---
+
+## 6. Conclusions & Recommendations
+
+1. **Data Integrity**: The Archer data was loaded correctly, with minimal missing values. Duplicates or irrelevant entries were removed.  
+2. **Outliers**: Large losses were confirmed to be genuine events, so they remain in the dataset.  
+3. **Completeness**: No unexpected gaps exist; we enforced a continuous quarterly time series.  
+4. **Appropriateness**: The final dataset is well‐aligned with modeling needs (quarterly operational‐risk frequency and severity).  
+
+**Recommendation**: Proceed with the aggregated dataset for the frequency‐severity modeling. Re‐evaluate data quarterly or annually to ensure that any new or erroneous entries are flagged, and the time series remains accurate.
+
+---
+
+## 7. Attachments
+
+- **SAS Code** (excerpts): Provided throughout the report for missing value checks, outlier analysis, duplication removal, final summary.  
+- **Exclusion Rationale**: [Attach or list the specific business rules used to exclude certain events.]  
+- **Data Dictionary** (if needed): Summarizing each variable’s definition and acceptable ranges.
+
+---
+
+### Disclaimers
+
+This document is proprietary and confidential to Truist Financial Corporation.  
+Use of this data is subject to internal governance, data security, and regulatory compliance guidelines.
+
+---
+
+**End of Report**
