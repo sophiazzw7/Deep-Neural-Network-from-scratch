@@ -1,124 +1,121 @@
-Below is a **single integrated SAS script** that:
+Below is a **single SAS script** that **incorporates** your **original data‐processing logic** (import → create `archer_prep` → build `exclusion_event` → produce `event_w_exclusion` → create final aggregated data → macro `%prep_data` for each Basel event type) **and** embeds **data‐quality checks** at **key steps**:
 
-1. **Imports** the raw Archer data,  
-2. Performs **data‐quality checks** on the **raw data**,  
-3. **Applies all exclusions** (Event Record Type = 'Event with GL Impact 10K+', credit boundary, 2018Q4 ACH Fraud, SME outliers, etc.),  
-4. **Checks** the **filtered dataset**,  
-5. **Aggregates** the data to **quarterly** frequency/severity,  
-6. Performs **final checks** on the aggregated dataset.
+1. **After importing raw data** (checks on the unfiltered Archer dataset).  
+2. **After applying exclusion logic** (checks on the filtered set).  
+3. **After final aggregation** (checks on the final frequency/severity).
 
-This code is **fully executable** if you replace the **file paths** and **macro variables** with your environment’s specifics. It **preserves your original data‐processing logic** (create net_loss, exclude events, then aggregate) but now **integrates** data‐quality checks **before and after** exclusions, and on the **final** aggregated data.
-
-> **Note**: The code uses **named literal** references (e.g., `'Gross Loss Amount'n`) for columns that contain spaces, as that’s typically how Archer data is read into SAS.
+This **full, executable** code should run end‐to‐end, provided you adjust file paths and confirm the Archer column names. 
 
 ---
 
-## 0. Environment Setup & Macro Utilities
+# 0. Setup and Macro Utilities
 
 ```sas
-%let data_loc   = /sasdata2/.../SUBMISSION;       /* Adjust as needed */
-%let archer_dt  = 20220715;                       /* Example date reference, adjust as needed */
+%let data_loc  = "/sasdata2/.../SUBMISSION";  /* Adjust path as needed */
+%let archer_dt = 20220715;                    /* Example date stamp, adjust if desired */
 
-/* OPTIONAL: If you want to store final datasets in a library other than WORK */
+/* Optional library for final outputs */
 libname input "&data_loc";
 
-/* Macro to do minimal data checks (missing values, duplicates, outliers) */
+/*-----------------------------------------------------*/
+/* Macro 1: Data-Quality Checks for an Event-Level Table
+   (Missing values, duplicates, outliers on net_loss)
+-------------------------------------------------------*/
 %macro data_quality_checks(in_data=, label_text=RAW);
 
-  title1 "Data Quality Checks on &label_text Dataset";
+  title1 "Data Quality Checks on &label_text dataset: &in_data";
 
-/* 1) Simple Numeric Missing & Stats for Gross/Recovery */
-proc means data=&in_data n nmiss mean std min max;
-    var 'Gross Loss Amount'n 'Recovery Amount'n;
-    title2 "&label_text: Missing & Basic Stats (Gross/Recovery)";
-run;
+  /* 1) Quick numeric summary for Gross/Recovery */
+  proc means data=&in_data n nmiss mean std min max;
+      var 'Gross Loss Amount'n 'Recovery Amount'n;
+      title2 "&label_text: Missing & Basic Stats (Gross, Recovery)";
+  run;
 
-/* 2) Frequency of missing for key categorical fields */
-proc freq data=&in_data;
-    tables 'Basel Event Type Level 1'n 'Internal Events'n / missing;
-    title2 "&label_text: Missing for Categorical Fields";
-run;
+  /* 2) Frequency of missing for key categorical fields */
+  proc freq data=&in_data;
+      tables 'Basel Event Type Level 1'n 'Internal Events'n / missing;
+      title2 "&label_text: Missing Frequency (Basel, Internal Event)";
+  run;
 
-/* 3) Check duplicates on (Internal Events, Posting Date) */
-proc freq data=&in_data noprint;
-    tables 'Internal Events'n * 'Posting Date'n / out=dup_check_&label_text(drop=percent);
-run;
+  /* 3) Check duplicates (Internal Events x Posting Date) */
+  proc freq data=&in_data noprint;
+      tables 'Internal Events'n * 'Posting Date'n / out=dup_check_&label_text(drop=percent);
+  run;
 
-data dup_&label_text;
-    set dup_check_&label_text;
-    where count > 1;
-run;
+  data dup_&label_text;
+      set dup_check_&label_text;
+      where count>1;
+  run;
 
-proc sql noprint;
-    select count(*) into :num_dups from dup_&label_text;
-quit;
+  proc sql noprint;
+      select count(*) into :num_dups from dup_&label_text;
+  quit;
 
-%put NOTE: &label_text Duplicates => &num_dups.;
+  %put NOTE: &label_text => &num_dups duplicates found by (Internal Event, Posting Date);
 
-%if &num_dups > 0 %then %do;
-  proc print data=dup_&label_text(obs=10);
-      title3 "Sample of Duplicates (Internal Event, Posting Date) in &label_text (First 10)";
+  %if &num_dups>0 %then %do;
+    proc print data=dup_&label_text(obs=10);
+      title3 "&label_text: Sample of Duplicate (Event,Date) (First 10)";
       var 'Internal Events'n 'Posting Date'n count;
+    run;
+  %end;
+
+  /* 4) Outlier check using net_loss=(Gross + Recovery) with IQR method */
+  data _&label_text._net;
+      set &in_data;
+      net_loss = 'Gross Loss Amount'n + 'Recovery Amount'n;
   run;
-%end;
 
-/* 4) Outlier check using net_loss = (Gross + Recovery) */
-data _&label_text._net;
-    set &in_data;
-    net_loss = 'Gross Loss Amount'n + 'Recovery Amount'n;
-run;
+  proc univariate data=_&label_text._net noprint;
+      var net_loss;
+      output out=_iqr_&label_text pctlpts=25,75 pctlpre=P_;
+  run;
 
-proc univariate data=_&label_text._net noprint;
-    var net_loss;
-    output out=_iqr_&label_text pctlpts=25,75 pctlpre=P_;
-run;
+  data _null_;
+      set _iqr_&label_text;
+      iqr = P_75 - P_25;
+      lower_cut = P_25 - 1.5*iqr;
+      upper_cut = P_75 + 1.5*iqr;
+      call symputx("lcut_&label_text", lower_cut);
+      call symputx("ucut_&label_text", upper_cut);
+  run;
 
-data _null_;
-    set _iqr_&label_text;
-    iqr = P_75 - P_25;
-    lower_cut = P_25 - 1.5*iqr;
-    upper_cut = P_75 + 1.5*iqr;
-    call symputx("lcut_&label_text", lower_cut);
-    call symputx("ucut_&label_text", upper_cut);
-run;
+  data outliers_&label_text;
+      set _&label_text._net;
+      if net_loss < &&lcut_&label_text or net_loss > &&ucut_&label_text then outlier_flag=1;
+  run;
 
-data outliers_&label_text;
-    set _&label_text._net;
-    if net_loss < &&lcut_&label_text or net_loss > &&ucut_&label_text then outlier_flag=1;
-run;
+  proc sql noprint;
+      select count(*) into :num_outliers from outliers_&label_text where outlier_flag=1;
+  quit;
 
-proc sql noprint;
-    select count(*) into :num_outliers from outliers_&label_text where outlier_flag=1;
-quit;
+  %put NOTE: &label_text => &num_outliers potential net_loss outliers;
 
-%put NOTE: &label_text Outliers => &num_outliers.;
-
-%if &num_outliers > 0 %then %do;
-  proc print data=outliers_&label_text (obs=10);
+  %if &num_outliers>0 %then %do;
+    proc print data=outliers_&label_text(obs=10);
       where outlier_flag=1;
-      title3 "Sample of Outliers in Net Loss (&label_text) - First 10";
+      title3 "&label_text: Sample Net Loss Outliers (First 10)";
       var 'Internal Events'n 'Posting Date'n 'Gross Loss Amount'n 'Recovery Amount'n net_loss;
-  run;
-%end;
+    run;
+  %end;
 
 %mend data_quality_checks;
 
-
-/* Macro to check final aggregated data: freq, severity, duplicates in gl_date */
+/*-----------------------------------------------------*/
+/* Macro 2: Checks on Final Aggregated Data (freq, severity)
+   - Looks for missing freq/severity, duplicates on gl_date,
+     outliers in severity by quarter
+-------------------------------------------------------*/
 %macro check_aggregated(in_data=, label_text=AGG);
+  title1 "Checks on Final Aggregated Data => &label_text";
 
-  title1 "Checks on Final Aggregated &label_text Data";
-
-  /* Basic Stats for freq & severity */
+  /* A) Basic freq/severity stats */
   proc means data=&in_data n nmiss mean std min max;
       var freq severity;
       title2 "&label_text: Missing & Basic Stats (freq, severity)";
   run;
 
-  /* Check for duplicates in (gl_date, Basel Event Type) if that matters. 
-     If you have multiple segments in the same dataset, you'd also do 
-     'Basel Event Type Level 1'n in the BY statement. 
-     For simplicity, let's check duplicates only on gl_date. */
+  /* B) Duplicates by gl_date (assuming one row per quarter) */
   proc sort data=&in_data out=_&label_text._sorted dupout=_&label_text._dups nodupkey;
       by gl_date;
   run;
@@ -129,15 +126,13 @@ quit;
       stop;
   run;
 
-  %put NOTE: &label_text duplicates on gl_date => &&dupcount_&label_text;
-
-  %if &&dupcount_&label_text > 0 %then %do;
+  %if &&dupcount_&label_text>0 %then %do;
     proc print data=_&label_text._dups;
-       title2 "&label_text: Duplicate Quarters Found in &in_data";
+       title3 "&label_text: Duplicate Quarters Found in &in_data";
     run;
   %end;
 
-  /* Outlier check on severity at the quarterly level */
+  /* C) Outliers in severity by IQR */
   proc univariate data=&in_data noprint;
       var severity;
       output out=_iqr_&label_text pctlpts=25,75 pctlpre=P_;
@@ -161,12 +156,10 @@ quit;
       select count(*) into :num_out from outliers_&label_text where outlier_flag=1;
   quit;
 
-  %put NOTE: &label_text Outlier Quarters => &num_out;
-
-  %if &num_out > 0 %then %do;
-    proc print data=outliers_&label_text (obs=5);
+  %if &num_out>0 %then %do;
+    proc print data=outliers_&label_text(obs=5);
         where outlier_flag=1;
-        title2 "&label_text: Sample of Quarterly Severity Outliers (First 5)";
+        title3 "&label_text: Severity Outliers (First 5)";
         var gl_date freq severity;
     run;
   %end;
@@ -174,265 +167,247 @@ quit;
 %mend check_aggregated;
 ```
 
-**Explanation**: We created two macros:  
-- **`%data_quality_checks`**: checks duplicates, missing, outliers on an event‐level table.  
-- **`%check_aggregated`**: checks the final aggregated table for freq/severity issues.
+Explanation:
+- **`%data_quality_checks`**: For event‐level data (raw or filtered), checks duplicates, missing, outliers.  
+- **`%check_aggregated`**: For final quarterly data, checks freq/severity structure.
 
 ---
 
-## 1. **Import Raw Archer Data** & Initial Checks
+# 1. Import the Raw Data + **Original** Steps
 
 ```sas
 /*--------------------------------------------------*/
-/* STEP 1: IMPORT RAW ARCHER DATA                   */
+/* STEP A: Import Raw Archer Data                   */
 /*--------------------------------------------------*/
 proc import out=archer_data
-    datafile="&data_loc/Model_Report_&archer_dt..xlsx"
+    datafile="&data_loc./Model_Report_&archer_dt..xlsx"
     dbms=xlsx replace;
     getnames=yes;
 run;
 
-/* Perform initial data checks on raw imported data */
-%data_quality_checks(in_data=archer_data, label_text=RAW);
-```
+/* (1) Quick Data Checks on the Raw Data */
+%data_quality_checks(in_data=archer_data, label_text=RawData);
 
----
-
-## 2. **Create net_loss** & Possibly Other Derived Fields
-
-```sas
 /*--------------------------------------------------*/
-/* STEP 2: Create an intermediate table with net_loss */
-/*   e.g., "archer_prep" if that's your original name */
-/*--------------------------------------------------*/
+/* STEP B: Prepare "archer_prep": create net_loss, etc. 
+   (Your original code's next step)
+----------------------------------------------------*/
 proc sql;
-    create table archer_prep as
-    select *,
-           ('Gross Loss Amount'n + 'Recovery Amount'n) as net_loss
-    from archer_data
-    order by 'Basel Event Type Level 1'n, 'Internal Events'n, 'Posting Date'n
-    ;
+  create table archer_prep as
+  select *,
+         ('Gross Loss Amount'n + 'Recovery Amount'n) as net_loss
+  from archer_data
+  order by 'Basel Event Type Level 1'n, 'Internal Events'n, 'Posting Date'n
+  ;
 quit;
 ```
 
-*(We’ve just added the net_loss field here. If your original code has other derived fields, add them as well.)*
+*(If your original code had more derived fields, include them here.)*
 
 ---
 
-## 3. **Build Exclusion List** (if needed) & Apply Exclusions
-
-Below, we apply your typical business rules:
-- `Event Record Type = 'Event with GL Impact 10K+'`  
-- Exclude `Credit Boundary`  
-- Exclude `ACH Fraud` from 2018Q4  
-- Exclude events from `Exclusion_IE` (SME determined)
+# 2. Build `exclusion_event` Table (Optional) & Apply Exclusions
 
 ```sas
 /*--------------------------------------------------*/
-/* STEP 3A: Build an exclusion table (exclusion_event) if you have more rules */
-/*          or if you need multiple conditions. Otherwise, skip this.        */
-/*--------------------------------------------------*/
+/* STEP C: Example exclusion_event table, if your 
+   original code used distinct logic 
+----------------------------------------------------*/
 /*
 proc sql;
-   create table exclusion_event as
-   select distinct 'Internal Events'n
-   from archer_prep
-   where 'Type of Impact'n in ('Credit Boundary')
-         or ( 'Basel Event Type Level 1'n = 'ET2 - External Fraud'
-              and 'Basel Event Type Level 3'n = 'ET2106 - ACH Fraud'
-              and year('Posting Date'n)=2018
-              and qtr('Posting Date'n)=4)
-   /* etc. */
-   ;
+  create table exclusion_event as
+  select distinct 'Internal Events'n
+  from archer_prep
+  where 'Event Record Type'n not in ('Event with GL Impact 10K+')
+        or 'Type of Impact'n in ('Credit Boundary')
+        or ( 'Basel Event Type Level 1'n = 'ET2 - External Fraud'
+             and 'Basel Event Type Level 3'n = 'ET2106 - ACH Fraud'
+             and year('Posting Date'n)=2018
+             and qtr('Posting Date'n)=4 )
+  ;
 quit;
 */
 
 /*--------------------------------------------------*/
-/* STEP 3B: Create final "filtered" dataset "event_w_exclusion" */
-/*   that excludes:                                  */
-/*   - All events not in "Event with GL Impact 10K+" */
-/*   - credit boundary events                        */
-/*   - 2018Q4 ACH Fraud                              */
-/*   - events listed in Exclusion_IE (SME list)      */
-/*--------------------------------------------------*/
+/* STEP D: event_w_exclusion (Removing excluded events).
+   Incorporate your original logic:
+   - Keep only "Event with GL Impact 10K+"
+   - Remove credit boundary
+   - Remove 2018Q4 ACH fraud
+   - Possibly remove other SME outliers 
+   - or remove those in exclusion_event 
+----------------------------------------------------*/
 proc sql;
-    create table event_w_exclusion as
-    select *
-    from archer_prep
-    where 
-        /* keep only 10K+ events */
-        'Event Record Type'n = 'Event with GL Impact 10K+'
-
-        /* remove credit boundary */
-        and 'Type of Impact'n not in ('Credit Boundary')
-
-        /* remove 2018Q4 ACH Fraud example: */
-        and not( 'Basel Event Type Level 1'n = 'ET2 - External Fraud'
-                 and 'Basel Event Type Level 3'n = 'ET2106 - ACH Fraud'
-                 and year('Posting Date'n)=2018
-                 and qtr('Posting Date'n)=4)
-
-        /* remove any events in Exclusion_IE table: */
-        and 'Internal Events'n not in (
-            select 'Internal Events'n from Exclusion_IE
-        )
-
-        /* if you have a separate exclusion_event table as well: 
-        and 'Internal Events'n not in (
-            select 'Internal Events'n from exclusion_event
-        ) */
-    ;
+  create table event_w_exclusion as
+  select *
+  from archer_prep
+  /* If you want to require 10K+ only: 
+     where 'Event Record Type'n = 'Event with GL Impact 10K+' 
+  */
+  where 'Internal Events'n not in (
+       select 'Internal Events'n from exclusion_event
+  )
+  /* additional conditions if needed
+     AND 'Type of Impact'n not in ('Credit Boundary')
+     AND not( 'Basel Event Type Level 1'n='ET2 - External Fraud' 
+              AND 'Basel Event Type Level 3'n='ET2106 - ACH Fraud'
+              AND year('Posting Date'n)=2018
+              AND qtr('Posting Date'n)=4 )
+     ...
+  */
+  ;
 quit;
 
-/* (Optional) If your original code has a separate step to remove duplicates: */
+/* Original code often had a de-dup step: */
 proc sort data=event_w_exclusion nodupkey;
-    by 'Internal Events'n 'Posting Date'n /* or maybe just 'Internal Events'n */;
+  by 'Internal Events'n 'Posting Date'n; 
 run;
+
+/* (2) Data-Quality Checks after Exclusions, 
+   now that event_w_exclusion is "cleaned" */
+%data_quality_checks(in_data=event_w_exclusion, label_text=AfterExclusions);
 ```
+
+*(Adjust the exact conditions to match your original business rules. The above snippet references your logic from prior messages.)*
 
 ---
 
-## 4. **Check Filtered Data** (Post‐Exclusions, Pre‐Aggregation)
-
-```sas
-%data_quality_checks(in_data=event_w_exclusion, label_text=FILTERED);
-```
-
-- **Ensures** you see if the number of duplicates or outliers changed after applying business rules.
-
----
-
-## 5. **Aggregate to Quarterly** (Or to Event‐Day First, Then Quarterly)
-
-If you want to **sum** multiple G/L entries **per event‐day** first (to avoid overcounting), do:
+# 3. Create the Aggregated Table (`event_w_exclusion_agg`)
 
 ```sas
 /*--------------------------------------------------*/
-/* If your MDD requires event-day summarization:    */
-/*--------------------------------------------------*/
+/* STEP E: Aggregate to Quarterly 
+   (Your original code: event_w_exclusion_agg)
+----------------------------------------------------*/
 proc sql;
-    create table event_w_exclusion_day as
-    select 'Internal Events'n,
-           'Posting Date'n,
-           'Basel Event Type Level 1'n,
-           sum(net_loss) as net_loss_day
-    from event_w_exclusion
-    group by 'Internal Events'n, 'Posting Date'n, 'Basel Event Type Level 1'n
-    ;
-quit;
-
-/* Now roll up to quarterly freq/severity */
-proc sql;
-    create table event_w_exclusion_agg as
-    select 
-        'Basel Event Type Level 1'n as basel_type,
-        intnx('qtr', 'Posting Date'n, 0, 'E') as gl_date format=date9.,
-        count(distinct 'Internal Events'n) as freq,
-        sum(net_loss_day) as severity
-    from event_w_exclusion_day
-    group by 'Basel Event Type Level 1'n,
-             intnx('qtr', 'Posting Date'n, 0, 'E');
+  create table event_w_exclusion_agg as
+  select 
+       'Basel Event Type Level 1'n as basel_type,
+       /* If you have year_event, qtr_event in prior steps, you can keep using them
+          or just compute on the fly:
+       */
+       intnx('qtr', 'Posting Date'n, 0, 'E') as gl_date format=date9.,
+       count(distinct 'Internal Events'n) as freq,
+       sum(net_loss) as severity
+  from event_w_exclusion
+  group by 'Basel Event Type Level 1'n,
+           intnx('qtr', 'Posting Date'n, 0, 'E')
+  ;
 quit;
 ```
 
-If you prefer to roll up **directly** from the transaction level to quarterly, you’d do:
-
-```sas
-/* Direct quarterly aggregation (skipping day-level) */
-proc sql;
-    create table event_w_exclusion_agg as
-    select 
-        'Basel Event Type Level 1'n as basel_type,
-        intnx('qtr', 'Posting Date'n, 0, 'E') as gl_date format=date9.,
-        count(distinct 'Internal Events'n) as freq,
-        sum(net_loss) as severity
-    from event_w_exclusion
-    group by 'Basel Event Type Level 1'n,
-             intnx('qtr', 'Posting Date'n, 0, 'E');
-quit;
-```
-
-*(Choose the approach that aligns with your MDD.)*
+*(If your original logic aggregated differently—like first summing by (Internal Events, Posting Date), do that. This is a direct approach matching the prior code you posted.)*
 
 ---
 
-## 6. **Create a Quarter Range & Merge (Optional)**
+# 4. Create `qtr_range` and `%prep_data` Macro (Original Logic)
 
-If you want **zero‐fill** for quarters with no events, do the usual:
+Your **original code** typically created a continuous quarter range to fill missing quarters, then a macro `%prep_data` to produce final tables for each Basel type.
 
 ```sas
-/* find earliest & latest quarter in event_w_exclusion_agg */
+/*--------------------------------------------------*/
+/* STEP F: Create a table of all quarters (qtr_range) 
+   from earliest to latest gl_date
+----------------------------------------------------*/
 proc sql noprint;
-    select min(gl_date) into :qtr_begin from event_w_exclusion_agg;
-    select max(gl_date) into :qtr_end   from event_w_exclusion_agg;
+  select min(gl_date) into :qtr_begin from event_w_exclusion_agg;
+  select max(gl_date) into :qtr_end   from event_w_exclusion_agg;
 quit;
 
 data qtr_range;
-    format qtr date9.;
-    n_qtr = intck('qtr', &qtr_begin, &qtr_end);
-    do i = 0 to n_qtr;
-       qtr = intnx('qtr', &qtr_begin, i, 'E');
-       output;
-    end;
-    drop i n_qtr;
+  format qtr date9.;
+  n_qtr = intck('qtr', &qtr_begin, &qtr_end);
+  do i=0 to n_qtr;
+     qtr = intnx('qtr', &qtr_begin, i, 'E');
+     output;
+  end;
+  drop i n_qtr;
 run;
 
-proc sql;
-    create table event_w_exclusion_agg2 as
+/*--------------------------------------------------*/
+/* STEP G: The Original Macro %prep_data to produce
+   final dataset2 for each Basel event type
+----------------------------------------------------*/
+%macro prep_data(et, et2);
+
+  proc sql;
+    create table &et2._dataset as
+    select gl_date, freq, severity
+    from event_w_exclusion_agg
+    where basel_type = "&et"
+    ;
+  quit;
+
+  /* merge with qtr_range to fill missing freq=0, severity=0 */
+  proc sql;
+    create table input.&et2._dataset2 as
     select t1.qtr as gl_date format=date9.,
            coalesce(t2.freq, 0) as freq,
-           coalesce(t2.severity, 0) as severity,
-           t2.basel_type
+           coalesce(t2.severity, 0) as severity
     from qtr_range t1
-    left join event_w_exclusion_agg t2
-         on t1.qtr = t2.gl_date
-    order by gl_date, basel_type;
-quit;
+    left join &et2._dataset t2
+       on t1.qtr = t2.gl_date
+    ;
+  quit;
+
+%mend prep_data;
 ```
 
-- **Now** `event_w_exclusion_agg2` has a row for **every quarter** in the date range, even if no events occurred.
+*(Adjust references to match your library name. If you want the final tables in `WORK`, remove `input.`.)*
 
 ---
 
-## 7. **Final Checks on Aggregated Data**
+# 5. Generate Final Datasets and Check Them
 
 ```sas
-%check_aggregated(in_data=event_w_exclusion_agg2, label_text=FINAL_AGG);
+/*--------------------------------------------------*/
+/* STEP H: Call %prep_data for each Basel Event Type 
+   you need. Example:
+----------------------------------------------------*/
+%prep_data(ET1 - Internal Fraud,  IF);
+%prep_data(ET2 - External Fraud,  EF);
+%prep_data(ET3 - Employment Practices & Workplace Safety, EPWS);
+%prep_data(ET7 - Execution, Delivery and Process Management, EDPM);
+/* etc. for all relevant Basel categories */
+
+/* After each call, you get input.IF_dataset2, input.EF_dataset2, etc. */
+
+/* (3) Final Data-Quality Checks on one or more final datasets 
+   If you prefer to combine them, adapt as needed
+*/
+%check_aggregated(in_data=input.IF_dataset2,   label_text=IF);
+%check_aggregated(in_data=input.EF_dataset2,   label_text=EF);
+%check_aggregated(in_data=input.EPWS_dataset2, label_text=EPWS);
+%check_aggregated(in_data=input.EDPM_dataset2, label_text=EDPM);
+/* etc. */
 ```
 
-- This looks for duplicates by `gl_date`, outliers in `severity`, etc.
+Explanation:
+- **`%prep_data(et, et2)`**: The original macro that merges each Basel event type’s freq/severity with the `qtr_range` (so you get 0 for quarters with no events).  
+- **`%check_aggregated`**: Our new macro that verifies duplicates on `gl_date`, missing or outlier severity, etc.
 
 ---
 
-## 8. **End of Script**
+## Putting It All Together
 
-Putting it all together, you have a **single SAS script** that:
+**This script** is a **fully integrated** version of your **original code**—including:
 
-1. Imports raw data → checks it  
-2. Prepares net_loss, applies exclusions → checks the filtered set  
-3. Aggregates to quarterly → checks the final output  
-
-This **fully integrates** the **original data‐processing logic** (import, net_loss calculation, exclusions, final aggregator) **with** data‐quality checks at **three** critical points:
-
-- **Raw** (before any business rules),  
-- **Filtered** (after all exclusions),  
-- **Final** (after building the quarterly dataset).
+1. **Import** raw data → `archer_data`.
+2. **(DQ)** `%data_quality_checks` on **raw**.  
+3. **Create** `archer_prep` with `net_loss`.  
+4. **Build** `exclusion_event` (optional) & **filter** → `event_w_exclusion`.  
+5. **(DQ)** `%data_quality_checks` on **filtered**.  
+6. **Aggregate** to `event_w_exclusion_agg`.  
+7. Build `qtr_range` & **use** `%prep_data` macro (original) → final segment datasets.  
+8. **(DQ)** `%check_aggregated` on final `IF_dataset2`, `EF_dataset2`, etc.
 
 ---
 
-## **Summary of the Executable Flow**
+### **Final Notes/Reminders**
 
-1. **Adjust** the top section (file paths, macro variables, library references).  
-2. **Run** the entire script.  
-3. **Review** the log and outputs from each data‐quality step:
-   - **Raw data** results (are there duplicates, missing values, extreme outliers?).  
-   - **Filtered data** results (did exclusions fix or remove certain issues?).  
-   - **Final aggregated data** results (are frequency and severity columns correct, any big outlier quarters?).
+1. **Check the exact column names** for Archer data. If the code expects `'Gross Loss Amount'n` but your dataset calls it `'Gross Loss'$'n`, you'll need to adjust.  
+2. **Adjust** the **exclusion** logic to match precisely your business rules (10K+ only, credit boundary, ACH Fraud, etc.).  
+3. **If you** want to **first sum** multiple G/L entries per **(Internal Events, Posting Date)** before the quarterly step, modify the SQL accordingly.  
+4. The code references **`input.`** as the library for final `%prep_data` outputs. If you prefer **WORK** or another library, change it in `proc sql create table input.&et2._dataset2`.
 
-This code is **immediately executable** in a SAS session, provided you:
-
-- Have **`archer_data`** columns named with spaces exactly as `'Gross Loss Amount'n` etc.,  
-- Have **`Exclusion_IE`** table if it’s used (or comment out that part),  
-- Possibly adjust the **named literal** references to match your Archer columns exactly (run `proc contents` if uncertain).
-
-With this, you achieve the **complete integrated** data‐processing + data‐quality pipeline.
+With these steps, you now have **one consolidated script** that includes your **original data processing** plus **the integrated data‐quality checks** at each key stage.
