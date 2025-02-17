@@ -213,4 +213,13 @@ With these minimal/targeted code snippets:
 - **Domain/Outlier** checks: Summaries or partial print  
 - **No** big listing of all data or all frequencies
 
-…you significantly reduce the volume of output, hopefully avoiding SAS’s “output too large to display” warning. This set of checks **still** covers the key items from your “blue‐print” requirements but in a more “production‐friendly” manner.
+==data net_outliers_sample;
+    set net_outliers;
+    where outlier_flag=1;
+    if _n_ <= 20;
+run;
+
+proc print data=net_outliers_sample;
+    title "Sample of Net Loss Outliers (First 20)";
+    var 'Internal Events'n 'Posting Date'n 'Gross Loss Amount'n 'Recovery Amount'n net_loss;
+run;
