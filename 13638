@@ -1,26 +1,216 @@
-/* Check frequency of categorical variables (Basel Event Type, Internal Events) */
-proc freq data=archer_data noprint;
-    tables 'Basel Event Type Level 1'n 
-           'Internal Events'n 
-        / missing out=cat_freq (drop=percent);
+Below is a **“lean” SAS code** that focuses on **key data checks** (missing values, duplicates, domain/outlier checks) **without** producing an extremely large output. It uses **brief summary outputs** or **no interactive prints** to avoid flooding the log or output window. This should help if SAS complains that the result is too large to display.
+
+---
+
+## 1. Missing Value & Basic Stats
+
+### 1.1 Numeric Variables (Gross, Recovery)
+
+- **Use `PROC MEANS`** but **suppress** the detailed listing, keeping only summary statistics in the output window.
+
+```sas
+/* Turn off some default outputs to limit size */
+ods select Summary;  /* or you can do: ods noresults; if you want no listing at all */
+
+proc means data=archer_data n nmiss mean std min max;
+    var 'Gross Loss Amount'n 'Recovery Amount'n;
+    title "Key Numeric Variables: Missing & Basic Stats";
 run;
 
-/* Check if cat_freq was created */
+/* Turn results back on if you turned them off:
+   ods select all; 
+*/
+```
+
+- **What It Does**: Prints a single summary table with `N`, `N Miss`, `Mean`, `Std`, `Min`, `Max`. That’s typically not huge.  
+- If even that is too big, you could suppress it to an **output dataset** and not print:
+
+```sas
+proc means data=archer_data n nmiss mean std min max noprint;
+    var 'Gross Loss Amount'n 'Recovery Amount'n;
+    output out=stats_summary
+       n= n_gross n_recovery
+       nmiss= nm_gross nm_recovery
+       mean= mean_gross mean_recovery
+       min= min_gross min_recovery
+       max= max_gross max_recovery
+       std= std_gross std_recovery;
+run;
+
+proc print data=stats_summary;
+    title "Key Numeric Variables Stats (One Row Only)";
+run;
+```
+
+This prints just **one row** with aggregated stats.
+
+### 1.2 Categorical Variables (Basel Event Type, Internal Events)
+
+```sas
+/* Check how many distinct categories or missing counts, 
+   but don't show full freq table if it's huge.
+*/
+proc freq data=archer_data noprint;
+    tables 'Basel Event Type Level 1'n
+           'Internal Events'n
+           / missing
+           out=cat_freq (drop=percent);
+run;
+
+proc print data=cat_freq (obs=20);
+    title "Sample of Distinct Categorical Values (Top 20)";
+run;
+```
+
+- **What It Does**: Creates `cat_freq` with the count of each category. Then it only prints the **first 20** rows. If you have thousands of unique “Internal Events,” you won’t blow up the output.
+
+---
+
+## 2. Checking Duplicates
+
+If you suspect large data, **avoid** printing them all. Let’s just count how many duplicates exist. We can do it in two steps with `PROC FREQ` or `PROC SQL`:
+
+```sas
+/* Count how many times each (Internal Events, Posting Date) combo appears */
+proc freq data=archer_data noprint;
+    tables 'Internal Events'n * 'Posting Date'n 
+        / out=freq_key (drop=percent);
+run;
+
+/* Filter to combos with freq>1 => duplicates */
+data freq_key_dups;
+    set freq_key;
+    where count>1;
+run;
+
+/* Now see how many combos are duplicates (not too large). 
+   If it's large, we won't print them all, just the first 30. */
+proc print data=freq_key_dups (obs=30);
+    title "Duplicate (Internal Event, Posting Date) Combos - Top 30";
+run;
+
+proc sql;
+    select count(*) as num_dup_keys
+    from freq_key_dups;
+quit;
+```
+
+- **What It Does**: 
+  - `PROC FREQ` is typically faster than sorting the entire dataset.  
+  - We only print the **first 30** duplicates and the total count, so the output is manageable.  
+
+---
+
+## 3. Domain Checks & Outliers
+
+### 3.1 Domain Checks: Negative Gross or Positive Recovery
+
+```sas
+data domain_checks;
+    set archer_data (keep='Internal Events'n 'Posting Date'n 
+                          'Gross Loss Amount'n 'Recovery Amount'n);
+    if 'Gross Loss Amount'n < 0 then flag_neg_gross=1; else flag_neg_gross=0;
+    if 'Recovery Amount'n > 0 then flag_pos_recovery=1; else flag_pos_recovery=0;
+run;
+
+proc means data=domain_checks n sum maxdec=0;
+    var flag_neg_gross flag_pos_recovery;
+    title "Count of Negative Gross & Positive Recovery (Domain Flags)";
+run;
+```
+
+- **What It Does**: Summarizes how many records have a negative gross or a positive recovery. Prints just two numbers (the sums).
+
+### 3.2 Outlier Check with IQR (Net Loss)
+
+We can do an IQR approach but **not** print the entire outlier set if it’s huge. Instead, store them in a dataset and print only a sample:
+
+```sas
+data archer_data_net;
+    set archer_data;
+    net_loss = 'Gross Loss Amount'n + 'Recovery Amount'n;
+run;
+
+proc univariate data=archer_data_net noprint;
+    var net_loss;
+    output out=out_iqr pctlpts=25,75 pctlpre=P_;
+run;
+
+data _null_;
+    set out_iqr;
+    iqr = P_75 - P_25;
+    lower_cut = P_25 - 1.5*iqr;
+    upper_cut = P_75 + 1.5*iqr;
+    call symputx('lcut', lower_cut);
+    call symputx('ucut', upper_cut);
+run;
+
+data net_outliers;
+    set archer_data_net;
+    if net_loss < &lcut or net_loss > &ucut then outlier_flag=1;
+    else outlier_flag=0;
+run;
+
 proc sql noprint;
-    select count(*) into :cat_count from cat_freq;
+    select count(*) into :num_out from net_outliers where outlier_flag=1;
 quit;
 
-%put NOTE: Number of records in cat_freq = &cat_count.;
+%put NOTE: Number of net_loss outliers = &num_out;
 
-%macro check_cat_freq;
-    %if &cat_count > 0 %then %do;
-        proc print data=cat_freq (obs=20);
-            title "Sample of Distinct Categorical Values (First 20)";
-        run;
-    %end;
-    %else %do;
-        %put WARNING: cat_freq is empty or was not created. No valid data to display.;
-    %end;
-%mend;
+proc print data=net_outliers (where=(outlier_flag=1)) (obs=20);
+    title "Sample of Net Loss Outliers (First 20)";
+    var 'Internal Events'n 'Posting Date'n 'Gross Loss Amount'n 
+        'Recovery Amount'n net_loss;
+run;
+```
 
-%check_cat_freq;
+- **What It Does**:  
+  - We don’t print all outliers, only the first 20 (`(obs=20)`).  
+  - Also puts the total count of outliers in the log (`&num_out`).
+
+---
+
+## 4. Summary & Additional Tips
+
+1. **`noprint`** or `ods select none`**: These are your friends when you want to **avoid giant output**.  
+2. **Limiting `OBS=`**: For large frequency or outlier tables, print only a small sample.  
+3. **Write Summaries to a Dataset**: Like the `proc means noprint` approach, so you only get 1 row with overall stats.
+
+### Additional “Lightweight” Approaches
+
+- **`PROC SQL` for duplicates**:  
+  ```sas
+  proc sql;
+    create table freq_count_sql as
+    select 'Internal Events'n, 
+           'Posting Date'n,
+           count(*) as freq
+    from archer_data
+    group by 'Internal Events'n, 'Posting Date'n
+    having calculated freq > 1
+    ;
+  quit;
+  ```
+  Then you can print just `(obs=30)` from `freq_count_sql`.
+
+- **Sampling**: If the raw Archer data is extremely large, you might do:  
+  ```sas
+  data sample;
+      set archer_data;
+      if ranuni(12345) < 0.001; /* keep ~0.1% random sample */
+  run;
+  ```
+  Then run your checks on `sample` for an idea of data quality.
+
+---
+
+### Conclusion
+
+With these minimal/targeted code snippets:
+
+- **Missing Values**: Summaries only  
+- **Duplicates**: No giant print‐outs, just a small top list + total count  
+- **Domain/Outlier** checks: Summaries or partial print  
+- **No** big listing of all data or all frequencies
+
+…you significantly reduce the volume of output, hopefully avoiding SAS’s “output too large to display” warning. This set of checks **still** covers the key items from your “blue‐print” requirements but in a more “production‐friendly” manner.
