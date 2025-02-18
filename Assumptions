@@ -286,3 +286,68 @@ The **only** additional notes might be:
 - Make sure that if you **truncate data to December 2021** (as discussed in the doc) that step is done **before** or **within** your SAS code (if not already in the input file).
 
 Otherwise, the code fully addresses the template’s data‐quality and final data‐preparation guidelines.
+
+
+
+=================
+
+
+%let archer_dt = 2022_7152022226PM;
+%let data_loc = /sasdata/sasdata2/ctmd2/ppnr/model_dev/MOD13638_Ops Risk/SUBMISSION;
+LIBNAME input "&data_loc";
+
+/* Import Archer Data */
+PROC IMPORT OUT=archer_data DATAFILE= "&data_loc./Model_Report_&archer_dt..xlsx"
+    DBMS=xlsx REPLACE;
+    GETNAMES=YES;
+RUN;
+
+/* Import Exclusion List */
+PROC IMPORT OUT=Exclusion_IE DATAFILE= "&data_loc./Exclusion_IE.xlsx"
+    DBMS=xlsx REPLACE;
+    GETNAMES=YES;
+RUN;
+
+/* Convert Posting Date */
+DATA archer_data;
+    SET archer_data;
+    formatted_posting_date = INPUT('Posting Date'n, MMDDYY10.);
+    FORMAT formatted_posting_date DATE9.;
+RUN;
+
+/* Apply Exclusions Before Aggregation */
+PROC SQL;
+    CREATE TABLE archer_prep AS 
+    SELECT *, ('Gross Loss Amount'n + 'Recovery Amount'n) AS net_loss
+    FROM archer_data
+    WHERE formatted_posting_date <= '31DEC2021'd 
+          AND UPCASE(STRIP('Internal Events'n)) NOT IN 
+             (SELECT DISTINCT UPCASE(STRIP('Internal Events'n)) FROM Exclusion_IE);
+QUIT;
+
+/* Aggregate Before De-Duplication */
+PROC SQL;
+    CREATE TABLE event_w_exclusion_dedup AS 
+    SELECT 'Basel Event Type Level 1'n, YEAR(formatted_posting_date) AS year_event, 
+           INTNX('QTR', formatted_posting_date, 0, 'E') AS qtr_event,
+           COUNT(DISTINCT 'Internal Events'n) AS freq, 
+           SUM(net_loss) AS severity
+    FROM archer_prep
+    GROUP BY 1, 2, 3;
+QUIT;
+
+/* Data Quality Checks */
+PROC MEANS DATA=event_w_exclusion_dedup N NMISS MEAN STD MIN MAX;
+    VAR freq severity;
+    TITLE "Final Data Quality Check - Frequency & Severity";
+RUN;
+
+/* Check for Negative Values */
+PROC SQL;
+    SELECT * FROM event_w_exclusion_dedup WHERE freq < 0 OR severity < 0;
+QUIT;
+
+/* Final Output */
+PROC PRINT DATA=event_w_exclusion_dedup (OBS=20);
+RUN;
+
