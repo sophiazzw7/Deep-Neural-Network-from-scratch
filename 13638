@@ -1,20 +1,7 @@
-proc sql;
-    /* Calculate total frequency and total net loss */
-    create table et1_summary as
-    select 
-        sum(frequency) as total_frequency,
-        sum(severity) as total_net_loss
-    from if_dataset_2;
+ods excel file="C:\Users\YourName\Documents\if_dataset_2.xlsx"
+    options(sheet_name="Data" autofilter="yes");
 
-    /* Calculate percent of net loss */
-    create table et1_percent_loss as
-    select 
-        a.*, 
-        (a.severity / b.total_net_loss) * 100 as percent_net_loss format=percent8.2
-    from if_dataset_2 a
-    cross join (select sum(severity) as total_net_loss from if_dataset_2) b;
-quit;
+proc print data=if_dataset_2; 
+run;
 
-/* Display results */
-proc print data=et1_summary; run;
-proc print data=et1_percent_loss; run;
+ods excel close;
