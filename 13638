@@ -1,3 +1,1 @@
-The 3.5 multiplier was chosen based on a spectrum of possible multipliers derived from historical overlays, stress tests, and expert judgment. Figures 4.3–4.4 show that multipliers for CPBP range from roughly 2 to 10 and for EF from 2 to 4, meaning 3.5 falls within a reasonable middle range—neither an extreme high nor low. Since operational risk losses are highly idiosyncratic, expert input was prioritized over rigid mathematical formulas, ensuring the choice reflects empirical validation and past adjustments. Given this approach, does this methodology seem acceptable to you?
-
-
+It robustly covers the reasons for moving toward a qualitative, multiplier-based approach and explains how the 3.5 multiplier was empirically guided yet expert-driven. The data lineage, controls, assumptions, and monitoring sections provide a solid governance framework, while also acknowledging known limitations and the plan to refresh these assumptions.
