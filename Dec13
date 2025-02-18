@@ -1,42 +1,153 @@
-Here’s the revised version without inferences:
+/* Set file paths */
+%LET archer_dt = 2022_7152022226PM;
+%LET data_loc = /sasdata/sasdata2/ctmd2/ppnr2/model_dev/MOD13638_Ops_Risk/SUBMISSION;
 
----
+LIBNAME input "&data_loc";
 
-1. First bullet of FND-17134827:  
-The reasoning behind the expected frequency under the BHC Adverse scenario being higher than the frequency rates under the BHC Severe and FRB Severe scenarios for CPBP Basel is not documented. While the updated text states, "The predicted frequencies are a function of macroeconomic variations, and it’s not necessary that the Adverse scenario frequencies are less than the FRB and BHC Severe," could you add more elaborative evidence in Section 6.3 to address this finding? Also, could you clarify why the ranking reversal is only in CPBP and not in EF?
+/* Import Archer Data */
+PROC IMPORT OUT= archer_data DATAFILE= "&data_loc./Model_Report_&archer_dt..xlsx"
+    DBMS=xlsx REPLACE;
+    GETNAMES=YES;
+RUN;
 
-2. Do you have the backtesting results of frequency for all segments for development, stress, and the most recent 9 quarters?
+/* Import SME-defined Exclusion File */
+PROC IMPORT OUT= Exclusion_IE DATAFILE= "&data_loc./Exclusion_IE.xlsx"
+    DBMS=xlsx REPLACE;
+    GETNAMES=YES;
+RUN;
 
-3. Section 6.1.1 of MDD states, "The model owners are aware of the variance and agree that it is within the tolerance limits." Could you clarify what the tolerance limit mentioned here is and provide the proof of model owner acceptance or discussion?
+/* Step 1: Deduplicate Entries Based on Internal Events + Posting Date */
+PROC SQL;
+    CREATE TABLE archer_prep AS 
+    SELECT 'Internal Events'n, 
+           'Basel Event Type Level 1'n, 
+           'Posting Date'n AS formatted_posting_date FORMAT=DATE9.,
+           SUM('Gross Loss Amount'n) AS gross_loss, 
+           SUM('Recovery Amount'n) AS recovery_amount, 
+           SUM('Gross Loss Amount'n + 'Recovery Amount'n) AS net_loss
+    FROM archer_data
+    GROUP BY 'Internal Events'n, 'Basel Event Type Level 1'n, formatted_posting_date
+    ORDER BY 'Basel Event Type Level 1'n, 'Internal Events'n, formatted_posting_date;
+QUIT;
 
-4. Could you share the data quality testing and data appropriateness testing for OGM data?
+/* Step 2: Apply Business Rule Exclusions */
+PROC SQL;
+    CREATE TABLE exclusion_event AS 
+    SELECT DISTINCT 'Internal Events'n
+    FROM archer_prep
+    WHERE 
+        'Type of Impact'n IN ('Credit Boundary') OR
+        'GL Account'n IN ('865400') OR
+        ('Basel Event Type Level 1'n = 'ET2 - External Fraud' 
+            AND 'Basel Event Type Level 3'n = 'ET2106 - ACH Fraud' 
+            AND YEAR(formatted_posting_date) = 2018 AND QTR(formatted_posting_date) = 4)
+        OR ('Internal Events'n IN (SELECT 'Internal Events'n FROM Exclusion_IE));
+QUIT;
 
-5. Could you clarify the backtesting results for EDPM, IF, DPA, and EPWS in Section 6.1.1 of MDD? Is it based on the historical average approach?
+/* Step 3: Remove Excluded Events */
+PROC SQL;
+    CREATE TABLE event_w_exclusion AS 
+    SELECT * 
+    FROM archer_prep
+    WHERE 'Internal Events'n NOT IN (SELECT 'Internal Events'n FROM exclusion_event);
+QUIT;
 
----
+/* Step 4: Handle Missing Data */
+PROC MEANS DATA=event_w_exclusion NMISS N MEAN STD MIN MAX;
+    VAR gross_loss recovery_amount net_loss;
+    TITLE "Missing Values Check for Numeric Variables";
+RUN;
 
-Let me know if you need further adjustments.
+PROC FREQ DATA=event_w_exclusion;
+    TABLES 'Basel Event Type Level 1'n / MISSING;
+    TITLE "Missing Values Check for Categorical Variables";
+RUN;
 
+/* Step 5: Domain & Consistency Checks */
+DATA domain_checks;
+    SET event_w_exclusion;
+    flag_gross_neg = (gross_loss < 0);
+    flag_recovery_pos = (recovery_amount > 0);
+RUN;
 
-Here’s a draft email based on your colleague's example, tailored to share your questions and request a reply by December 23:
+PROC FREQ DATA=domain_checks;
+    TABLES flag_gross_neg flag_recovery_pos / MISSING;
+    TITLE "Domain Checks: Negative Gross Loss & Unexpected Recovery Sign";
+RUN;
 
----
+/* Step 6: Outlier Detection using IQR */
+PROC UNIVARIATE DATA=event_w_exclusion NOPRINT;
+    VAR net_loss;
+    OUTPUT OUT=_stats_ PCTLPTS=25,75 PCTLPRE=P_;
+RUN;
 
-**Subject:** Questions Regarding [Model Name or Validation Task]  
+DATA _NULL_;
+    SET _stats_;
+    IQR = P_75 - P_25;
+    lower_cut = P_25 - 1.5*IQR;
+    upper_cut = P_75 + 1.5*IQR;
+    CALL SYMPUTX('lower_cut', lower_cut);
+    CALL SYMPUTX('upper_cut', upper_cut);
+RUN;
 
-Hi [Recipient's Name],  
+DATA outliers;
+    SET event_w_exclusion;
+    IF net_loss < &lower_cut OR net_loss > &upper_cut THEN outlier_flag = 1;
+    ELSE outlier_flag = 0;
+RUN;
 
-Thank you for your support on this review process. I have compiled a few questions regarding [specific task or model validation], which require clarification to ensure we can complete the review efficiently.  
+PROC PRINT DATA=outliers (WHERE=(outlier_flag=1)) OBS=20;
+    TITLE "Potential Net Loss Outliers (IQR Method)";
+RUN;
 
-Please find the attached document with the questions. Could you kindly review them and provide your responses by December 23, 2024? If there are any uncertainties or additional information needed, we’d be happy to schedule a call to discuss further.  
+/* Step 7: Aggregation to Quarterly Frequency/Severity */
+PROC SQL;
+    CREATE TABLE event_w_exclusion_agg AS 
+    SELECT 'Basel Event Type Level 1'n, 
+           YEAR(formatted_posting_date) AS year_event, 
+           INTNX('QTR', formatted_posting_date, 0, 'E') AS qtr_event FORMAT=DATE9.,
+           COUNT(DISTINCT 'Internal Events'n) AS freq, 
+           SUM(net_loss) AS severity
+    FROM event_w_exclusion
+    GROUP BY 1, 2, 3;
+QUIT;
 
-Let me know if you have any doubts or need assistance regarding these questions. I appreciate your cooperation and look forward to your response.  
+/* Step 8: Ensure Full Quarter Range (Zero-fill Missing Quarters) */
+PROC SQL NOPRINT;
+    SELECT MIN(qtr_event) INTO :qtr_begin FROM event_w_exclusion_agg;
+    SELECT MAX(qtr_event) INTO :qtr_end FROM event_w_exclusion_agg;
+QUIT;
 
-Best regards,  
-[Your Full Name]  
-[Your Job Title]  
-[Your Contact Information]  
+DATA qtr_range;
+    FORMAT qtr DATE9.;
+    n_qtr = INTCK('QTR', &qtr_begin, &qtr_end);
+    DO i = 0 TO n_qtr;
+        qtr = INTNX('QTR', &qtr_begin, i, 'E');
+        OUTPUT;
+    END;
+    DROP i n_qtr;
+RUN;
 
----
+PROC SQL;
+    CREATE TABLE final_data AS
+    SELECT t1.qtr AS gl_date FORMAT=DATE9.,
+           COALESCE(t2.freq, 0) AS freq,
+           COALESCE(t2.severity, 0) AS severity
+    FROM qtr_range t1
+    LEFT JOIN event_w_exclusion_agg t2
+        ON t1.qtr = t2.qtr_event;
+QUIT;
 
-Feel free to adjust it as needed to align with your style. Let me know if you want any refinements.
+/* Step 9: Final Data Quality Checks on Output */
+PROC MEANS DATA=final_data NMISS N MEAN STD MIN MAX;
+    VAR freq severity;
+    TITLE "Final Data Missing & Summary Stats";
+RUN;
+
+PROC SORT DATA=final_data OUT=_sorted_ DUPOUT=_duplicates_ NODUPKEY;
+    BY gl_date;
+RUN;
+
+PROC PRINT DATA=_duplicates_ OBS=20;
+    TITLE "Duplicate Records in Final Output";
+RUN;
