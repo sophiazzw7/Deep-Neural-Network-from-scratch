@@ -1,120 +1,119 @@
 /***********************************************************/
-/* Let's assume these 3 examples. Repeat as needed.        */
+/* Step 1: Subset Data by Basel Event Type Level 1        */
 /***********************************************************/
-data agg_IF;
-    set event_w_exclusion_agg;
-    where 'Basel Event Type Level 1'n = "ET1 - Internal Fraud";
-run;
+%macro create_subset(event_label, dataset_name);
+    data &dataset_name;
+        set event_w_exclusion_agg;
+        where 'Basel Event Type Level 1'n = "&event_label";
+    run;
+%mend;
 
-data agg_EF;
-    set event_w_exclusion_agg;
-    where 'Basel Event Type Level 1'n = "ET2 - External Fraud";
-run;
+%create_subset(ET1 - Internal Fraud, agg_IF);
+%create_subset(ET2 - External Fraud, agg_EF);
+%create_subset(ET3 - Employment Practices & Workplace Safety, agg_EPWS);
 
-data agg_EPWS;
-    set event_w_exclusion_agg;
-    where 'Basel Event Type Level 1'n = 
-          "ET3 - Employment Practices & Workplace Safety";
-run;
+/***********************************************************/
+/* Step 2: Perform Data Quality Checks for Each Subset    */
+/***********************************************************/
+%macro check_data_quality(dataset, event_code);
 
-/* Then do the same checks on each. 
-   For brevity, let's show one example (agg_IF). 
-   Repeat for agg_EF, agg_EPWS, etc.
-*/
-
-/***************************************************/
-/* Example: Checking agg_IF (Internal Fraud)       */
-/***************************************************/
-
-/* A) Basic Numeric Summary (freq, severity) */
-proc means data=agg_IF n nmiss min max mean std noprint;
+/* A) Distribution of Variables (Continuous + Categorical) */
+proc means data=&dataset n nmiss min max mean std;
     var freq severity;
-    output out=_IF_means(drop=_type_ _freq_)
-        n= n_freq n_sev
-        nmiss= nm_freq nm_sev
-        min= min_freq min_sev
-        max= max_freq max_sev
-        mean= mean_freq mean_sev
-        std= std_freq std_sev
-    ;
+    title "&event_code: Distribution of Continuous Variables";
 run;
 
-data _null_;
-    set _IF_means;
-    put "=== agg_IF (ET1) freq & severity Stats ===";
-    put "freq: N=" n_freq " Nmiss=" nm_freq 
-        " Min=" min_freq " Max=" max_freq " Mean=" mean_freq best8.2;
-    put "severity: N=" n_sev " Nmiss=" nm_sev 
-        " Min=" min_sev " Max=" max_sev " Mean=" mean_sev best8.2;
+proc freq data=&dataset;
+    tables 'Basel Event Type Level 1'n / missing;
+    title "&event_code: Distribution of Categorical Variables";
 run;
 
-/* B) Duplicate check => gl_date 
-      (since now there's only 1 Basel type in each dataset) */
-proc freq data=agg_IF noprint;
-    tables gl_date / out=_IF_dup(drop=percent);
+/* B) Check for Missing Values */
+proc means data=&dataset nmiss;
+    var freq severity;
+    title "&event_code: Missing Value Check";
 run;
 
-data _IF_dup2;
-    set _IF_dup;
-    if count>1;
+/* C) Check for Duplicates on gl_date */
+proc freq data=&dataset noprint;
+    tables gl_date / out=_&event_code._dup(drop=percent);
+run;
+
+data _&event_code._dup_filtered;
+    set _&event_code._dup;
+    if count > 1;
 run;
 
 proc sql noprint;
-    select count(*) into :num_dup_IF from _IF_dup2;
+    select count(*) into :num_dup from _&event_code._dup_filtered;
 quit;
 
-%put NOTE: agg_IF => &num_dup_IF duplicates by gl_date;
-
-%if &num_dup_IF > 0 %then %do;
-    title "agg_IF: Sample Duplicates (gl_date) (Top 5)";
-    proc print data=_IF_dup2(obs=5);
+%put NOTE: &event_code => &num_dup duplicates found for gl_date;
+%if &num_dup > 0 %then %do;
+    proc print data=_&event_code._dup_filtered(obs=5);
         var gl_date count;
+        title "&event_code: Sample Duplicates (Top 5)";
     run;
 %end;
 
-/* C) Outlier check => severity IQR */
-proc univariate data=agg_IF noprint;
+/* D) Outlier Detection using IQR Method */
+proc univariate data=&dataset noprint;
     var severity;
-    output out=_IF_iqr pctlpts=25 75 pctlpre=P_;
+    output out=_&event_code._iqr pctlpts=25 75 pctlpre=P_;
 run;
 
 data _null_;
-    set _IF_iqr;
+    set _&event_code._iqr;
     iqr = P_75 - P_25;
-    lower_cut = P_25 - 1.5*iqr;
-    upper_cut = P_75 + 1.5*iqr;
-    call symputx('IF_lower', lower_cut);
-    call symputx('IF_upper', upper_cut);
+    lower_cut = P_25 - 1.5 * iqr;
+    upper_cut = P_75 + 1.5 * iqr;
+    call symputx("&event_code._lower", lower_cut);
+    call symputx("&event_code._upper", upper_cut);
 run;
 
-data _IF_outliers;
-    set agg_IF;
-    if severity < &IF_lower or severity > &IF_upper then outlier_flag=1;
+data _&event_code._outliers;
+    set &dataset;
+    if severity < &&&event_code._lower or severity > &&&event_code._upper then outlier_flag=1;
 run;
 
 proc sql noprint;
-    select count(*) into :num_out_IF
-    from _IF_outliers
-    where outlier_flag=1;
+    select count(*) into :num_out from _&event_code._outliers where outlier_flag=1;
 quit;
 
-%put NOTE: agg_IF => &num_out_IF severity outliers;
-
-%if &num_out_IF>0 %then %do;
-    title "agg_IF: severity Outliers (Top 5)";
-    proc print data=_IF_outliers(obs=5);
-       where outlier_flag=1;
-       var gl_date freq severity;
+%put NOTE: &event_code => &num_out severity outliers;
+%if &num_out > 0 %then %do;
+    proc print data=_&event_code._outliers(obs=5);
+        where outlier_flag=1;
+        var gl_date freq severity;
+        title "&event_code: Severity Outliers (Top 5)";
     run;
 %end;
 
-/***************************************************/
-/* D) Repeat for agg_EF, agg_EPWS, etc.           */
-/***************************************************/
-/* e.g.:
+/* E) Consistency Check - Ensure Frequency & Severity >= 0 */
+data _&event_code._consistency;
+    set &dataset;
+    if freq < 0 then consistency_flag = "Negative Frequency";
+    if severity < 0 then consistency_flag = "Negative Severity";
+run;
 
-   proc means data=agg_EF ... 
-   ...
-   proc univariate data=agg_EF ...
-   ...
-*/
+proc sql noprint;
+    select count(*) into :num_consistency from _&event_code._consistency where consistency_flag is not missing;
+quit;
+
+%put NOTE: &event_code => &num_consistency consistency issues;
+%if &num_consistency > 0 %then %do;
+    proc print data=_&event_code._consistency(obs=5);
+        where consistency_flag is not missing;
+        var gl_date freq severity consistency_flag;
+        title "&event_code: Consistency Issues (Top 5)";
+    run;
+%end;
+
+%mend;
+
+/***********************************************************/
+/* Step 3: Run the Data Quality Check for All Categories  */
+/***********************************************************/
+%check_data_quality(agg_IF, IF);
+%check_data_quality(agg_EF, EF);
+%check_data_quality(agg_EPWS, EPWS);
