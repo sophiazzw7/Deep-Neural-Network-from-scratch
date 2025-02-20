@@ -18,3 +18,48 @@ Net Loss = $3,086,682.02
 Different GL Tracking IDs
 Possible explanation: If this is a duplicate, it could double your severity sum.
 Action: Check the source system to see if this is an actual correction or a repeated data entry error.
+
+
+
+### **Subject:** Clarification on Duplicate Handling in `event_w_exclusion` vs. `event_w_exclusion_dedup`  
+
+Hi [Developer's Name],  
+
+I was reviewing the duplicate handling process in the data pipeline, specifically comparing `event_w_exclusion` and `event_w_exclusion_dedup`. Below are my observations:  
+
+### **Observations on `event_w_exclusion`**
+- I found cases where the **same `Internal Events` appear multiple times** with identical values for:
+  - `Posting Date`
+  - `Gross Loss Amount`
+  - `Recovery Amount`
+  - `net_loss`
+  - `GL Account`
+- The only difference among these duplicate rows is the **GL Tracking ID**.
+- This suggests that multiple G/L entries for the same event exist in `event_w_exclusion`, which could impact **severity calculations** if they are not meant to be separate transactions.
+
+### **Observations on `event_w_exclusion_dedup`**
+- When I checked `event_w_exclusion_dedup`, it returned **no duplicate records** based on `Internal Events` and `net_loss`.
+- This is likely because `event_w_exclusion_dedup` is created using a `SELECT DISTINCT` on:
+  - `'Basel Event Type Level 1'n`
+  - `year_event`
+  - `qtr_event`
+  - `gl_date`
+  - `'Event Record Type'n`
+  - `'Internal Events'n`
+  - `net_loss`
+- Since **GL Tracking ID and Posting Date were not included**, rows that were distinct in `event_w_exclusion` may have been collapsed into one event record in `event_w_exclusion_dedup`.
+
+### **Question for Clarification**
+- Was this **intentional behavior** to aggregate multiple G/L entries into a single event record in `event_w_exclusion_dedup`?  
+- Or should `event_w_exclusion_dedup` be preserving **all distinct records from `event_w_exclusion`**, including variations in **GL Tracking ID and Posting Date**?  
+- If the goal was to sum all distinct G/L entries per event before rolling up to `event_w_exclusion_dedup`, should a different aggregation approach be used before deduplication?  
+
+I've attached the **duplicates detail from `event_w_exclusion`** for reference. Let me know your thoughts on this!  
+
+Best,  
+[Your Name]  
+
+---
+
+### **Next Steps**
+Let me know if you'd like any adjustments to the message or additional attachments before sending it to the developer! 🚀
