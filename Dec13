@@ -1,56 +1,65 @@
-Below is the revised duplicate check code along with a summary you can send to the developer:
+Here's a structured version of your **meeting notes** based on the transcript:  
 
 ---
 
-### **SAS Code to Check for Duplicates in event_w_exclusion_dedup**
-```sas
-/* Check for duplicates in event_w_exclusion_dedup */
-proc sql;
-    create table dup_check as
-    select 
-        'Internal Events'n as event_id,
-        net_loss,
-        count(*) as count_occurrences
-    from event_w_exclusion_dedup
-    group by 
-        'Internal Events'n, net_loss
-    having count(*) > 1;
-quit;
-
-proc print data=dup_check;
-run;
-```
-
-*Note: This code returns 0 rows, meaning that based on 'Internal Events' and net_loss, there are no duplicate records in event_w_exclusion_dedup.*
+# **Meeting Notes: Stress Delta and 3.5 Multiplier Discussion**  
+**Date:** [Insert Meeting Date]  
+**Attendees:** [List of Participants]  
+**Subject:** Discussion on Stress Delta, 3.5 Multiplier, and Methodology Changes  
 
 ---
 
-### **Email Summary Draft**
-
-**Subject:** Clarification on Duplicate Handling in event_w_exclusion vs. event_w_exclusion_dedup
-
-Hi [Developer's Name],
-
-I’ve been reviewing our data pipeline and have a question regarding how duplicates are handled between the event_w_exclusion and event_w_exclusion_dedup datasets.
-
-**Observations:**
-
-1. **event_w_exclusion:**  
-   - I noticed that in event_w_exclusion, some events appear multiple times with identical values for Posting Date, Gross Loss Amount, Recovery Amount, net_loss, and GL Account, differing only in GL Tracking ID.
-   - This suggests that multiple G/L entries exist for the same event.
-
-2. **event_w_exclusion_dedup:**  
-   - This dataset is created using a SELECT DISTINCT on a set of key fields (Basel Event Type Level 1, year_event, qtr_event, gl_date, Event Record Type, Internal Events, and net_loss).
-   - When checking for duplicates based on Internal Events and net_loss, the duplicate check returned 0 rows.
-   - This indicates that event_w_exclusion_dedup has no duplicate records (as defined by these keys), and the differences in fields like Posting Date and GL Tracking ID are intentionally not included in the deduplication.
-
-Could you please confirm if this behavior is intentional? Specifically, should we be collapsing multiple G/L entries for the same event (even if they differ only by GL Tracking ID or Posting Date) into a single record in event_w_exclusion_dedup for aggregation purposes?
-
-I've attached the duplicate check code for your reference.
-
-Thank you,  
-[Your Name]
+## **1. Background on Proposed Stress Delta**
+- The **2025 proposed stress deltas** were initially generated from the model.  
+- However, these deltas were found to be **extremely high**, prompting a discussion on methodology changes.  
+- The initial methodology was **quantitative**, but due to the high deltas, it was proposed to shift to a **qualitative** approach instead.  
+- The initial proposal did **not go through**, and the methodology was adjusted accordingly.
 
 ---
 
-This draft summarizes our observations and asks for clarification on whether the deduplication approach in event_w_exclusion_dedup is intended. Let me know if you need any further modifications!
+## **2. Comparison of Different Multiplier Choices**
+- A document was reviewed that compared:
+  - The **original proposed overlay delta**  
+  - The **new 3.5 multiplier delta**  
+- The **new multiplier (3.5)** resulted in **smaller deltas**, leading to the decision to adopt a qualitative approach.  
+- The primary reason for this shift was not just the delta size but also that the **model results did not make sense** when reviewed.
+
+---
+
+## **3. New Qualitative Methodology and Removal of Scenario Analysis**
+- Under the new **qualitative methodology**, **scenario analysis is no longer applicable**.  
+- Since this is **not macroeconomic-driven**, there is no meaningful rank ordering between severe and adverse scenarios.
+- Previously, the **four event types** used a **single stress delta** for both severe and adverse scenarios.  
+- Instead of introducing separate multipliers (e.g., **3.5 for adverse and 4.0 for severe**), it was decided to **keep everything uniform**.
+- The approach was aligned with **other methodologies**, ensuring consistency.
+
+---
+
+## **4. Final Decision on the 3.5 Multiplier**
+- The **final methodology** applies **3.5 for both severe and adverse scenarios**, meaning there is **no differentiation between them**.
+- Since the **same delta** is used, there is **no need to check for rank ordering** between stress levels.
+- The rationale is that **historical stress testing** has already accounted for past variations, and the firm is prepared for stress events regardless of severity categorization.
+- The logic followed is **"we are prepared for the worst,"** rather than trying to differentiate between adverse and severe stress scenarios.
+
+---
+
+## **5. Next Steps and Urgent Requests**
+- A **memo** is being prepared summarizing the proposed changes and their approval.
+- Approval **meeting notes** for the **3.5 multiplier decision** need to be documented and attached.
+- There is an **urgent request from GCO** related to this, and outreach to relevant stakeholders is ongoing.
+- The final logic in the memo will:
+  - **Explain the original proposal**  
+  - **Attach the approval meeting notes as supporting evidence**  
+  - **Ensure alignment with previous qualitative adjustments**  
+
+---
+
+**Action Items:**
+| Task | Owner | Deadline |
+|------|-------|----------|
+| Retrieve and attach approval meeting notes for the 3.5 multiplier | [Responsible Person] | [Due Date] |
+| Finalize and submit memo to GCO | [Responsible Person] | [Due Date] |
+
+---
+
+This version keeps things **concise, structured, and easy to follow** while maintaining all key points from the discussion. Let me know if you need any refinements! 🚀
