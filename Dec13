@@ -63,3 +63,77 @@ Best,
 
 ### **Next Steps**
 Let me know if you'd like any adjustments to the message or additional attachments before sending it to the developer! 🚀
+
+
+
+
+==========
+
+
+Below is a SAS code snippet that checks for duplicates in **event_w_exclusion_dedup** based on the combination of `'Internal Events'n` and `net_loss`. If no rows are returned from this query, then there are no duplicates according to those key fields.
+
+---
+
+```sas
+/* Check for duplicates in event_w_exclusion_dedup */
+proc sql;
+    create table dup_check as
+    select 
+        'Internal Events'n as event_id,
+        net_loss,
+        count(*) as count_occurrences
+    from event_w_exclusion_dedup
+    group by 
+        'Internal Events'n, net_loss
+    having count(*) > 1;
+quit;
+
+proc print data=dup_check;
+run;
+```
+
+---
+
+### **Summary of Observations**
+
+**Regarding `event_w_exclusion`:**
+- We observed that in the **event_w_exclusion** dataset there are multiple rows for the same event (i.e., same `'Internal Events'n`, same `Posting Date`, same `Gross Loss Amount`, `Recovery Amount`, `net_loss`, and `GL Account`), differing only in the **GL Tracking ID**.
+- This indicates that multiple G/L entries exist for a single event.
+
+**Regarding `event_w_exclusion_dedup`:**
+- This dataset is created using a `SELECT DISTINCT` on a limited set of fields:
+  - `'Basel Event Type Level 1'n`, `year_event`, `qtr_event`, `gl_date`, `'Event Record Type'n`, `'Internal Events'n`, and `net_loss`.
+- As a result, differences in fields such as **Posting Date** and **GL Tracking ID** are not considered.
+- Our duplicate check (using the code above) based on `'Internal Events'n` and `net_loss` helps us determine if the deduplication collapsed rows as intended.
+- If duplicates (i.e., same event ID and net loss) still appear, that implies multiple records with identical event-level details exist in **event_w_exclusion_dedup**—either because they are legitimate partial postings or because the deduplication did not remove pure duplicates.
+
+---
+
+### **Email to Developer**
+
+Subject: **Clarification on Duplicate Handling in event_w_exclusion vs. event_w_exclusion_dedup**
+
+Hi [Developer's Name],
+
+I’ve been reviewing the duplicate handling logic in our data pipeline. Here’s a summary of my observations:
+
+1. **event_w_exclusion:**  
+   - I found that some events appear multiple times with the same values for Posting Date, Gross Loss Amount, Recovery Amount, net_loss, and GL Account—differing only by the GL Tracking ID.
+   - This suggests that multiple G/L entries exist for a single event.
+
+2. **event_w_exclusion_dedup:**  
+   - This dataset is built using a SELECT DISTINCT on key fields (Basel Event Type Level 1, year_event, qtr_event, gl_date, Event Record Type, Internal Events, and net_loss).  
+   - As a result, fields like Posting Date and GL Tracking ID are not included in the deduplication logic.
+   - I ran a duplicate check (see attached SAS code below) on event_w_exclusion_dedup based on Internal Events and net_loss.  
+   - The duplicate check reveals that some duplicate records still exist based on these keys.
+
+Could you please confirm if this behavior is intended? Specifically, should we be collapsing multiple G/L entries for the same event (even if they differ only in GL Tracking ID), or should we preserve these differences further upstream?
+
+For your reference, I’ve attached the code used for the duplicate check.
+
+Thank you,  
+[Your Name]
+
+---
+
+Please let me know if any further adjustments are needed!
