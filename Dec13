@@ -1,21 +1,20 @@
-/* 
-   1) Identify all (event_id, post_dt) pairs with row_count>1 
-      from your check_dups table.
-   2) Extract the *detail rows* from event_w_exclusion for only 
-      those pairs, so you can inspect them side by side.
-*/
-proc sql;
-  create table duplicates_detail as
-  select a.*
-  from event_w_exclusion a
-  inner join check_dups b 
-     on  a.'Internal Events'n = b.event_id
-     and a.'Posting Date'n    = b.post_dt
-  where b.row_count > 1
-  order by a.'Internal Events'n, a.'Posting Date'n;
-quit;
-proc print data=duplicates_detail (obs=50);
-  var 'Internal Events'n 'Posting Date'n 'GL Tracking ID'n 
-      'Gross Loss Amount'n 'Recovery Amount'n net_loss
-      'GL Account'n /* plus any other columns that matter */;
-run;
+Same Event ID, Same Posting Date, Same Gross Loss & Recovery Amounts
+Example: IE-12097866 on 02/27/2019 appears multiple times, each with:
+Gross Loss = $88,415.00
+Recovery = ($2,415.00)
+Net Loss = 86,000.00
+GL Account = 860340 (same for all)
+The only difference is GL Tracking ID, but that might just be a system artifact.
+This looks like a duplicate rather than a true separate transaction.
+Same Event ID, Same Posting Date, Different Gross/Net Loss
+Example: IE-12097912 on 08/29/2019
+First row: Gross Loss = $558,000.00, Recovery = ($558,000.00), Net Loss = $0
+Second row: Identical
+These are exact duplicates and should be removed before summation.
+Different Gross Loss Amounts per Same Event & Date
+Example: IE-12097830 on 10/01/2019
+Gross Loss = $3,086,682.02 (repeated)
+Net Loss = $3,086,682.02
+Different GL Tracking IDs
+Possible explanation: If this is a duplicate, it could double your severity sum.
+Action: Check the source system to see if this is an actual correction or a repeated data entry error.
