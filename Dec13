@@ -1,153 +1,316 @@
-/* Set file paths */
-%LET archer_dt = 2022_7152022226PM;
-%LET data_loc = /sasdata/sasdata2/ctmd2/ppnr2/model_dev/MOD13638_Ops_Risk/SUBMISSION;
+Below is a consolidated **SAS code** example with **named‐literal references** for the original Archer columns that contain spaces (e.g., `'Gross Loss Amount'n`, `'Recovery Amount'n`, `'Basel Event Type Level 1'n`, `'Internal Events'n`, `'Posting Date'n`, `'Event Record Type'n`). This version should avoid the “variable not found” error, as long as these are indeed the exact column names in your Archer dataset. 
 
-LIBNAME input "&data_loc";
+> **Tip:** You can confirm the correct names with:  
+> ```sas
+> proc contents data=archer_data;
+>   title "Check Variable Names in Archer Data";
+> run;
+> ```
 
-/* Import Archer Data */
-PROC IMPORT OUT= archer_data DATAFILE= "&data_loc./Model_Report_&archer_dt..xlsx"
-    DBMS=xlsx REPLACE;
-    GETNAMES=YES;
-RUN;
+---
 
-/* Import SME-defined Exclusion File */
-PROC IMPORT OUT= Exclusion_IE DATAFILE= "&data_loc./Exclusion_IE.xlsx"
-    DBMS=xlsx REPLACE;
-    GETNAMES=YES;
-RUN;
+## 1. Data‐Quality Checks on the **Raw Archer Data**
 
-/* Step 1: Deduplicate Entries Based on Internal Events + Posting Date */
-PROC SQL;
-    CREATE TABLE archer_prep AS 
-    SELECT 'Internal Events'n, 
-           'Basel Event Type Level 1'n, 
-           'Posting Date'n AS formatted_posting_date FORMAT=DATE9.,
-           SUM('Gross Loss Amount'n) AS gross_loss, 
-           SUM('Recovery Amount'n) AS recovery_amount, 
-           SUM('Gross Loss Amount'n + 'Recovery Amount'n) AS net_loss
-    FROM archer_data
-    GROUP BY 'Internal Events'n, 'Basel Event Type Level 1'n, formatted_posting_date
-    ORDER BY 'Basel Event Type Level 1'n, 'Internal Events'n, formatted_posting_date;
-QUIT;
+```sas
+/*-----------------------------------------------------*/
+/* 1) Quick numeric missing summary for Loss & Recovery*/
+/*-----------------------------------------------------*/
+proc means data=archer_data n nmiss mean std min max;
+    var 'Gross Loss Amount'n 'Recovery Amount'n;
+    title "Numeric Variables Missing Value Check";
+run;
 
-/* Step 2: Apply Business Rule Exclusions */
-PROC SQL;
-    CREATE TABLE exclusion_event AS 
-    SELECT DISTINCT 'Internal Events'n
-    FROM archer_prep
-    WHERE 
-        'Type of Impact'n IN ('Credit Boundary') OR
-        'GL Account'n IN ('865400') OR
-        ('Basel Event Type Level 1'n = 'ET2 - External Fraud' 
-            AND 'Basel Event Type Level 3'n = 'ET2106 - ACH Fraud' 
-            AND YEAR(formatted_posting_date) = 2018 AND QTR(formatted_posting_date) = 4)
-        OR ('Internal Events'n IN (SELECT 'Internal Events'n FROM Exclusion_IE));
-QUIT;
+/*-------------------------------------------------------*/
+/* 2) Frequency of missing for categorical fields        */
+/*-------------------------------------------------------*/
+proc freq data=archer_data;
+    tables 'Basel Event Type Level 1'n 'Internal Events'n / missing;
+    title "Categorical Variables Missing Value Check";
+run;
 
-/* Step 3: Remove Excluded Events */
-PROC SQL;
-    CREATE TABLE event_w_exclusion AS 
-    SELECT * 
-    FROM archer_prep
-    WHERE 'Internal Events'n NOT IN (SELECT 'Internal Events'n FROM exclusion_event);
-QUIT;
+/*-----------------------------------------------------*/
+/* 3) Check for duplicate Internal Event IDs           */
+/*   (if 'Internal Events'n is supposed to be unique)  */
+/*-----------------------------------------------------*/
+proc sort data=archer_data out=archer_data_sorted;
+    by 'Internal Events'n 'Posting Date'n;
+run;
 
-/* Step 4: Handle Missing Data */
-PROC MEANS DATA=event_w_exclusion NMISS N MEAN STD MIN MAX;
-    VAR gross_loss recovery_amount net_loss;
-    TITLE "Missing Values Check for Numeric Variables";
-RUN;
+data duplicates;
+    set archer_data_sorted;
+    by 'Internal Events'n 'Posting Date'n;
+    if not (first.'Posting Date'n and last.'Posting Date'n) then output;
+run;
 
-PROC FREQ DATA=event_w_exclusion;
-    TABLES 'Basel Event Type Level 1'n / MISSING;
-    TITLE "Missing Values Check for Categorical Variables";
-RUN;
+proc print data=duplicates;
+    title "Potential Duplicate Records";
+    var 'Internal Events'n 'Posting Date'n 'Gross Loss Amount'n 'Recovery Amount'n;
+run;
 
-/* Step 5: Domain & Consistency Checks */
-DATA domain_checks;
-    SET event_w_exclusion;
-    flag_gross_neg = (gross_loss < 0);
-    flag_recovery_pos = (recovery_amount > 0);
-RUN;
+/*-----------------------------------------------------*/
+/* 4) Simple domain checks: negative gross or recovery */
+/*-----------------------------------------------------*/
+data domain_checks;
+    set archer_data;
+    if 'Gross Loss Amount'n < 0 then flag_gross_neg=1;
+       else flag_gross_neg=0;
 
-PROC FREQ DATA=domain_checks;
-    TABLES flag_gross_neg flag_recovery_pos / MISSING;
-    TITLE "Domain Checks: Negative Gross Loss & Unexpected Recovery Sign";
-RUN;
+    if 'Recovery Amount'n > 0 then flag_recovery_pos=1; 
+       else flag_recovery_pos=0; /* or the reverse, depending on your convention */
+run;
 
-/* Step 6: Outlier Detection using IQR */
-PROC UNIVARIATE DATA=event_w_exclusion NOPRINT;
-    VAR net_loss;
-    OUTPUT OUT=_stats_ PCTLPTS=25,75 PCTLPRE=P_;
-RUN;
+proc freq data=domain_checks;
+    tables flag_gross_neg flag_recovery_pos / missing;
+    title "Domain Checks for Negative Gross or Unexpected Recovery Sign";
+run;
 
-DATA _NULL_;
-    SET _stats_;
-    IQR = P_75 - P_25;
-    lower_cut = P_25 - 1.5*IQR;
-    upper_cut = P_75 + 1.5*IQR;
-    CALL SYMPUTX('lower_cut', lower_cut);
-    CALL SYMPUTX('upper_cut', upper_cut);
-RUN;
+/*-----------------------------------------------------*/
+/* 5) Outlier check (IQR) for net_loss (if needed)     */
+/*   First define net_loss:                            */
+/*   net_loss = (Gross Loss + Recovery)                */
+/*-----------------------------------------------------*/
+data archer_data_net;
+    set archer_data;
+    net_loss = 'Gross Loss Amount'n + 'Recovery Amount'n;
+run;
 
-DATA outliers;
-    SET event_w_exclusion;
-    IF net_loss < &lower_cut OR net_loss > &upper_cut THEN outlier_flag = 1;
-    ELSE outlier_flag = 0;
-RUN;
+proc univariate data=archer_data_net noprint;
+    var net_loss;
+    output out=_stats_ pctlpts=25, 75 pctlpre=P_;
+run;
 
-PROC PRINT DATA=outliers (WHERE=(outlier_flag=1)) OBS=20;
-    TITLE "Potential Net Loss Outliers (IQR Method)";
-RUN;
+data _null_;
+    set _stats_;
+    iqr = P_75 - P_25;
+    lower = P_25 - 1.5*iqr;
+    upper = P_75 + 1.5*iqr;
+    call symputx('lower_cut', lower);
+    call symputx('upper_cut', upper);
+run;
 
-/* Step 7: Aggregation to Quarterly Frequency/Severity */
-PROC SQL;
-    CREATE TABLE event_w_exclusion_agg AS 
-    SELECT 'Basel Event Type Level 1'n, 
-           YEAR(formatted_posting_date) AS year_event, 
-           INTNX('QTR', formatted_posting_date, 0, 'E') AS qtr_event FORMAT=DATE9.,
-           COUNT(DISTINCT 'Internal Events'n) AS freq, 
-           SUM(net_loss) AS severity
-    FROM event_w_exclusion
-    GROUP BY 1, 2, 3;
-QUIT;
+data outliers;
+    set archer_data_net;
+    if net_loss < &lower_cut or net_loss > &upper_cut then outlier_flag=1;
+    else outlier_flag=0;
+run;
 
-/* Step 8: Ensure Full Quarter Range (Zero-fill Missing Quarters) */
-PROC SQL NOPRINT;
-    SELECT MIN(qtr_event) INTO :qtr_begin FROM event_w_exclusion_agg;
-    SELECT MAX(qtr_event) INTO :qtr_end FROM event_w_exclusion_agg;
-QUIT;
+proc print data=outliers (where=(outlier_flag=1));
+    title "Potential Net Loss Outliers (IQR Method)";
+    var 'Internal Events'n 'Posting Date'n 'Gross Loss Amount'n 'Recovery Amount'n net_loss;
+run;
+```
 
-DATA qtr_range;
-    FORMAT qtr DATE9.;
-    n_qtr = INTCK('QTR', &qtr_begin, &qtr_end);
-    DO i = 0 TO n_qtr;
-        qtr = INTNX('QTR', &qtr_begin, i, 'E');
-        OUTPUT;
-    END;
-    DROP i n_qtr;
-RUN;
+---
 
-PROC SQL;
-    CREATE TABLE final_data AS
-    SELECT t1.qtr AS gl_date FORMAT=DATE9.,
-           COALESCE(t2.freq, 0) AS freq,
-           COALESCE(t2.severity, 0) AS severity
-    FROM qtr_range t1
-    LEFT JOIN event_w_exclusion_agg t2
-        ON t1.qtr = t2.qtr_event;
-QUIT;
+## 2. Building Net Loss & Filtering/Excluding Unwanted Events
 
-/* Step 9: Final Data Quality Checks on Output */
-PROC MEANS DATA=final_data NMISS N MEAN STD MIN MAX;
-    VAR freq severity;
-    TITLE "Final Data Missing & Summary Stats";
-RUN;
+Below is an example of how you might **create a cleaned version** of Archer data by calculating net loss and excluding certain records (e.g., credit boundary, external fraud in certain quarters, etc.). The **exact** conditions will vary depending on your business rules, but this shows the **named‐literal** style for the relevant columns.
 
-PROC SORT DATA=final_data OUT=_sorted_ DUPOUT=_duplicates_ NODUPKEY;
-    BY gl_date;
-RUN;
+```sas
+/*--------------------------------------------*/
+/* Create an intermediate table with net_loss */
+/*--------------------------------------------*/
+proc sql;
+    create table archer_prep as
+    select *, 
+           ('Gross Loss Amount'n + 'Recovery Amount'n) as net_loss
+    from archer_data
+    order by 'Basel Event Type Level 1'n, 'Internal Events'n, 'Posting Date'n
+    ;
+quit;
 
-PROC PRINT DATA=_duplicates_ OBS=20;
-    TITLE "Duplicate Records in Final Output";
-RUN;
+/*------------------------------------------------*/
+/* Example: Exclude certain "credit boundary" etc.*/
+/*   The actual rules depend on your MDD.         */
+/*------------------------------------------------*/
+proc sql;
+    create table exclusion_event as
+    select distinct 'Internal Events'n
+    from archer_prep
+    where 
+        /* Example condition: exclude credit boundary */
+        'Type of Impact'n in ('Credit Boundary')
+        /* OR exclude certain Basel event + date combos, etc. */
+        OR ( 'Basel Event Type Level 1'n = 'ET2 - External Fraud'
+             and year('Posting Date'n)=2018
+             and qtr('Posting Date'n)=4 )
+        OR ...
+    ;
+quit;
+
+/*------------------------------------------------*/
+/* Remove those exclusions from final "good" set  */
+/*------------------------------------------------*/
+proc sql;
+    create table event_w_exclusion as
+    select *
+    from archer_prep
+    where 'Internal Events'n 
+          not in (select 'Internal Events'n from exclusion_event);
+quit;
+
+/*---------------------------------------------*/
+/* De-dup if needed (assuming event-level ID)  */
+/*---------------------------------------------*/
+proc sort data=event_w_exclusion nodupkey;
+    by 'Internal Events'n; /* or include other keys if needed */
+run;
+```
+
+---
+
+## 3. Aggregating to Quarterly Frequency & Severity
+
+```sas
+/*------------------------------------------------*/
+/* 1) Summarize events by quarter: freq, severity */
+/*   We'll take earliest date for each event, so  */
+/*   for each event, we reference min('Posting Date'n)   */
+/*------------------------------------------------*/
+proc sql;
+    create table event_w_exclusion_agg as
+    select
+        'Basel Event Type Level 1'n,
+        min('Posting Date'n) as min_date format=date9.,
+        intnx('qtr', min('Posting Date'n), 0, 'E') as gl_date format=date9.,
+        count(distinct 'Internal Events'n) as freq,
+        sum(net_loss) as severity
+    from event_w_exclusion
+    group by 'Basel Event Type Level 1'n, 
+             intnx('qtr', 'Posting Date'n, 0, 'E')
+    ;
+quit;
+
+/*----------------------------------------------------*/
+/* 2) Create a table of all quarters in the date range*/
+/*----------------------------------------------------*/
+proc sql noprint;
+    select min(gl_date) into :qtr_begin from event_w_exclusion_agg;
+    select max(gl_date) into :qtr_end   from event_w_exclusion_agg;
+quit;
+
+data qtr_range;
+    format qtr date9.;
+    n_qtr = intck('qtr', &qtr_begin, &qtr_end);
+    do i=0 to n_qtr;
+       qtr = intnx('qtr', &qtr_begin, i, 'E');
+       output;
+    end;
+    drop i n_qtr;
+run;
+```
+
+---
+
+## 4. Macro to Produce Final Output per Basel Event Type
+
+```sas
+%macro prep_data(et, et2);
+/* 1) Filter to a given Basel Event Type */
+proc sql;
+    create table &et2._dataset as
+    select gl_date, freq, severity
+    from event_w_exclusion_agg
+    where 'Basel Event Type Level 1'n = "&et"
+    ;
+quit;
+
+/* 2) Left join to qtr_range, fill freq/severity = 0 if missing */
+proc sql;
+    create table &et2._dataset2 as
+    select t1.qtr as gl_date format=date9.,
+           coalesce(t2.freq, 0) as freq,
+           coalesce(t2.severity, 0) as severity
+    from qtr_range t1
+    left join &et2._dataset t2
+        on t1.qtr = t2.gl_date
+    ;
+quit;
+%mend;
+
+/* Example calls */
+%prep_data(ET1 - Internal Fraud, IF);
+%prep_data(ET2 - External Fraud, EF);
+%prep_data(ET3 - Employment Practices & Workplace Safety, EPWS);
+%prep_data(ET7 - Execution, Delivery and Process Management, EDPM);
+/* etc. */
+```
+
+---
+
+## 5. Checking the **Final Output** Datasets for Missing/Outliers
+
+```sas
+%macro check_output_data(segment_ds=, seg_name=);
+
+  title "Data Quality Checks for &seg_name (Dataset: &segment_ds)";
+
+  /* 1) Numeric summary for freq & severity */
+  proc means data=&segment_ds n nmiss mean std min max;
+    var freq severity;
+    title2 "Missing Value & Descriptive Stats (freq, severity)";
+  run;
+
+  /* 2) Check for duplicates on gl_date (1 row per quarter expected) */
+  proc sort data=&segment_ds out=_sorted_ dupout=_duplicates_ nodupkey;
+    by gl_date;
+  run;
+
+  proc contents data=_duplicates_ noprint out=_dup_info; run;
+  data _null_;
+    set _dup_info end=last;
+    if last then call symputx('num_dup',_n_);
+  run;
+
+  %put Found &num_dup duplicates in &segment_ds by gl_date;
+
+  %if &num_dup > 0 %then %do;
+    proc print data=_duplicates_;
+      title3 "Duplicates by gl_date in &segment_ds";
+    run;
+  %end;
+
+  /* 3) Outlier detection using IQR on severity */
+  proc univariate data=&segment_ds noprint;
+    var severity;
+    output out=_stats_ pctlpts=25,75 pctlpre=P_;
+  run;
+
+  data _null_;
+    set _stats_;
+    iqr  = P_75 - P_25;
+    lcut = P_25 - 1.5*iqr;
+    hcut = P_75 + 1.5*iqr;
+    call symputx('lbound', lcut);
+    call symputx('hbound', hcut);
+  run;
+
+  data _outliers_;
+    set &segment_ds;
+    if severity < &lbound or severity > &hbound then outlier_flag=1;
+    else outlier_flag=0;
+  run;
+
+  proc print data=_outliers_ (where=(outlier_flag=1));
+    title3 "Potential Severity Outliers (IQR) in &segment_ds";
+    var gl_date freq severity;
+  run;
+
+%mend;
+
+/* Check each final dataset: */
+%check_output_data(segment_ds=IF_dataset2, seg_name=Internal_Fraud);
+%check_output_data(segment_ds=EF_dataset2, seg_name=External_Fraud);
+/* etc. */
+```
+
+---
+
+### Final Notes
+
+1. **Quoted Variable Names**: Anywhere you see references to columns that have **spaces** (e.g., `'Gross Loss Amount'n`), you must use this same quoted notation in **all** statements: `PROC SQL`, `DATA` steps, `PROC SORT`, etc.  
+2. **Renaming Option**: If you find the named‐literal syntax cumbersome, consider using a **rename** step early on to rename `'Gross Loss Amount'n` → `Gross_Loss_Amount`, `'Recovery Amount'n` → `Recovery_Amount`, etc. Then you can code with simpler underscore names in all subsequent steps.  
+3. **Check `PROC CONTENTS`**: Always verify the actual variable names that SAS sees in your dataset. If you see `'Gross Loss Amount'n` with slightly different spacing or punctuation, make sure it matches exactly.  
+4. **Any Additional Columns**: If you also have `'Event Record Type'n`, `'Type of Impact'n`, `'GL Account'n`, etc., you can apply the same approach.
+
+With these changes, the code should align with your **actual Archer column names** and avoid the “Variable not found” errors while performing the desired data‐quality checks and transformations.
