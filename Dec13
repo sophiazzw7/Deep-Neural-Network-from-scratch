@@ -1,28 +1,21 @@
-/* 1. Identify potential duplicates by grouping on (Event, Posting Date). */
-proc sql;
-  create table check_dups as
-  select 
-    'Internal Events'n            as event_id,
-    'Posting Date'n               as post_dt,
-    count(*)                      as row_count,
-    count(distinct net_loss)      as distinct_net_losses,
-    sum(net_loss)                 as sum_net_loss,
-    min(net_loss)                 as min_net_loss,
-    max(net_loss)                 as max_net_loss
-  from event_w_exclusion
-  group by 
-    'Internal Events'n, 'Posting Date'n
-  having count(*) > 1
-  order by row_count desc, event_id;
-quit;
-
-/* 2. Inspect the results in check_dups for suspicious patterns. */
-/* "Stack" the rows that have row_count>1 in a detail-level table for manual review. */
+/* 
+   1) Identify all (event_id, post_dt) pairs with row_count>1 
+      from your check_dups table.
+   2) Extract the *detail rows* from event_w_exclusion for only 
+      those pairs, so you can inspect them side by side.
+*/
 proc sql;
   create table duplicates_detail as
   select a.*
   from event_w_exclusion a
-  inner join check_dups b
-    on  a.'Internal Events'n = b.event_id
-    and a.'Posting Date'n    = b.post_dt;
+  inner join check_dups b 
+     on  a.'Internal Events'n = b.event_id
+     and a.'Posting Date'n    = b.post_dt
+  where b.row_count > 1
+  order by a.'Internal Events'n, a.'Posting Date'n;
 quit;
+proc print data=duplicates_detail (obs=50);
+  var 'Internal Events'n 'Posting Date'n 'GL Tracking ID'n 
+      'Gross Loss Amount'n 'Recovery Amount'n net_loss
+      'GL Account'n /* plus any other columns that matter */;
+run;
