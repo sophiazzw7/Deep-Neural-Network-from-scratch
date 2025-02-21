@@ -1,35 +1,101 @@
-Below is a consolidated list of questions for further investigation based on our MRO findings:
+/*************************************************************/
+/* 1. Basic Descriptive Statistics & Missing Data Checks     */
+/*************************************************************/
+proc means data=event_w_exclusion_dedup n nmiss mean std min max;
+    /* Replace these variables as needed: freq, severity, net_loss, etc. */
+    var freq severity;
+    title "Key Numeric Variables: event_w_exclusion_dedup";
+run;
 
-1. **Duplicate Records & Aggregation:**
-   - Can you clarify the process used to aggregate multiple G/L entries for the same event?  
-   - Specifically, how are the 4,785 duplicate (Internal Event, Posting Date) records consolidated to ensure net loss isn’t double-counted—especially in the EF and EDPM segments where high frequencies are observed?
+/* If you want to see all variables in the table, you can run: */
+proc contents data=event_w_exclusion_dedup;
+    title "Contents of event_w_exclusion_dedup";
+run;
 
-2. **Outlier Removal Policy:**
-   - The documentation mentions that 11 outliers were removed based on SME judgment; however, our analysis still identifies multiple high-loss outliers (e.g., up to $66M in EF).  
-   - Could you detail the criteria used for outlier removal and confirm whether all non-recurring events have been excluded as intended?
+/*************************************************************/
+/* 2. Categorical Frequency & Sample Distinct Values         */
+/*************************************************************/
+proc freq data=event_w_exclusion_dedup noprint;
+    /* Modify to match your actual categorical fields */
+    tables 'Basel Event Type Level 1'n 
+           'Event Record Type'n
+           'Internal Events'n 
+           / missing
+    out=dedup_cat_freq (drop=percent);
+run;
 
-3. **Missing Severity Values:**
-   - We observed missing severity values in the DPA (12.68% missing) and IF (5.63% missing) segments.  
-   - What is the planned treatment for these missing values? Are they being imputed, or are they simply dropped, and what is the rationale behind this approach?
+proc print data=dedup_cat_freq (obs=20);
+    title "Sample of Distinct Categorical Values (Top 20) in event_w_exclusion_dedup";
+run;
 
-4. **Negative Severity in IF Segment:**
-   - A negative severity value (-57,583.81) was observed in the IF segment.  
-   - Could you investigate and clarify whether this negative value is a data entry error or if there is a valid explanation for a negative loss in the operational risk context?
+/*************************************************************/
+/* 3. Duplicate Check: (Internal Events, gl_date) or Similar */
+/*************************************************************/
+proc freq data=event_w_exclusion_dedup noprint;
+    /* If you have qtr_event or gl_date, adjust accordingly */
+    tables 'Internal Events'n * gl_date
+    / out=dedup_key (drop=percent);
+run;
 
-5. **Extreme Outliers in EPWS and IF Segments:**
-   - EPWS shows a very large outlier (e.g., 8.49M) and the IF segment displays a wide spread in severity.  
-   - Can you provide further validation or documentation on these extreme values? Are they genuine reflections of risk, or do they indicate data quality issues or inconsistencies in data collection?
+data dedup_key_dups;
+    set dedup_key;
+    where count > 1;
+run;
 
-6. **Manual Mapping & Exclusions:**
-   - The documentation refers to manual mapping of G/L entries to Basel event types and the use of an exclusion file (Exclusion_IE.xlsx).  
-   - Could you provide additional details on how these manual mappings and exclusions are maintained and updated, and how they are ensured to be consistently applied in the final dataset?
+proc print data=dedup_key_dups (obs=30);
+    title "Duplicate (Internal Events, gl_date) Combos in event_w_exclusion_dedup - Top 30";
+run;
 
-These questions are aimed at ensuring that the data aggregation, cleaning, and transformation processes fully align with the documentation and that any potential biases or inconsistencies are addressed before model development proceeds.
+proc sql;
+    select count(*) as num_dup_keys 
+    from dedup_key_dups;
+quit;
 
-Please let us know your thoughts on these points.
+/*************************************************************/
+/* 4. Outlier Detection Using Interquartile Range (IQR)      */
+/*************************************************************/
+/* Example for 'severity'; if you have 'net_loss' instead,   */
+/* replace 'severity' with 'net_loss'.                       */
+proc univariate data=event_w_exclusion_dedup noprint;
+    var severity;
+    output out=dedup_out_iqr pctlpts=25 75 pctlpre=P_;
+run;
 
-Best regards,
+data _null_;
+    set dedup_out_iqr;
+    iqr = P_75 - P_25;
+    lower_cut = P_25 - 1.5*iqr;
+    upper_cut = P_75 + 1.5*iqr;
+    call symputx('dedup_lcut', lower_cut);
+    call symputx('dedup_ucut', upper_cut);
+run;
 
-[Your Name]  
-MRO Team  
-[Your Contact Information]
+data dedup_outliers;
+    set event_w_exclusion_dedup;
+    if severity < &dedup_lcut or severity > &dedup_ucut then outlier_flag=1;
+    else outlier_flag=0;
+run;
+
+proc sql noprint;
+    select count(*) into :num_out_dedup from dedup_outliers where outlier_flag=1;
+quit;
+
+%put NOTE: event_w_exclusion_dedup has &num_out_dedup severity outliers;
+
+/* Print a small sample of flagged outliers */
+%if &num_out_dedup > 0 %then %do;
+    title "event_w_exclusion_dedup: Severity Outliers (Top 5)";
+    proc print data=dedup_outliers(obs=5);
+        where outlier_flag=1;
+        var 'Basel Event Type Level 1'n gl_date freq severity;
+    run;
+%end;
+
+/*************************************************************/
+/* 5. Review the Results                                     */
+/*************************************************************/
+/* After running this code, review:                          */
+/* - # of duplicates                                          */
+/* - # of outliers                                           */
+/* - Basic stats & freq distribution                         */
+/*************************************************************/
