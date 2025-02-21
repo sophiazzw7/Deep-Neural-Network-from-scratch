@@ -1,1 +1,35 @@
-It robustly covers the reasons for moving toward a qualitative, multiplier-based approach and explains how the 3.5 multiplier was empirically guided yet expert-driven. The data lineage, controls, assumptions, and monitoring sections provide a solid governance framework, while also acknowledging known limitations and the plan to refresh these assumptions.
+Below is a consolidated list of questions for further investigation based on our MRO findings:
+
+1. **Duplicate Records & Aggregation:**
+   - Can you clarify the process used to aggregate multiple G/L entries for the same event?  
+   - Specifically, how are the 4,785 duplicate (Internal Event, Posting Date) records consolidated to ensure net loss isn’t double-counted—especially in the EF and EDPM segments where high frequencies are observed?
+
+2. **Outlier Removal Policy:**
+   - The documentation mentions that 11 outliers were removed based on SME judgment; however, our analysis still identifies multiple high-loss outliers (e.g., up to $66M in EF).  
+   - Could you detail the criteria used for outlier removal and confirm whether all non-recurring events have been excluded as intended?
+
+3. **Missing Severity Values:**
+   - We observed missing severity values in the DPA (12.68% missing) and IF (5.63% missing) segments.  
+   - What is the planned treatment for these missing values? Are they being imputed, or are they simply dropped, and what is the rationale behind this approach?
+
+4. **Negative Severity in IF Segment:**
+   - A negative severity value (-57,583.81) was observed in the IF segment.  
+   - Could you investigate and clarify whether this negative value is a data entry error or if there is a valid explanation for a negative loss in the operational risk context?
+
+5. **Extreme Outliers in EPWS and IF Segments:**
+   - EPWS shows a very large outlier (e.g., 8.49M) and the IF segment displays a wide spread in severity.  
+   - Can you provide further validation or documentation on these extreme values? Are they genuine reflections of risk, or do they indicate data quality issues or inconsistencies in data collection?
+
+6. **Manual Mapping & Exclusions:**
+   - The documentation refers to manual mapping of G/L entries to Basel event types and the use of an exclusion file (Exclusion_IE.xlsx).  
+   - Could you provide additional details on how these manual mappings and exclusions are maintained and updated, and how they are ensured to be consistently applied in the final dataset?
+
+These questions are aimed at ensuring that the data aggregation, cleaning, and transformation processes fully align with the documentation and that any potential biases or inconsistencies are addressed before model development proceeds.
+
+Please let us know your thoughts on these points.
+
+Best regards,
+
+[Your Name]  
+MRO Team  
+[Your Contact Information]
