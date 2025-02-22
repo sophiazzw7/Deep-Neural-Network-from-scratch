@@ -1,101 +1,14 @@
-/*************************************************************/
-/* 1. Basic Descriptive Statistics & Missing Data Checks     */
-/*************************************************************/
-proc means data=event_w_exclusion_dedup n nmiss mean std min max;
-    /* Replace these variables as needed: freq, severity, net_loss, etc. */
-    var freq severity;
-    title "Key Numeric Variables: event_w_exclusion_dedup";
-run;
-
-/* If you want to see all variables in the table, you can run: */
-proc contents data=event_w_exclusion_dedup;
-    title "Contents of event_w_exclusion_dedup";
-run;
-
-/*************************************************************/
-/* 2. Categorical Frequency & Sample Distinct Values         */
-/*************************************************************/
-proc freq data=event_w_exclusion_dedup noprint;
-    /* Modify to match your actual categorical fields */
-    tables 'Basel Event Type Level 1'n 
-           'Event Record Type'n
-           'Internal Events'n 
-           / missing
-    out=dedup_cat_freq (drop=percent);
-run;
-
-proc print data=dedup_cat_freq (obs=20);
-    title "Sample of Distinct Categorical Values (Top 20) in event_w_exclusion_dedup";
-run;
-
-/*************************************************************/
-/* 3. Duplicate Check: (Internal Events, gl_date) or Similar */
-/*************************************************************/
-proc freq data=event_w_exclusion_dedup noprint;
-    /* If you have qtr_event or gl_date, adjust accordingly */
-    tables 'Internal Events'n * gl_date
-    / out=dedup_key (drop=percent);
-run;
-
-data dedup_key_dups;
-    set dedup_key;
-    where count > 1;
-run;
-
-proc print data=dedup_key_dups (obs=30);
-    title "Duplicate (Internal Events, gl_date) Combos in event_w_exclusion_dedup - Top 30";
-run;
-
+/* Create a new table with a computed absolute severity variable */
 proc sql;
-    select count(*) as num_dup_keys 
-    from dedup_key_dups;
+    create table top50_outliers as
+    select *, abs(severity) as abs_severity
+    from dedup_outliers
+    where outlier_flag = 1
+    order by calculated abs_severity desc;
 quit;
 
-/*************************************************************/
-/* 4. Outlier Detection Using Interquartile Range (IQR)      */
-/*************************************************************/
-/* Example for 'severity'; if you have 'net_loss' instead,   */
-/* replace 'severity' with 'net_loss'.                       */
-proc univariate data=event_w_exclusion_dedup noprint;
-    var severity;
-    output out=dedup_out_iqr pctlpts=25 75 pctlpre=P_;
+/* Print the top 50 outliers */
+proc print data=top50_outliers (obs=50);
+    title "Top 50 Outliers Sorted by Absolute Severity";
+    var 'Basel Event Type Level 1'n gl_date freq severity abs_severity;
 run;
-
-data _null_;
-    set dedup_out_iqr;
-    iqr = P_75 - P_25;
-    lower_cut = P_25 - 1.5*iqr;
-    upper_cut = P_75 + 1.5*iqr;
-    call symputx('dedup_lcut', lower_cut);
-    call symputx('dedup_ucut', upper_cut);
-run;
-
-data dedup_outliers;
-    set event_w_exclusion_dedup;
-    if severity < &dedup_lcut or severity > &dedup_ucut then outlier_flag=1;
-    else outlier_flag=0;
-run;
-
-proc sql noprint;
-    select count(*) into :num_out_dedup from dedup_outliers where outlier_flag=1;
-quit;
-
-%put NOTE: event_w_exclusion_dedup has &num_out_dedup severity outliers;
-
-/* Print a small sample of flagged outliers */
-%if &num_out_dedup > 0 %then %do;
-    title "event_w_exclusion_dedup: Severity Outliers (Top 5)";
-    proc print data=dedup_outliers(obs=5);
-        where outlier_flag=1;
-        var 'Basel Event Type Level 1'n gl_date freq severity;
-    run;
-%end;
-
-/*************************************************************/
-/* 5. Review the Results                                     */
-/*************************************************************/
-/* After running this code, review:                          */
-/* - # of duplicates                                          */
-/* - # of outliers                                           */
-/* - Basic stats & freq distribution                         */
-/*************************************************************/
