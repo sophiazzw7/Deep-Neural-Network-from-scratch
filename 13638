@@ -1,35 +1,44 @@
-/* STEP 1: Summarize Total Loss at the Quarterly Level in Deduplicated Table */
-proc sql;
-    create table dedup_quarterly as
-    select 
-        gl_date,
-        sum(input(net_loss, best32.)) as sum_loss_dedup  /* Summing net loss after deduplication */
-    from event_w_exclusion_dedup
-    group by gl_date
-    order by gl_date;
-quit;
+Here’s a structured meeting note based on the transcription:  
 
-/* STEP 2: Extract Severity at the Quarterly Level from Aggregated Table */
-proc sql;
-    create table agg_quarterly as
-    select 
-        gl_date,
-        sum(input(severity, best32.)) as sum_loss_agg  /* Summing severity after aggregation */
-    from event_w_exclusion_agg
-    group by gl_date
-    order by gl_date;
-quit;
+---
 
-/* STEP 3: Compare Deduplicated vs. Aggregated Losses */
-proc sql;
-    create table loss_discrepancy as
-    select 
-        a.gl_date,
-        a.sum_loss_dedup,
-        b.sum_loss_agg,
-        b.sum_loss_agg - a.sum_loss_dedup as difference
-    from dedup_quarterly a
-    full join agg_quarterly b
-    on a.gl_date = b.gl_date
-    order by gl_date;
-quit;
+### **Meeting Notes – OGM Monitoring Plan & Policy Updates**  
+**Date:** [Insert Date]  
+**Attendees:** [List attendees]  
+**Facilitator:** [Insert name]  
+
+#### **Key Discussion Points:**  
+
+1. **Suspension of OGM Monitoring Plan**  
+   - The OGM monitoring plan submitted in early December will be suspended as it is no longer appropriate.  
+   - The team proposes that for the purposes of the OGM finding, the monitoring plan for this model should be considered out of scope.  
+   - Agreement was sought from all stakeholders regarding this decision.  
+
+2. **Qualitative Nature of the Model & Justification of Assumptions**  
+   - The model is classified as qualitative and heavily reliant on expert judgment and assumptions rather than a purely quantitative approach.  
+   - It was agreed that the focus should be on documenting and justifying the assumptions used in the model.  
+   - Before using the model, it must be confirmed that the assumptions, such as the multiplier approach, remain appropriate.  
+   - Since the model is not quantitative, its validity relies on the justification of its assumptions.  
+
+3. **Policy & Procedure Considerations for Qualitative Models**  
+   - Currently, there is no formal definition or classification of qualitative models within existing policies.  
+   - As more qualitative or expert-judgment-based models emerge, there is an intent to refine policies and procedures to incorporate them as a class of models.  
+   - For the OGM minimum requirements, adjustments will be made within the procedural guidelines rather than a high-level policy change, which is a more complex process.  
+
+4. **Next Steps & Action Items**  
+   - **Submission Deadline:** The final submission is scheduled for tomorrow, pending the inclusion of control IDs and minor updates.  
+   - **Model Documentation Updates:** Sophia will be contacted to ensure all necessary updates are made within the new ServiceNow system.  
+   - **Policy & Procedure Updates:**  
+     - The procedural update to formally recognize qualitative models is planned before June next year.  
+     - Consideration will be given to either implementing a policy exception for this case or revising procedures to accommodate this type of model monitoring.  
+
+#### **Conclusion:**  
+- No additional questions were raised.  
+- The primary focus remains on documenting and validating assumptions to ensure model integrity.  
+- The team will proceed with updating procedures, with formal policy refinements planned for next year.  
+
+**Meeting Adjourned.**  
+
+---
+
+Let me know if you’d like any modifications!
