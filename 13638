@@ -1,163 +1,35 @@
-Here’s a **SAS code** snippet to validate whether **net losses were double-counted** before `event_w_exclusion_dedup`. The goal is to compare total net loss at different processing stages (`event_w_exclusion`, `event_w_exclusion_dedup`, `event_w_exclusion_agg`) to detect any discrepancies that might indicate unintended aggregation before deduplication.
-
----
-
-### **Step 1: Compute Total Net Loss at Each Stage**
-This section calculates the **total net loss** for each dataset and compares them.
-
-```sas
 /*************************************************************/
-/* Step 1: Compute total net loss before and after deduplication */
+/* Step 4 (Optimized): Validate Aggregation Step */
 /*************************************************************/
 
-/* Total net loss in event_w_exclusion */
+/* Precompute sum of net loss by quarter from event_w_exclusion_dedup */
 proc sql;
-    select sum(net_loss) as total_net_loss_exclusion
-    into :total_exclusion
-    from event_w_exclusion;
+    create table dedup_quarterly as
+    select qtr_event, sum(net_loss) as sum_dedup
+    from event_w_exclusion_dedup
+    group by qtr_event;
 quit;
 
-%put NOTE: Total net loss in event_w_exclusion = &total_exclusion;
-
-/* Total net loss in event_w_exclusion_dedup */
-proc sql;
-    select sum(net_loss) as total_net_loss_dedup
-    into :total_dedup
-    from event_w_exclusion_dedup;
+/* Create an index to speed up joins */
+proc datasets library=work;
+    modify dedup_quarterly;
+    index create qtr_event;
 quit;
 
-%put NOTE: Total net loss in event_w_exclusion_dedup = &total_dedup;
-
-/* Total net loss in event_w_exclusion_agg */
-proc sql;
-    select sum(severity) as total_net_loss_agg
-    into :total_agg
-    from event_w_exclusion_agg;
-quit;
-
-%put NOTE: Total net loss in event_w_exclusion_agg = &total_agg;
-```
-
----
-
-### **Step 2: Compare Results to Detect Potential Double Counting**
-- If `total_net_loss_exclusion > total_net_loss_dedup`, **net losses were summed before deduplication.**
-- If `total_net_loss_dedup > total_net_loss_agg`, **there may be unexpected loss adjustments in the aggregation step.**
-
-```sas
-/*************************************************************/
-/* Step 2: Identify potential double counting issues */
-/*************************************************************/
-data check_net_loss;
-    exclusion = &total_exclusion;
-    dedup     = &total_dedup;
-    agg       = &total_agg;
-    diff_excl_dedup = exclusion - dedup;
-    diff_dedup_agg  = dedup - agg;
-run;
-
-proc print data=check_net_loss;
-    title "Comparison of Net Loss Across Processing Stages";
-run;
-
-/* Flagging potential discrepancies */
-%macro check_discrepancies;
-    %if &total_exclusion > &total_dedup %then %do;
-        %put WARNING: Potential double counting detected - event_w_exclusion has a higher total net loss than event_w_exclusion_dedup!;
-    %end;
-
-    %if &total_dedup > &total_agg %then %do;
-        %put WARNING: Potential issue in aggregation - event_w_exclusion_dedup has a higher total net loss than event_w_exclusion_agg!;
-    %end;
-%mend;
-
-%check_discrepancies;
-```
-
----
-
-### **Step 3: Identify Specific Events with Potential Double Counting**
-If **total net loss drops significantly after deduplication**, identify which events contributed to the excess in `event_w_exclusion`.
-
-```sas
-/*************************************************************/
-/* Step 3: Identify duplicated net loss amounts before dedup */
-/*************************************************************/
-
-/* Count occurrences of each event in event_w_exclusion */
-proc sql;
-    create table duplicate_events as
-    select 'Internal Events'n, gl_date, count(*) as count_occurrences
-    from event_w_exclusion
-    group by 'Internal Events'n, gl_date
-    having count(*) > 1;
-quit;
-
-proc print data=duplicate_events (obs=20);
-    title "Top 20 Duplicate Events in event_w_exclusion";
-run;
-
-/* Compare net loss of duplicate events between exclusion and dedup */
-proc sql;
-    create table compare_net_loss as
-    select a.'Internal Events'n, a.gl_date,
-           a.net_loss as net_loss_exclusion,
-           b.net_loss as net_loss_dedup
-    from event_w_exclusion a
-    left join event_w_exclusion_dedup b
-    on a.'Internal Events'n = b.'Internal Events'n
-    and a.gl_date = b.gl_date
-    where a.net_loss ne b.net_loss;
-quit;
-
-proc print data=compare_net_loss (obs=20);
-    title "Events with Net Loss Differences Between event_w_exclusion and event_w_exclusion_dedup";
-run;
-```
-
----
-
-### **Step 4: Validate Aggregation to event_w_exclusion_agg**
-Since `event_w_exclusion_agg` aggregates event-level data to the quarter level, check if net losses at the quarter level sum correctly.
-
-```sas
-/*************************************************************/
-/* Step 4: Validate Aggregation Step */
-/*************************************************************/
-
-/* Summing total net loss by quarter before and after aggregation */
+/* Compare with aggregated severity from event_w_exclusion_agg */
 proc sql;
     create table validate_aggregation as
     select a.qtr_event, 
-           sum(a.net_loss) as sum_dedup,
+           a.sum_dedup,
            b.severity as sum_agg,
-           sum(a.net_loss) - b.severity as difference
-    from event_w_exclusion_dedup a
+           a.sum_dedup - b.severity as difference
+    from dedup_quarterly a
     left join event_w_exclusion_agg b
-    on a.qtr_event = b.qtr_event
-    group by a.qtr_event;
+    on a.qtr_event = b.qtr_event;
 quit;
 
-proc print data=validate_aggregation (obs=20);
-    title "Quarterly Net Loss Comparison Between Dedup and Aggregation";
+/* Print only quarters with significant discrepancies */
+proc print data=validate_aggregation;
+    where abs(difference) > 10000; /* Adjust threshold as needed */
+    title "Quarters with Net Loss Discrepancies (Dedup vs. Aggregation)";
 run;
-
-/* Flag quarters with significant differences */
-proc sql;
-    select * from validate_aggregation
-    where abs(difference) > 10000; /* Threshold can be adjusted */
-quit;
-```
-
----
-
-### **Key Takeaways**
-- This code **verifies that net loss is not double-counted before deduplication** by comparing `event_w_exclusion`, `event_w_exclusion_dedup`, and `event_w_exclusion_agg`.
-- The **duplicate check** flags events appearing multiple times in `event_w_exclusion`, which could lead to overstatement if net loss was summed before deduplication.
-- The **aggregation validation** ensures that total net loss in `event_w_exclusion_agg` is consistent with `event_w_exclusion_dedup`.
-
-#### **If discrepancies are found:**
-- **If `event_w_exclusion` net loss is much higher than `event_w_exclusion_dedup`**, check whether net loss was summed before deduplication.
-- **If `event_w_exclusion_dedup` is much higher than `event_w_exclusion_agg`**, validate that event-level net losses correctly roll up into quarterly severity.
-
-This ensures **data integrity before the final model dataset is used**.
