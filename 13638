@@ -1,73 +1,35 @@
-/* STEP 1: Summarize Net Loss at Event-Date Level in Deduplicated Table */
+/* STEP 1: Summarize Total Loss at the Quarterly Level in Deduplicated Table */
 proc sql;
-    create table dedup_event_loss as
+    create table dedup_quarterly as
     select 
-        'Internal Events'n as event_id,
         gl_date,
-        sum(net_loss) as sum_loss_dedup
+        sum(input(net_loss, best32.)) as sum_loss_dedup  /* Summing net loss after deduplication */
     from event_w_exclusion_dedup
-    group by 'Internal Events'n, gl_date
-    order by event_id, gl_date;
+    group by gl_date
+    order by gl_date;
 quit;
 
-/* STEP 2: Summarize Net Loss at Event-Date Level in Aggregated Table */
+/* STEP 2: Extract Severity at the Quarterly Level from Aggregated Table */
 proc sql;
-    create table agg_event_loss as
+    create table agg_quarterly as
     select 
-        'Internal Events'n as event_id,
         gl_date,
-        sum(net_loss) as sum_loss_agg
+        sum(input(severity, best32.)) as sum_loss_agg  /* Summing severity after aggregation */
     from event_w_exclusion_agg
-    group by 'Internal Events'n, gl_date
-    order by event_id, gl_date;
+    group by gl_date
+    order by gl_date;
 quit;
 
-/* STEP 3: Compare Event-Level Losses Between Dedup & Aggregated Tables */
+/* STEP 3: Compare Deduplicated vs. Aggregated Losses */
 proc sql;
-    create table compare_event_losses as
+    create table loss_discrepancy as
     select 
-        coalesce(a.event_id, b.event_id) as event_id,
-        coalesce(a.gl_date, b.gl_date)   as gl_date,
+        a.gl_date,
         a.sum_loss_dedup,
         b.sum_loss_agg,
-        (b.sum_loss_agg - a.sum_loss_dedup) as difference
-    from dedup_event_loss a
-    full join agg_event_loss b
-      on a.event_id = b.event_id
-     and a.gl_date = b.gl_date
-    order by event_id, gl_date;
-quit;
-
-/* STEP 4: Flag Discrepancies Where Aggregated Loss is Higher Than Deduplicated */
-data discrepancies;
-    set compare_event_losses;
-    if difference > 0; /* Flag cases where sum_agg > sum_dedup */
-run;
-
-proc print data=discrepancies;
-    title "Discrepancies in Net Loss Between Dedup & Aggregated Stages";
-run;
-
-/* STEP 5: Find Events in Aggregated Table But Not in Deduplicated */
-proc sql;
-    create table missing_in_dedup as
-    select b.event_id, b.gl_date, b.sum_loss_agg
-    from agg_event_loss b
-    left join dedup_event_loss a
-      on a.event_id = b.event_id
-     and a.gl_date = b.gl_date
-    where a.event_id is null;
-quit;
-
-proc print data=missing_in_dedup;
-    title "Events in Aggregation but Missing in Deduplication";
-run;
-
-/* STEP 6: Compute Overall Net Loss Totals to Identify Global Mismatch */
-proc sql;
-    select 
-       sum(sum_loss_dedup) format=best20. as total_dedup_summed,
-       sum(sum_loss_agg)   format=best20. as total_agg_summed,
-       (sum(sum_loss_agg) - sum(sum_loss_dedup)) format=best20. as total_difference
-    from compare_event_losses;
+        b.sum_loss_agg - a.sum_loss_dedup as difference
+    from dedup_quarterly a
+    full join agg_quarterly b
+    on a.gl_date = b.gl_date
+    order by gl_date;
 quit;
