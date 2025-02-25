@@ -1,105 +1,26 @@
-Below is a **Model Description** and **Model Change** section that comprehensively explains **why** the methodology changed for **External Fraud (EF)** and **Clients, Products & Business Practices (CPBP)**, while clarifying how the other four event types (**DPA, EPWS, IF, EDPM**) remain on their existing frameworks. This summary draws on the partial MDD content you provided and highlights the transition from a quantitative (negative binomial regression) approach to a predominantly qualitative (historical average multiplier) methodology.
+Below is a **concise model description**, integrating the newly provided MDD content while reflecting the **latest methodology changes**:
 
 ---
 
 ## **Model Description**
 
-The **Operational Loss Forecasting Model** projects **operational risk losses** under baseline and stressed scenarios to support CCAR/DFAST compliance. It has two main components:
+The **CCAR/DFAST Operational Loss Forecast Model** estimates potential operational risk losses for Truist under various macroeconomic scenarios, supporting annual **CCAR** and **DFAST** stress tests and capital planning. The model is part of the **PPNR suite** and uses a **frequency-times-severity** framework: each Basel-defined event type’s **expected frequency** is multiplied by its **expected severity** to produce quarterly loss estimates. Additional **stress deltas** are then added to management’s baseline forecast to create severe-but-plausible CCAR projections.
 
-1. **Frequency** of loss events (how many occur in a quarter).  
-2. **Severity** of each loss event (average dollar amount per event).
+1. **Scope & Purpose**  
+   - **Scope**: Six Basel event types are included—**IF**, **EF**, **CPBP**, **EDPM**, **DPA**, **EPWS**—while **BDSF** is excluded.  
+   - **Purpose**: Provide **credible, institution-specific** operational loss forecasts under adverse conditions, aligning with Federal Reserve requirements. Model results feed into the **FR Y-14A** reporting form and receive challenge from the **Capital Committee** and **Operational Risk Management** SMEs.
 
-Historically, **EF** and **CPBP** leveraged **negative binomial regression** to capture macroeconomic influences in their frequency forecasts, while other event types (**DPA, EPWS, IF, EDPM**) typically followed a **qualitative average-based** approach if no meaningful macroeconomic predictors were identified. Severity, on the other hand, largely relied on **historical averages**, with additional multipliers to account for stress or non-stress scenarios.
+2. **Methodology**  
+   - **Frequency**:  
+     - Historically, **EF** and **CPBP** used **negative binomial regression** to capture potential macroeconomic drivers; other event types relied on a **simple 9Q average** or negative binomial if strong macro correlations were discovered.  
+     - Due to weak macroeconomic relationships, **EF** and **CPBP** now also rely on the **qualitative 9Q average** approach, mirroring the other four event types.  
+   - **Severity**:  
+     - **Severity is largely random**, showing minimal correlation with macroeconomic factors.  
+     - The model applies **historical average severity** plus **stress multipliers** (derived from identified stress periods) to differentiate stressed vs. non-stressed conditions.
 
-### **Key Elements of the Current Methodology**
+3. **Governance & Use**  
+   - **Reviewed by SMEs** in Operational Risk Management and subject to challenge by the **Capital Committee**.  
+   - **Mapped to FR Y-14A** and other regulatory submissions for CCAR/DFAST.  
+   - **Tier 2 Model** (per Model Risk Oversight) and cannot be extended beyond CCAR/DFAST without additional validation.
 
-1. **Qualitative Approach for EF and CPBP**  
-   - **Negative Binomial Regression Removed**: EF and CPBP no longer rely on macroeconomic factors; their regression-based frameworks were retired due to weak or inconsistent relationships with economic indicators.  
-   - **9-Quarter Average & Multiplier**: Both EF and CPBP now use a **simple average** of the last nine quarters for frequency, coupled with stress multipliers to scale up in adverse scenarios.  
-
-2. **No Methodology Change for the Other Four Event Types**  
-   - **DPA, EPWS, IF, and EDPM** continue to follow the **existing approach**:  
-     - **Frequency** can use negative binomial regression if valid macro drivers are found, or a **9-quarter average** otherwise.  
-     - **Severity** is derived from **historical average** multipliers, which vary between baseline and stress conditions.  
-
-3. **Severity Modeling**  
-   - **Random & Largely Non-Macroeconomic**: Data indicates that theft, errors, and lawsuits exhibit high idiosyncratic variance.  
-   - **Historical Average and Stress Multipliers**: The model uses a “frequency × severity” approach, applying multipliers identified from historical stress periods (e.g., based on the 95th percentile of past events).
-
-4. **Stress Period Identification**  
-   - A **nine-quarter window** representing the most severe historical period (or event-type-specific peak) is chosen as the “stress period.”  
-   - Multipliers—both for frequency and severity—are **refreshed annually** as part of the model’s monitoring to keep pace with new data.
-
-5. **Data Sources**  
-   - **Archer**: Captures losses ≥ \$10,000, serving as the primary system of record.  
-   - If macroeconomic drivers are **not** found or are deemed unreliable, the model defaults to the **average-based** approach described above.
-
----
-
-## **Model Change (EF & CPBP Transition)**
-
-### **Reason for Methodology Change**
-- **Inability to Produce Reasonable Stressed Outputs**: The negative binomial regression models for EF and CPBP were producing stress forecasts that required excessive manual overlays or haircuts, indicating that macroeconomic predictors were weakly correlated with actual losses.  
-- **Underlying Structural Changes & Evolving Risk Landscape**: Operational risk drivers (e.g., cyber incidents, litigation, or fraud) often do **not** follow predictable economic cycles. A purely quantitative framework could not capture these institution-specific and rapidly shifting risks.  
-- **Ensuring Ongoing Relevance**: The firm needed a more **robust and adaptable** approach that could be updated quickly and align with expert insights.
-
-### **What Changed for EF & CPBP**  
-1. **Negative Binomial Regression Removed**  
-   - Economic variables (e.g., DOWJ, GDP, etc.) are no longer used in EF/CPBP frequency estimation.  
-2. **Switch to Qualitative 9Q Average**  
-   - EF/CPBP frequency is now based on the **simple average of the most recent nine quarters**.  
-   - **Stressed** scenarios apply **95th-percentile multipliers** determined from historical peak loss periods.  
-3. **Severity Remains Random & Average-Based**  
-   - EF/CPBP severity calculations now follow the historical average approach, similar to other event types.  
-   - **Random and idiosyncratic** nature means macroeconomic sensitivity remains minimal.
-
-### **No Change for DPA, EPWS, IF, & EDPM**  
-- These four event types continue to follow **existing frameworks** that already relied on either a **negative binomial** approach (if robust macro drivers were found) or a **historical average** approach when no meaningful macroeconomic relationship existed.
-
-### **Impact of the Change**  
-- **Reduced Overlays**: Eliminates the constant adjustments previously needed to reconcile quantitative outputs with real-world EF/CPBP losses.  
-- **Stronger Alignment Across All Event Types**: Consolidates the approach so that **all six Basel event types** use a **qualitative or partially qualitative** frequency model, a historically informed severity model, and stress multipliers tailored to **institution-specific** data.  
-- **Annual Monitoring & Update**: The model continues to **review stress periods** and **refresh multipliers** annually, ensuring it remains current with changing risk profiles.
-
-By transitioning EF and CPBP to the **qualitative 9Q average** framework, **the entire operational loss model** now emphasizes the **realities of internal losses** and the **limited predictive power** of macroeconomic factors for operational events, thus enhancing **forecast stability** and **methodological consistency** across all event types.
-
-
-========
-
-
-### **Model Description**  
-
-The **CCAR/DFAST Operational Loss Forecast Model** was originally developed to estimate **operational risk losses** for Truist under different macroeconomic scenarios. This model was part of the **PPNR suite of models**, supporting **Comprehensive Capital Analysis and Review (CCAR)** and **Dodd-Frank Act Stress Testing (DFAST)** scenario forecasts. These annual forecasts were primarily used for **capital assessment and planning**.  
-
-Historically, the model incorporated **quantitative methodologies**, leveraging **macroeconomic indicators** to predict operational losses. However, due to **weak statistical relationships**, **high data variance**, and **inconsistent macro linkages**, the model has undergone a **methodology shift**.  
-
-#### **Current Methodology**  
-- **Transition to a Qualitative Approach:** Previously, **four operational loss segments** followed a **qualitative historical average approach**, while **External Fraud (EF) and Clients, Products & Business Practices (CPBP)** utilized a **quantitative model** based on macroeconomic variables. Under **MOD13628**, EF and CPBP have also transitioned to the **qualitative approach**, eliminating the use of macroeconomic indicators.  
-- **Exclusive Use of Archer Data:** The model now solely relies on **Archer**, the **system of record** for operational risk events. Archer data captures events exceeding **$10,000 net loss**, including details such as **posting date, event type classification, impact type, and severity**.  
-- **Multiplier-Based Stress Forecasting:** Instead of regression-based modeling, the stress loss calculation now applies **multipliers** derived from **recent 9-quarter historical frequency and severity trends**. This ensures that forecasts remain relevant to the **current control and risk environment**.  
-
-By transitioning to a **purely qualitative approach**, the model improves **forecast adaptability**, **reduces complexity**, and **ensures alignment across all operational risk segments**.  
-
----
-
-### **Model Change**  
-
-The following **methodology changes** were implemented as part of **MOD13628**:  
-
-1. **Elimination of Macroeconomic Variables**  
-   - **Previous Approach:** EF and CPBP were modeled using **negative binomial regression**, incorporating **macroeconomic indicators** such as **DOWJ Total, SNP Volatility, Financial Employment**, and **Real GDP**.  
-   - **Updated Approach:** EF and CPBP now align with the other four segments, using **only Archer data** for frequency and severity calculations.  
-
-2. **Shift to a Fully Qualitative Model**  
-   - **Prior to MOD13628:** Four segments used a **historical average approach**, while EF and CPBP followed a **statistical modeling approach**.  
-   - **Post MOD13628:** **All six operational risk segments** now follow the **qualitative historical average approach**, ensuring a **consistent methodology**.  
-
-3. **Implementation of a Multiplier-Based Forecasting Method**  
-   - The model now **derives stress loss estimates** by applying a **3.5x frequency multiplier** to recent **9-quarter historical averages** of frequency and severity.  
-   - This **replaces** the previous regression model, which required **manual overlays due to inconsistent macroeconomic relationships**.  
-
-4. **Data Source Consolidation to Archer**  
-   - **Macroeconomic input data has been removed**.  
-   - **Archer event data is now the sole input source**, ensuring a **streamlined, institution-specific risk forecasting framework**.  
-
-These changes address the **limitations of the prior model**, enhancing **forecast stability, reducing the need for overlays, and ensuring that operational risk projections align more closely with historical loss experience and expert judgment**.
+By centralizing on **internally observed data** (Archer for ≥\$10K gross losses, plus limited exploration of small GL losses), the model provides a coherent approach to capture **severe but plausible** operational risk losses, ensuring **relevance** to Truist’s evolving risk landscape.
