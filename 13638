@@ -1,26 +1,21 @@
-Below is a **concise model description**, integrating the newly provided MDD content while reflecting the **latest methodology changes**:
+MODEL DESCRIPTION
 
----
+The CCAR/DFAST Operational Loss Forecast Model at Truist is part of the broader PPNR suite supporting stress testing and capital planning. It provides quarterly loss estimates for six Basel-defined operational risk event types: IF, EF, CPBP, EDPM, DPA, and EPWS (BDSF is excluded). Key outputs are incorporated into the FR Y-14A submission and reviewed by Operational Risk Management SMEs and the Capital Committee.
 
-## **Model Description**
+The model follows a frequency-times-severity approach:
 
-The **CCAR/DFAST Operational Loss Forecast Model** estimates potential operational risk losses for Truist under various macroeconomic scenarios, supporting annual **CCAR** and **DFAST** stress tests and capital planning. The model is part of the **PPNR suite** and uses a **frequency-times-severity** framework: each Basel-defined event type’s **expected frequency** is multiplied by its **expected severity** to produce quarterly loss estimates. Additional **stress deltas** are then added to management’s baseline forecast to create severe-but-plausible CCAR projections.
+• Frequency. Before the methodology change, EF and CPBP used negative binomial regression if macroeconomic predictors appeared relevant. If no significant macro linkages were found, or for the other event types (IF, EDPM, DPA, EPWS), the model applied a nine-quarter rolling average of historical events.  
+• Severity. All event types relied on historical average severities. Stress vs. baseline conditions were reflected using multipliers drawn from historical peaks or stress periods. These multipliers were periodically refreshed based on updated experience.
 
-1. **Scope & Purpose**  
-   - **Scope**: Six Basel event types are included—**IF**, **EF**, **CPBP**, **EDPM**, **DPA**, **EPWS**—while **BDSF** is excluded.  
-   - **Purpose**: Provide **credible, institution-specific** operational loss forecasts under adverse conditions, aligning with Federal Reserve requirements. Model results feed into the **FR Y-14A** reporting form and receive challenge from the **Capital Committee** and **Operational Risk Management** SMEs.
+By focusing on internal Archer data (≥$10,000 net loss) and applying additional overlays or multipliers where needed, the model aims to capture both baseline expectations and plausible stress outcomes for the bank’s operational losses.
 
-2. **Methodology**  
-   - **Frequency**:  
-     - Historically, **EF** and **CPBP** used **negative binomial regression** to capture potential macroeconomic drivers; other event types relied on a **simple 9Q average** or negative binomial if strong macro correlations were discovered.  
-     - Due to weak macroeconomic relationships, **EF** and **CPBP** now also rely on the **qualitative 9Q average** approach, mirroring the other four event types.  
-   - **Severity**:  
-     - **Severity is largely random**, showing minimal correlation with macroeconomic factors.  
-     - The model applies **historical average severity** plus **stress multipliers** (derived from identified stress periods) to differentiate stressed vs. non-stressed conditions.
+MODEL CHANGES
 
-3. **Governance & Use**  
-   - **Reviewed by SMEs** in Operational Risk Management and subject to challenge by the **Capital Committee**.  
-   - **Mapped to FR Y-14A** and other regulatory submissions for CCAR/DFAST.  
-   - **Tier 2 Model** (per Model Risk Oversight) and cannot be extended beyond CCAR/DFAST without additional validation.
+1. Removal of Negative Binomial for EF and CPBP.  
+Originally, EF and CPBP were modeled via negative binomial regression to capture possible macroeconomic influences on event frequency. In practice, these models produced weak or inconsistent relationships, necessitating frequent manual overlays. Under the updated methodology, EF and CPBP now align with the other event types’ qualitative approach, using a simple nine-quarter historical average for frequency.
 
-By centralizing on **internally observed data** (Archer for ≥\$10K gross losses, plus limited exploration of small GL losses), the model provides a coherent approach to capture **severe but plausible** operational risk losses, ensuring **relevance** to Truist’s evolving risk landscape.
+2. Adoption of a Uniform Multiplier-Based Method.  
+EF and CPBP stress forecasts are determined by multiplying the nine-quarter average frequency and severity by a stress factor (for example, 3.5). Other event types (IF, EDPM, DPA, EPWS) also rely on historical averages but may apply specific multipliers for baseline and stress scenarios, often derived from a longer “development” window of data and identified stress periods.
+
+3. Streamlined Forecasting and Reduced Overlays.  
+By discontinuing macroeconomic variables for EF and CPBP and unifying all event types under a single multiplier-based framework, the need for large manual overlays has decreased significantly. The updated approach places greater emphasis on internal operational data and expert judgment, resulting in forecasts that better reflect Truist’s current risk environment and structural controls.
