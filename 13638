@@ -1,21 +1,64 @@
-MODEL DESCRIPTION
+The CCAR/DFAST Operational Loss Forecast Model at Truist generates quarterly operational loss estimates for six Basel event types (IF, EF, CPBP, EDPM, DPA, and EPWS) via a frequency-times-severity framework. Historically, EF and CPBP used negative binomial regression if macroeconomic predictors were found, but they have since moved to the qualitative approach used by the other four segments.
 
-The CCAR/DFAST Operational Loss Forecast Model at Truist is part of the broader PPNR suite supporting stress testing and capital planning. It provides quarterly loss estimates for six Basel-defined operational risk event types: IF, EF, CPBP, EDPM, DPA, and EPWS (BDSF is excluded). Key outputs are incorporated into the FR Y-14A submission and reviewed by Operational Risk Management SMEs and the Capital Committee.
+EF AND CPBP (QUALITATIVE)
 
-The model follows a frequency-times-severity approach:
+Frequency:
 
-• Frequency. Before the methodology change, EF and CPBP used negative binomial regression if macroeconomic predictors appeared relevant. If no significant macro linkages were found, or for the other event types (IF, EDPM, DPA, EPWS), the model applied a nine-quarter rolling average of historical events.  
-• Severity. All event types relied on historical average severities. Stress vs. baseline conditions were reflected using multipliers drawn from historical peaks or stress periods. These multipliers were periodically refreshed based on updated experience.
+Baseline = recent 9-quarter (9Q) moving average (no multiplier)
 
-By focusing on internal Archer data (≥$10,000 net loss) and applying additional overlays or multipliers where needed, the model aims to capture both baseline expectations and plausible stress outcomes for the bank’s operational losses.
+Stress = 9Q moving average × a qualitative multiplier (e.g., 3.5)
+
+Severity:
+
+Based on a broader “development period” average.
+
+The stress multiplier is a simpler, judgment-based factor replacing the old macro-driven approach.
+
+IF, EDPM, DPA, AND EPWS (MULTIPLIER-BASED)
+
+These four segments rely on defined multipliers for frequency, derived from comparing each quarter’s 9Q moving average frequency to a ‘development average’ frequency:
+
+Step A: Compute the development average frequency over a long historical window.
+Step B: For each quarter in that window, calculate a 9Q moving average frequency.
+Step C: Form a ratio = (9Q moving average) ÷ (development average).
+Step D: Sort these ratios to find the 95th percentile, identifying a “stress threshold” and hence a stress period.
+Step E: The stress frequency multiplier is set at or near that 95th-percentile ratio.
+Step F: Exclude that stress period from the dataset and compute the ratio of the remaining data’s average frequency to the total development average. This becomes the non-stress frequency multiplier.
+
+Hence:
+
+Baseline Frequency = (Recent 9Q Frequency) × (Non-Stress Frequency Multiplier)
+
+Stress Frequency = (Recent 9Q Frequency) × (Stress Frequency Multiplier)
+
+Severity:
+
+Uses the development-period average severity.
+
+Baseline vs. stress severity multipliers follow a similar 95th-percentile logic, except focusing on rolling 9Q severity vs. the development average. The top 5% of severity ratios defines the stress threshold.
+
+PUTTING IT ALL TOGETHER
+
+EF/CPBP:
+
+Baseline Forecast = (9Q Avg Frequency) × (9Q Avg Severity)
+
+Stress Forecast = (9Q Avg Frequency) × (9Q Avg Severity) × (Qualitative Stress Multiplier)
+
+IF, EDPM, DPA, EPWS:
+
+Baseline Forecast = Baseline Frequency × Baseline Severity
+
+Stress Forecast = Stress Frequency × Stress Severity
+
+Where Baseline/Stress Frequency and Severity each draw on the respective multipliers identified via the 95th-percentile approach.
 
 MODEL CHANGES
 
-1. Removal of Negative Binomial for EF and CPBP.  
-Originally, EF and CPBP were modeled via negative binomial regression to capture possible macroeconomic influences on event frequency. In practice, these models produced weak or inconsistent relationships, necessitating frequent manual overlays. Under the updated methodology, EF and CPBP now align with the other event types’ qualitative approach, using a simple nine-quarter historical average for frequency.
+Removal of Negative Binomial Regression for EF & CPBP
+EF and CPBP previously used a macro-driven approach for frequency. Weak correlations led to large manual overlays. Now, EF and CPBP rely solely on a 9Q average for baseline and a qualitative stress factor (e.g., 3.5) for stress.
 
-2. Adoption of a Uniform Multiplier-Based Method.  
-EF and CPBP stress forecasts are determined by multiplying the nine-quarter average frequency and severity by a stress factor (for example, 3.5). Other event types (IF, EDPM, DPA, EPWS) also rely on historical averages but may apply specific multipliers for baseline and stress scenarios, often derived from a longer “development” window of data and identified stress periods.
+Unified Multiplier Logic for the Other Four Segments
+IF, EDPM, DPA, and EPWS refine both frequency and severity with multipliers. They use rolling 9Q averages, a development-period average, and percentile-based thresholds (often 95th) to distinguish stress from non-stress. This ensures consistent stress quantification while retaining some customization for each event type’s historical distribution.
 
-3. Streamlined Forecasting and Reduced Overlays.  
-By discontinuing macroeconomic variables for EF and CPBP and unifying all event types under a single multiplier-based framework, the need for large manual overlays has decreased significantly. The updated approach places greater emphasis on internal operational data and expert judgment, resulting in forecasts that better reflect Truist’s current risk environment and structural controls.
+By aligning EF/CPBP with the simpler, all-internal approach and maintaining the established multiplier-based framework for the other four, the model delivers more consistent, institution-specific forecasts without relying on tenuous macroeconomic relationships.
