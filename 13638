@@ -1,31 +1,5 @@
-MODEL DESCRIPTION
+**IMPACT ANALYSIS**
 
-The CCAR/DFAST Operational Loss Forecast Model uses a frequency-times-severity framework for six Basel-defined operational risk event types (IF, EF, CPBP, EDPM, DPA, and EPWS). Because macroeconomic correlations for EF and CPBP proved weak, those two event types shifted to a simplified qualitative approach. The other four event types maintain a more detailed “baseline vs. stress” multiplier structure.
+Prior attempts to forecast operational risk losses using quantitative methods—particularly negative binomial regression with macroeconomic variables—revealed weak or inconsistent linkages. Factors like fraud, litigation, and process breakdowns do not reliably correlate with broad economic indicators, so stress forecasts often required large manual overlays or haircuts. As a result, the institution’s modeling process became unnecessarily complex and still failed to capture the true, idiosyncratic nature of operational losses.
 
-1. EF AND CPBP (QUALITATIVE)
-• Frequency  
-  – Baseline = recent nine-quarter (9Q) average frequency (no multiplier).  
-  – Stress = recent 9Q average frequency × a qualitative stress factor (e.g., 3.5).
-
-• Severity  
-  – Both baseline and stress severities start from a development-period average.  
-  – Stress multipliers are determined qualitatively, replacing the prior macro-driven method.
-
-2. IF, EDPM, DPA, AND EPWS (MULTIPLIER-BASED)
-• Frequency  
-  – Baseline Frequency = (recent 9Q average frequency) × (non-stress frequency multiplier).  
-  – Stress Frequency = (recent 9Q average frequency) × (stress frequency multiplier).  
-  – These multipliers come from comparing each quarter’s 9Q rolling frequency to the overall development average, then identifying a stress threshold (e.g., 95th percentile).
-
-• Severity  
-  – Baseline Severity = (development-period average severity) × (non-stress severity multiplier).  
-  – Stress Severity = (development-period average severity) × (stress severity multiplier).  
-  – Similar to frequency, multipliers derive from rolling 9Q severity ratios vs. the development average, with the 95th percentile defining the stress period.
-
-3. HOW MULTIPLIERS ARE DERIVED (IF, EDPM, DPA, EPWS)
-• For frequency or severity, each quarter’s 9Q rolling value is divided by the development-period average.  
-• The 95th percentile of these ratios defines the “stress” threshold and marks a historical stress period.  
-• The stress multiplier is set around this 95th-percentile ratio.  
-• The non-stress multiplier is computed by removing the identified stress period and calculating the ratio of the remaining average to the development average.
-
-By separating EF and CPBP’s simpler baseline (no frequency multiplier) plus a single stress factor from the more detailed “baseline vs. stress” multipliers used by the other four event types, the model ensures each segment is aligned with its historical data patterns while preserving a consistent institution-specific framework for operational loss forecasting.
+By shifting toward a qualitative multiplier-based approach focused on the most recent nine quarters of internal loss data, the model now relies on current, institution-specific conditions rather than tenuous macroeconomic correlations. This transition offers clearer alignment between observed loss patterns and forecasted scenarios, reducing the need for post-hoc adjustments. Although purely qualitative methods may forgo potential insights about economy-wide trends, the random, high-variance behavior of many operational loss events means these events are less likely to be systematically tied to economic cycles in the first place. Consequently, the new framework provides more realistic, timely estimates of operational risk exposure—reflecting the internal control environment, recent trends, and emerging threats—while acknowledging that the inherently idiosyncratic nature of operational risk remains challenging to predict with statistical precision.
