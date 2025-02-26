@@ -1,64 +1,1765 @@
-The CCAR/DFAST Operational Loss Forecast Model at Truist generates quarterly operational loss estimates for six Basel event types (IF, EF, CPBP, EDPM, DPA, and EPWS) via a frequency-times-severity framework. Historically, EF and CPBP used negative binomial regression if macroeconomic predictors were found, but they have since moved to the qualitative approach used by the other four segments.
+Share
 
-EF AND CPBP (QUALITATIVE)
 
+You said:
+
+
+
+Can you help me draft this section? Model description from MDD is the third photo, also, here is the section regarding model changes - MOD13628 
+### **1. Background to Qualitative Methodology:**
+
+Operational risk forecasting in banking is a critical component of risk management, regulatory compliance, and capital planning. Traditionally, quantitative models have been employed to predict operational risk events based on macroeconomic indicators. However, these models often fail to establish a robust predictive relationship due to the inherently idiosyncratic and institution-specific nature of operational risk losses.
+
+Quantitative methodologies are often unsuitable for operational risk forecasting due to several fundamental challenges:
+
+- **Weak Statistical Relationship:** Unlike credit or market risk, operational risk events do not exhibit strong, consistent correlations with macroeconomic variables. Losses often stem from internal control failures, fraud, legal disputes, or cyber incidents—factors that do not fluctuate predictably with economic cycles.
+
+- **High-Variance Data:** Operational risk loss data is typically characterized by extreme skewness, heavy-tailed distributions, and limited data points, making it difficult to develop reliable statistical models. Many operational losses are rare but severe, further complicating forecasting.
+
+- **Evolving Risk Landscape:** Operational risks change dynamically due to regulatory shifts, technological advancements, and emerging threats like cybercrime, making historical data less predictive of future trends.
+
+- **Regulatory and Industry Expectations:** The regulatory frameworks acknowledge the limitations of purely quantitative operational risk models and encourage institutions to integrate expert judgment, scenario analysis, and qualitative assessments into their risk management frameworks.
+
+---
+
+### **Empirical Analysis of Operational Loss Data**
+Empirical analysis of operational loss data further reinforces these limitations. Out of the six operational loss event types, only two—namely **External Fraud (EF)** and **Clients, Products & Business Practices (CPBP)**—were modeled using a **negative binomial regression** with macroeconomic variables. Even for these, the relationships observed were weak and inconsistent.
+
+The previously developed negative binomial regression has demonstrated a **negative correlation** for EF events with both **DOWJ Total** and **Financial/Accounting sector employment**. As observed in **Fig 1.1**, a decline in **DOWJ Total** is not always associated with an increase in EF loss. The EF loss remains flat for most steep decreases in the **DOWJ Total**, with the exception of **two cycles**. A similar trend is evident in **Fig 1.2**, comparing **Financial/Accounting sector employment** with EF losses, where the losses remain flat even during the steepest decline in the macro-variable, yet rise as the employment macro-variable recovers.
+
+For **CPBP events**, a **positive correlation** was identified with **SNP Volatility** and **Real GDP**. However, **Fig 1.3 and 1.4** illustrate that these relationships are weak as well. In **Fig 1.3**, historically higher losses are mostly associated with a flat change in **SNP Volatility**, a similar trend observed with **GDP** in **Fig 1.4**.
+
+---
+
+### **Figures:**
+- **Fig 1.1** - Comparison of macroeconomic variable **DOWJ Total QOQ** with **EF Loss**.
+- **Fig 1.2** - Comparison of macroeconomic variable **Financial Act Employment QOQ** with **EF Loss**.
+- **Fig 1.3** - Comparison of macroeconomic variable **SNP Vol MAVG YDiff** with **CPBP Loss**.
+
+---
+
+Here is the continuation of the transcribed text from the additional images:
+
+---
+
+### **Fig 1.4 - Comparison of Macroeconomic Variable Real GDP Lag2 with CPBP Loss**
+
+---
+
+### **Given the Model’s Limitation, an Adjustment to the Forecast Was Always Needed in Terms of an Overlay**
+- **Figures 1.5 and 1.6** list all the overlays since the inception of the model.
+- The model has **over-forecasted CPBP frequency**, requiring a **50%+ haircut** to the **loss delta** in most scenarios historically.
+- **EF stress losses for the 2025 cycle** were observed to be **less than recent 9Q losses**, necessitating a **major adjustment**.
+- Consequently, the **model deltas were proposed to be tripled for BHC Adverse and more than doubled for BHC Severe scenarios**.
+- The overall trend indicates that the **model is contributing less to the forecast**, requiring **larger adjustments**.
+
+#### **Operational Risk SME Meeting Discussion**
+- **The magnitude of the overlays was questioned** by **MRO** in the **Operational Risk SME Meeting** (attached meeting notes).
+- **Model developers and SMEs** recognized the **model weakness** and agreed to explore a **qualitative approach**.
+- Given these limitations, the **model developers propose a qualitative methodology** that leverages:
+  - **Recent historical trends** in event frequency and severity.
+  - **Expert assessments** to ensure a more **adaptable and institution-specific risk forecasting mechanism**.
+
+---
+
+### **Figures**
+#### **Fig 1.5 - Historical Overlay for EF**
+| CCAR Cycle | Scenario Type | Stress Loss ($) | Delta ($) | Overlay Delta ($) | Change in Delta (%) | Overlay Frequency Multiple |
+|------------|--------------|----------------|---------|----------------|----------------|----------------------|
+| **2024** | **FRB Severe** | 478,845,296.91 | 366,159,886.14 | 278,570,490.16 | -23.92% | 99.7th percentile for 1 quarter |
+| **2024** | **BHC Adverse** | 253,612,520.43 | 141,404,082.30 | 461,746,196.90 | 226.54% | 3.5x of forecasted frequency |
+| **2025 Proposal** | **BHC Severe** | 374,702,908.90 | 262,494,470.77 | 585,501,799.12 | 123.05% | 3.5x of forecasted frequency |
+
+#### **Fig 1.6 - Historical CPBP Overlay**
+| CCAR Cycle | Scenario Type | Stress Loss ($) | Delta ($) | Overlay Delta ($) | Change in Delta (%) | Overlay Frequency Multiple |
+|------------|--------------|----------------|---------|----------------|----------------|----------------------|
+| **2024** | **BHC Adverse** | 471,812,212.34 | 270,380,336.80 | 118,364,923.41 | -56.22% | 3x of recent history average |
+| **2024** | **BHC Severe** | 453,409,252.51 | 251,977,376.98 | 171,664,389.90 | -31.87% | 3.5x of recent history average |
+| **2024** | **FRB Severe** | 425,663,951.41 | 226,503,526.40 | 173,935,840.42 | -23.21% | 3.5x of recent history average |
+| **2024** | **FRB Exploratory 1** | 120,636,373.93 | 257,416,865.03 | 120,636,373.93 | -53.14% | 3x of recent history average |
+| **2024 Mid-Year** | **BHC Severe** | 674,949,947.25 | 458,709,516.22 | 210,155,300.91 | -54.19% | 3.5x of recent history average |
+| **2025 Proposal** | **BHC Adverse** | 565,399,611.86 | 317,631,656.31 | 140,556,728.88 | -55.75% | 3x of recent history average |
+| **2025 Proposal** | **BHC Severe** | 556,347,267.30 | 310,041,293.03 | 140,556,728.88 | -54.67% | 3x of recent history average |
+
+---
+
+## **2. Data Lineage and Controls**
+- The **operational loss event data** is sourced from **Archer**, a **system of record** for operational risk events.
+- The **CAMP team** owns and controls the process of **extracting, validating, and storing** the data for model use.
+- A **structured data aggregation process** is performed on the **Archer dataset** to calculate **quarterly frequency and severity** for both event types, as described in **Section 2.4 - Data Aggregation and Transformations**.
+
+### **Data Transformation**
+- Executed using a **pre-defined script** (details attached).
+- **Model developers** are responsible for **execution and maintenance** of the aggregation code.
+- **Data is integrated into an Excel-based macro** that facilitates **stressed delta calculations**.
+- The **model developers will collaborate** with the **CAMP team** to **productionize and automate** the data aggregation process for **improved efficiency and accuracy**.
+
+---
+
+### **Data Sources and Storage**
+| **Description** | **Event Data** |
+|---------------|-------------|
+| **Data Source** | Archer |
+| **Truist Application Identifier** | APPID-31897104 |
+| **SAS Server** | **Prod**: sas-utility.truist-prd.com<br> **UAT**: sas-utility-uat.truist-tst.com |
+| **Data Elements** | Basel Event Type Level 1<br> Internal Events<br> Posting Date<br> Event Record Type<br> Type of Impact |
+| **Data Source Location** | **Truist Production SAS GRID**: sas-utility.truist-prd.com (replace YYYYMM with CCAR cycle) |
+| **File Path** | /sasdata/capprd1/ccar/ccar_run/YYYYMM/data/ppnr_models/inputs |
+| **Table Name** | archer_report_YYYYMM.xlsx |
+
+---
+
+Here is the continuation of the transcribed text from the latest images:
+
+---
+
+## **3. Qualitative Methodology Details**
+- **Operational loss severity and frequency** are largely **random in nature**. 
+- Events like **theft, errors, lawsuits**, and other unpredictable incidents contribute to **high variability in losses**.
+- Additionally, **idiosyncratic variance** further complicates **traditional quantitative modeling**.
+
+To address these challenges:
+- **Developers and SMEs (subject matter experts)** have determined that the **recent 9-quarter (9Q) period** best represents losses under the **current control and threat environment**.
+- As a result, a **multiplier-based approach** has been adopted for **stress delta forecasting**.
+
+---
+
+## **Stress Forecasting Calculation**
+The following methodology ensures that forecasts are **grounded in recent empirical experience**, while allowing for **forward-looking adjustments**:
+
+**Formula for Stress Forecast Calculation:**
+- **Model Stress Forecast** = **Multiplier 3.5** × (**Average Recent 9Q Frequency**) × (**Average Recent 9Q Severity**)
+- **Model Baseline Forecast** = (**Recent 9Q Frequency**) × (**Recent 9Q Severity**)
+- **Stress Delta** = **Model Stress Forecast** - **Model Baseline Forecast**
+
+- The **stress delta** is then incorporated into the **management baseline forecast** to produce **stress-adjusted projections**.
+- An **Excel macro** is used as a **working tool** for future **stress delta calculations**, ensuring **consistency and repeatability**.
+
+---
+
+## **4. Multiplier Selection**
+Selecting an **appropriate multiplier for stress delta forecasting** is inherently challenging because:
+- **Operational risk losses exhibit high randomness** and **idiosyncratic behavior**.
+- **Unlike credit or market risk**, where statistical models provide predictive insights, **operational risk events** are driven by **unpredictable and non-recurring** factors like **fraud, litigation, and cyber incidents**.
+- **Mathematical approaches** using **historical events** often prove **inadequate**.
+
+### **Challenges with Historical Multipliers**
+- **Past multipliers** become **obsolete over time** due to:
+  - **Evolving control environments**
+  - **External threats**
+  - **Changing risk management practices**
+- **Historical multipliers** are often **unreliable predictors** of **future stress losses**.
+- **Best estimates for stress forecasting** should be **rooted in recent operational experience** rather than **modeled using uncertain future conditions**.
+
+### **Alternative Methodologies for Multiplier Selection**
+The model developers **explored multiple methodologies**, including:
+- **95th percentile to average ratios**
+- **Maximum-to-average comparisons**
+- **Overlays applied historically**
+- **Stressed scenario averages compared to a 9-quarter average**
+
+These methods produced a **spectrum of possible multipliers**, each with its **own merits and limitations**.
+
+---
+
+## **Multiplier Spectrum Analysis**
+The **negative binomial model**:
+- **Overpredicted CPBP losses**
+- **Underpredicted EF losses**, requiring **frequent overlays**
+- Developers used **rejected model outputs** to **determine a relevant range** for multipliers.
+
+Figures **4.1 and 4.2** show **multiplier ranges using alternative methodologies**.
+
+### **Multiplier Range Findings**
+- **Fig 4.3** and **Fig 4.4** present a **graphical representation of the multiplier spectrum**.
+- **Lower Bound for EF** observed at **2.24** (historically required overlay).
+- **Upper Bound for CPBP** at **10.55**.
+
+---
+
+## **Multiplier Selection Table**
+| **Testing Method** | **Multiplier** |
+|-------------------|--------------|
+| **M1** - 9Q MAVG max: average | **3.86** |
+| **M2** - 95th percentile MAVG: average (used on dev data) | **1.95** |
+| **M3** - 95th percentile MAVG: average (used on re-estimated data) | **3.06** |
+| **M4** - Stress Loss output from the model: recent 9Q loss | **0.94 - 2.24** |
+| **M5** - Multiplier Used in overlay | **3 - 3.5** |
+
+- The **multiplier M4 and M5** represent the **lower-to-upper bound of past overlays**.
+
+---
+
+### **Graphical Representations of Multiplier Spectrum**
+- **Fig 4.3 - CPBP Multiplier Spectrum** shows various **multiplier evaluation scenarios**.
+- **Fig 4.4 - EF Multiplier Spectrum** presents a visual range of **multipliers used historically**.
+
+---
+Here is the continuation and final transcription from the latest images:
+
+---
+
+## **Fig 4.4 - Multiplier Spectrum for EF**
+- **The selected 3.5 multiplier** was not derived from a rigid mathematical formula but rather from **empirical validation**.
+- Historical overlays, frequency averages, and **expert judgment** were used to **arrive at a practical and defensible figure**.
+- Any **future changes** to the multiplier will be subject to **SME recommendations** and **documented in the MDD** to ensure that it continues to reflect the **evolving nature of operational risk**.
+
+---
+
+## **Choice of Multiplier: Intuition vs. Statistical Derivation**
+- The **choice of a multiplier** is **an exercise in expert intuition** rather than a strict **statistical derivation**.
+- Given the **unpredictable nature** of operational risk losses, the **application of structured judgment** remains **the most viable approach** for ensuring that **stress loss estimates remain relevant** and aligned with **industry expectations**.
+
+---
+
+## **5. Assumptions and Limitations (EF & CPBP)**
+
+### **Assumptions**
+#### **Multiplier Spectrum**
+- There is **no single best methodology** to determine the **optimal multiplier**.
+- Instead, a **spectrum of multipliers** is derived using **various established methodologies**.
+- This spectrum serves as a **reference range**, providing a **relevant and justifiable basis** for selecting a **multiplier**.
+- The chosen **multiplier is expected to fall within this range**, ensuring **robustness and consistency in decision-making**.
+
+#### **Relevance of Recent 9Q History**
+- The **most recent nine quarters (9Q) of historical data** are assumed to be the **best representation of future events**.
+- It is **not possible to quantitatively determine** which dataset is **optimal for forward-looking analysis**.
+- This **selection is based on expert intuition and practical relevance**.
+- The **assumption is that recent data** better reflects **current stress, threat conditions, and structural trends**, making it the **most suitable for modeling purposes**.
+
+---
+
+### **Limitations**
+- **Severity component calculations** are based on a **recent 9Q average**.
+- For **each event type**, there is only **one stress average**, and the **same stress average** is used for **varying stress scenarios** without distinction.
+
+#### **Archer Data Capture**
+- **Archer data captures loss events** ≥ **$10,000 (net loss)** and can **adequately represent** the **most material losses** from the firm.
+- This is based on **RMO-OMRM-PR-1100 Operational Risk Internal Loss Events Program policy** instituted at **Truist**.
+- The **minimum gross loss threshold of $10,000 per event** for reporting **Internal Loss Events** is based on:
+  - **Regulatory guidance** and **banking industry standards**.
+  - **BCBS (Basel Committee on Banking Supervision) SMA (Standardized Measurement Approach)** on the **$10K threshold**.
+  - **A bank’s internal loss data** must **comprehensively capture all material activities and exposures** across **all appropriate subsystems and geographic locations**.
+  - While the **de minimis gross loss threshold** may vary between banks, it **must not exceed $10,000**.
+
+#### **Limited Loss Events and Data Sparsity**
+- **Data only tracks back to 2005**, limiting historical coverage.
+- **The limitation impacts both frequency and severity calculations**.
+
+#### **Data Aggregation Code**
+- The **data aggregation code**, which provides **quarterly rolled-up frequency and severity**, is **not implemented by the CAMP team**.
+- **Model developers own the code and execute it** each cycle.
+- Developers will **collaborate with the CAMP team** to **productionize and automate** the **data aggregation process**, improving **efficiency and tracking**.
+
+---
+
+## **6. Monitoring Assumptions**
+Each cycle, **developers** will perform the following **annual exercise** to ensure the **assumptions remain relevant and applicable**.
+
+### **Multiplier Spectrum**
+- Developers will **recreate the range of multipliers** and **test if the chosen 3.5 multiplier is still within an acceptable range**.
+- **Multipliers in tables GG and HH are static**.
+- **M1 and M3 multipliers** will be **refreshed each cycle**.
+- If they **exceed 3.5**, developers will **consult SMEs** to discuss whether the **3.5 multiplier remains relevant**.
+- **Upper bound for CPBP (10.55)** is derived from the **M4 multiplier (static)**.
+- **Lower bound for EF (2.24)** is also derived from the **M4 multiplier (static)**.
+
+### **Relevance of Recent 9Q History**
+- The **most recent nine quarters (9Q) of historical data** are assumed to be the **best representation of future events**, based on **SME and developer intuition**.
+- This assumption **cannot be monitored statistically or qualitatively**.
+- **If the most recent 9Q deviates substantially from the average**, developers will:
+  - **Investigate whether the deviation is a data issue**.
+  - **Consult SMEs** to determine if a **structural change has occurred**.
+  - **Confirm with model stakeholders** that the **most recent history is still the most relevant**.
+
+---
+
+## **7. Model Owner Sign-Off**
+- The **following table records model owners’ approval** of changes to the methodology.
+- **Model change requests** will be included when the **plan update requires Model Risk Oversight review and approval**.
+
+---
+ChatGPT said:
+I see that you've uploaded three image files. I'll process them and extract the text so we can use the information for drafting the model description section. Let me extract the text now.
+
+Here is the extracted text from the images:
+
+OGM Plan Review
+Model Description
+
+Briefly describe the model business purpose(s), usage frequency, potential impact in terms of portfolio size, transaction volume.
+
+High-level summary of model methodology, model inputs, and previous year validation outcome related to the model changes made, if applicable. Otherwise, provide last validation review rating.
+
+Model Change
+
+Provide a detailed description of model changes along with the background and rationale for the changes.
+
+Depending on the change made, specify the changes in related model components (i.e., segmentation, methodology, performance monitoring, etc.).
+Risk Assessment
+1.1 OGM Plan Element Applicability Review
+
+Ref No.	Monitoring Element	Included in OGM Plan	Related Metric No.	MRO Assessment for Excluded Elements
+1	Limitations Monitoring	No	N/A	
+2	Backtesting	No	N/A	
+1.1 Model’s Statement of Purpose
+
+The CCAR/DFAST Operational Loss Forecast model (henceforth ‘the model’) was developed to estimate the operational risk losses for Truist under different macroeconomic scenarios. This model is part of the PPNR suite of models used by Corporate Finance to prepare Comprehensive Capital Analysis and Review (CCAR) and Dodd-Frank Act Stress Test (DFAST) scenario forecasts. The annual CCAR and DFAST forecasts are geared toward capital assessment and planning. Extending the model use would require—in addition to additional testing and expanding documentation—a separate validation and approval by the Model Risk Oversight (MRO).
+
+The model output is reviewed by Operational Risk Management subject matter experts (SMEs). The model’s final results are subject to subsequent reviews and challenge by the Capital Committee. The post-overlay 9-quarter loss forecasts are mapped to the FR Y-14A reporting form, used to report Capital Assessments and Stress Testing assessments in annual CCAR submission.
+
+Using this, I will now draft the Model Description section for you, incorporating relevant details from the Model’s Statement of Purpose and aligning it with the OGM Plan Review requirements. ​​
+
+I have drafted the Model Description section based on the provided details. Let me know if you need any refinements or additional information.
+
+
+
+
+
+
+You said:
+Can you help me incorporate the changes described in "MOD13628 
+### **1. Background to Qualitative Methodology:**
+
+Operational risk forecasting in banking is a critical component of risk management, regulatory compliance, and capital planning. Traditionally, quantitative models have been employed to predict operational risk events based on macroeconomic indicators. However, these models often fail to establish a robust predictive relationship due to the inherently idiosyncratic and institution-specific nature of operational risk losses.
+
+Quantitative methodologies are often unsuitable for operational risk forecasting due to several fundamental challenges:
+
+- **Weak Statistical Relationship:** Unlike credit or market risk, operational risk events do not exhibit strong, consistent correlations with macroeconomic variables. Losses often stem from internal control failures, fraud, legal disputes, or cyber incidents—factors that do not fluctuate predictably with economic cycles.
+
+- **High-Variance Data:** Operational risk loss data is typically characterized by extreme skewness, heavy-tailed distributions, and limited data points, making it difficult to develop reliable statistical models. Many operational losses are rare but severe, further complicating forecasting.
+
+- **Evolving Risk Landscape:** Operational risks change dynamically due to regulatory shifts, technological advancements, and emerging threats like cybercrime, making historical data less predictive of future trends.
+
+- **Regulatory and Industry Expectations:** The regulatory frameworks acknowledge the limitations of purely quantitative operational risk models and encourage institutions to integrate expert judgment, scenario analysis, and qualitative assessments into their risk management frameworks.
+
+---
+
+### **Empirical Analysis of Operational Loss Data**
+Empirical analysis of operational loss data further reinforces these limitations. Out of the six operational loss event types, only two—namely **External Fraud (EF)** and **Clients, Products & Business Practices (CPBP)**—were modeled using a **negative binomial regression** with macroeconomic variables. Even for these, the relationships observed were weak and inconsistent.
+
+The previously developed negative binomial regression has demonstrated a **negative correlation** for EF events with both **DOWJ Total** and **Financial/Accounting sector employment**. As observed in **Fig 1.1**, a decline in **DOWJ Total** is not always associated with an increase in EF loss. The EF loss remains flat for most steep decreases in the **DOWJ Total**, with the exception of **two cycles**. A similar trend is evident in **Fig 1.2**, comparing **Financial/Accounting sector employment** with EF losses, where the losses remain flat even during the steepest decline in the macro-variable, yet rise as the employment macro-variable recovers.
+
+For **CPBP events**, a **positive correlation** was identified with **SNP Volatility** and **Real GDP**. However, **Fig 1.3 and 1.4** illustrate that these relationships are weak as well. In **Fig 1.3**, historically higher losses are mostly associated with a flat change in **SNP Volatility**, a similar trend observed with **GDP** in **Fig 1.4**.
+
+---
+
+### **Figures:**
+- **Fig 1.1** - Comparison of macroeconomic variable **DOWJ Total QOQ** with **EF Loss**.
+- **Fig 1.2** - Comparison of macroeconomic variable **Financial Act Employment QOQ** with **EF Loss**.
+- **Fig 1.3** - Comparison of macroeconomic variable **SNP Vol MAVG YDiff** with **CPBP Loss**.
+
+---
+
+Here is the continuation of the transcribed text from the additional images:
+
+---
+
+### **Fig 1.4 - Comparison of Macroeconomic Variable Real GDP Lag2 with CPBP Loss**
+
+---
+
+### **Given the Model’s Limitation, an Adjustment to the Forecast Was Always Needed in Terms of an Overlay**
+- **Figures 1.5 and 1.6** list all the overlays since the inception of the model.
+- The model has **over-forecasted CPBP frequency**, requiring a **50%+ haircut** to the **loss delta** in most scenarios historically.
+- **EF stress losses for the 2025 cycle** were observed to be **less than recent 9Q losses**, necessitating a **major adjustment**.
+- Consequently, the **model deltas were proposed to be tripled for BHC Adverse and more than doubled for BHC Severe scenarios**.
+- The overall trend indicates that the **model is contributing less to the forecast**, requiring **larger adjustments**.
+
+#### **Operational Risk SME Meeting Discussion**
+- **The magnitude of the overlays was questioned** by **MRO** in the **Operational Risk SME Meeting** (attached meeting notes).
+- **Model developers and SMEs** recognized the **model weakness** and agreed to explore a **qualitative approach**.
+- Given these limitations, the **model developers propose a qualitative methodology** that leverages:
+  - **Recent historical trends** in event frequency and severity.
+  - **Expert assessments** to ensure a more **adaptable and institution-specific risk forecasting mechanism**.
+
+---
+
+### **Figures**
+#### **Fig 1.5 - Historical Overlay for EF**
+| CCAR Cycle | Scenario Type | Stress Loss ($) | Delta ($) | Overlay Delta ($) | Change in Delta (%) | Overlay Frequency Multiple |
+|------------|--------------|----------------|---------|----------------|----------------|----------------------|
+| **2024** | **FRB Severe** | 478,845,296.91 | 366,159,886.14 | 278,570,490.16 | -23.92% | 99.7th percentile for 1 quarter |
+| **2024** | **BHC Adverse** | 253,612,520.43 | 141,404,082.30 | 461,746,196.90 | 226.54% | 3.5x of forecasted frequency |
+| **2025 Proposal** | **BHC Severe** | 374,702,908.90 | 262,494,470.77 | 585,501,799.12 | 123.05% | 3.5x of forecasted frequency |
+
+#### **Fig 1.6 - Historical CPBP Overlay**
+| CCAR Cycle | Scenario Type | Stress Loss ($) | Delta ($) | Overlay Delta ($) | Change in Delta (%) | Overlay Frequency Multiple |
+|------------|--------------|----------------|---------|----------------|----------------|----------------------|
+| **2024** | **BHC Adverse** | 471,812,212.34 | 270,380,336.80 | 118,364,923.41 | -56.22% | 3x of recent history average |
+| **2024** | **BHC Severe** | 453,409,252.51 | 251,977,376.98 | 171,664,389.90 | -31.87% | 3.5x of recent history average |
+| **2024** | **FRB Severe** | 425,663,951.41 | 226,503,526.40 | 173,935,840.42 | -23.21% | 3.5x of recent history average |
+| **2024** | **FRB Exploratory 1** | 120,636,373.93 | 257,416,865.03 | 120,636,373.93 | -53.14% | 3x of recent history average |
+| **2024 Mid-Year** | **BHC Severe** | 674,949,947.25 | 458,709,516.22 | 210,155,300.91 | -54.19% | 3.5x of recent history average |
+| **2025 Proposal** | **BHC Adverse** | 565,399,611.86 | 317,631,656.31 | 140,556,728.88 | -55.75% | 3x of recent history average |
+| **2025 Proposal** | **BHC Severe** | 556,347,267.30 | 310,041,293.03 | 140,556,728.88 | -54.67% | 3x of recent history average |
+
+---
+
+## **2. Data Lineage and Controls**
+- The **operational loss event data** is sourced from **Archer**, a **system of record** for operational risk events.
+- The **CAMP team** owns and controls the process of **extracting, validating, and storing** the data for model use.
+- A **structured data aggregation process** is performed on the **Archer dataset** to calculate **quarterly frequency and severity** for both event types, as described in **Section 2.4 - Data Aggregation and Transformations**.
+
+### **Data Transformation**
+- Executed using a **pre-defined script** (details attached).
+- **Model developers** are responsible for **execution and maintenance** of the aggregation code.
+- **Data is integrated into an Excel-based macro** that facilitates **stressed delta calculations**.
+- The **model developers will collaborate** with the **CAMP team** to **productionize and automate** the data aggregation process for **improved efficiency and accuracy**.
+
+---
+
+### **Data Sources and Storage**
+| **Description** | **Event Data** |
+|---------------|-------------|
+| **Data Source** | Archer |
+| **Truist Application Identifier** | APPID-31897104 |
+| **SAS Server** | **Prod**: sas-utility.truist-prd.com<br> **UAT**: sas-utility-uat.truist-tst.com |
+| **Data Elements** | Basel Event Type Level 1<br> Internal Events<br> Posting Date<br> Event Record Type<br> Type of Impact |
+| **Data Source Location** | **Truist Production SAS GRID**: sas-utility.truist-prd.com (replace YYYYMM with CCAR cycle) |
+| **File Path** | /sasdata/capprd1/ccar/ccar_run/YYYYMM/data/ppnr_models/inputs |
+| **Table Name** | archer_report_YYYYMM.xlsx |
+
+---
+
+Here is the continuation of the transcribed text from the latest images:
+
+---
+
+## **3. Qualitative Methodology Details**
+- **Operational loss severity and frequency** are largely **random in nature**. 
+- Events like **theft, errors, lawsuits**, and other unpredictable incidents contribute to **high variability in losses**.
+- Additionally, **idiosyncratic variance** further complicates **traditional quantitative modeling**.
+
+To address these challenges:
+- **Developers and SMEs (subject matter experts)** have determined that the **recent 9-quarter (9Q) period** best represents losses under the **current control and threat environment**.
+- As a result, a **multiplier-based approach** has been adopted for **stress delta forecasting**.
+
+---
+
+## **Stress Forecasting Calculation**
+The following methodology ensures that forecasts are **grounded in recent empirical experience**, while allowing for **forward-looking adjustments**:
+
+**Formula for Stress Forecast Calculation:**
+- **Model Stress Forecast** = **Multiplier 3.5** × (**Average Recent 9Q Frequency**) × (**Average Recent 9Q Severity**)
+- **Model Baseline Forecast** = (**Recent 9Q Frequency**) × (**Recent 9Q Severity**)
+- **Stress Delta** = **Model Stress Forecast** - **Model Baseline Forecast**
+
+- The **stress delta** is then incorporated into the **management baseline forecast** to produce **stress-adjusted projections**.
+- An **Excel macro** is used as a **working tool** for future **stress delta calculations**, ensuring **consistency and repeatability**.
+
+---
+
+## **4. Multiplier Selection**
+Selecting an **appropriate multiplier for stress delta forecasting** is inherently challenging because:
+- **Operational risk losses exhibit high randomness** and **idiosyncratic behavior**.
+- **Unlike credit or market risk**, where statistical models provide predictive insights, **operational risk events** are driven by **unpredictable and non-recurring** factors like **fraud, litigation, and cyber incidents**.
+- **Mathematical approaches** using **historical events** often prove **inadequate**.
+
+### **Challenges with Historical Multipliers**
+- **Past multipliers** become **obsolete over time** due to:
+  - **Evolving control environments**
+  - **External threats**
+  - **Changing risk management practices**
+- **Historical multipliers** are often **unreliable predictors** of **future stress losses**.
+- **Best estimates for stress forecasting** should be **rooted in recent operational experience** rather than **modeled using uncertain future conditions**.
+
+### **Alternative Methodologies for Multiplier Selection**
+The model developers **explored multiple methodologies**, including:
+- **95th percentile to average ratios**
+- **Maximum-to-average comparisons**
+- **Overlays applied historically**
+- **Stressed scenario averages compared to a 9-quarter average**
+
+These methods produced a **spectrum of possible multipliers**, each with its **own merits and limitations**.
+
+---
+
+## **Multiplier Spectrum Analysis**
+The **negative binomial model**:
+- **Overpredicted CPBP losses**
+- **Underpredicted EF losses**, requiring **frequent overlays**
+- Developers used **rejected model outputs** to **determine a relevant range** for multipliers.
+
+Figures **4.1 and 4.2** show **multiplier ranges using alternative methodologies**.
+
+### **Multiplier Range Findings**
+- **Fig 4.3** and **Fig 4.4** present a **graphical representation of the multiplier spectrum**.
+- **Lower Bound for EF** observed at **2.24** (historically required overlay).
+- **Upper Bound for CPBP** at **10.55**.
+
+---
+
+## **Multiplier Selection Table**
+| **Testing Method** | **Multiplier** |
+|-------------------|--------------|
+| **M1** - 9Q MAVG max: average | **3.86** |
+| **M2** - 95th percentile MAVG: average (used on dev data) | **1.95** |
+| **M3** - 95th percentile MAVG: average (used on re-estimated data) | **3.06** |
+| **M4** - Stress Loss output from the model: recent 9Q loss | **0.94 - 2.24** |
+| **M5** - Multiplier Used in overlay | **3 - 3.5** |
+
+- The **multiplier M4 and M5** represent the **lower-to-upper bound of past overlays**.
+
+---
+
+### **Graphical Representations of Multiplier Spectrum**
+- **Fig 4.3 - CPBP Multiplier Spectrum** shows various **multiplier evaluation scenarios**.
+- **Fig 4.4 - EF Multiplier Spectrum** presents a visual range of **multipliers used historically**.
+
+---
+Here is the continuation and final transcription from the latest images:
+
+---
+
+## **Fig 4.4 - Multiplier Spectrum for EF**
+- **The selected 3.5 multiplier** was not derived from a rigid mathematical formula but rather from **empirical validation**.
+- Historical overlays, frequency averages, and **expert judgment** were used to **arrive at a practical and defensible figure**.
+- Any **future changes** to the multiplier will be subject to **SME recommendations** and **documented in the MDD** to ensure that it continues to reflect the **evolving nature of operational risk**.
+
+---
+
+## **Choice of Multiplier: Intuition vs. Statistical Derivation**
+- The **choice of a multiplier** is **an exercise in expert intuition** rather than a strict **statistical derivation**.
+- Given the **unpredictable nature** of operational risk losses, the **application of structured judgment** remains **the most viable approach** for ensuring that **stress loss estimates remain relevant** and aligned with **industry expectations**.
+
+---
+
+## **5. Assumptions and Limitations (EF & CPBP)**
+
+### **Assumptions**
+#### **Multiplier Spectrum**
+- There is **no single best methodology** to determine the **optimal multiplier**.
+- Instead, a **spectrum of multipliers** is derived using **various established methodologies**.
+- This spectrum serves as a **reference range**, providing a **relevant and justifiable basis** for selecting a **multiplier**.
+- The chosen **multiplier is expected to fall within this range**, ensuring **robustness and consistency in decision-making**.
+
+#### **Relevance of Recent 9Q History**
+- The **most recent nine quarters (9Q) of historical data** are assumed to be the **best representation of future events**.
+- It is **not possible to quantitatively determine** which dataset is **optimal for forward-looking analysis**.
+- This **selection is based on expert intuition and practical relevance**.
+- The **assumption is that recent data** better reflects **current stress, threat conditions, and structural trends**, making it the **most suitable for modeling purposes**.
+
+---
+
+### **Limitations**
+- **Severity component calculations** are based on a **recent 9Q average**.
+- For **each event type**, there is only **one stress average**, and the **same stress average** is used for **varying stress scenarios** without distinction.
+
+#### **Archer Data Capture**
+- **Archer data captures loss events** ≥ **$10,000 (net loss)** and can **adequately represent** the **most material losses** from the firm.
+- This is based on **RMO-OMRM-PR-1100 Operational Risk Internal Loss Events Program policy** instituted at **Truist**.
+- The **minimum gross loss threshold of $10,000 per event** for reporting **Internal Loss Events** is based on:
+  - **Regulatory guidance** and **banking industry standards**.
+  - **BCBS (Basel Committee on Banking Supervision) SMA (Standardized Measurement Approach)** on the **$10K threshold**.
+  - **A bank’s internal loss data** must **comprehensively capture all material activities and exposures** across **all appropriate subsystems and geographic locations**.
+  - While the **de minimis gross loss threshold** may vary between banks, it **must not exceed $10,000**.
+
+#### **Limited Loss Events and Data Sparsity**
+- **Data only tracks back to 2005**, limiting historical coverage.
+- **The limitation impacts both frequency and severity calculations**.
+
+#### **Data Aggregation Code**
+- The **data aggregation code**, which provides **quarterly rolled-up frequency and severity**, is **not implemented by the CAMP team**.
+- **Model developers own the code and execute it** each cycle.
+- Developers will **collaborate with the CAMP team** to **productionize and automate** the **data aggregation process**, improving **efficiency and tracking**.
+
+---
+
+## **6. Monitoring Assumptions**
+Each cycle, **developers** will perform the following **annual exercise** to ensure the **assumptions remain relevant and applicable**.
+
+### **Multiplier Spectrum**
+- Developers will **recreate the range of multipliers** and **test if the chosen 3.5 multiplier is still within an acceptable range**.
+- **Multipliers in tables GG and HH are static**.
+- **M1 and M3 multipliers** will be **refreshed each cycle**.
+- If they **exceed 3.5**, developers will **consult SMEs** to discuss whether the **3.5 multiplier remains relevant**.
+- **Upper bound for CPBP (10.55)** is derived from the **M4 multiplier (static)**.
+- **Lower bound for EF (2.24)** is also derived from the **M4 multiplier (static)**.
+
+### **Relevance of Recent 9Q History**
+- The **most recent nine quarters (9Q) of historical data** are assumed to be the **best representation of future events**, based on **SME and developer intuition**.
+- This assumption **cannot be monitored statistically or qualitatively**.
+- **If the most recent 9Q deviates substantially from the average**, developers will:
+  - **Investigate whether the deviation is a data issue**.
+  - **Consult SMEs** to determine if a **structural change has occurred**.
+  - **Confirm with model stakeholders** that the **most recent history is still the most relevant**.
+
+---
+
+## **7. Model Owner Sign-Off**
+- The **following table records model owners’ approval** of changes to the methodology.
+- **Model change requests** will be included when the **plan update requires Model Risk Oversight review and approval**.
+
+---" explain due to xxx reasons, there are changes in mythology of the EF and CPBP components.  Prior to the changes, 4 segemnts follow the qualitative historical average approach while EF and CPBP follow the quantitative model method, but now EF and CPBP changes to qualitative method as well, there are no longer macroeconomic variables used in MOD13638 and only data input is archer data(briefly explain what's in archer data). 
+Reasoned about adjustments to EF and CPBP modeling for 10 seconds
+Below is the updated version of the document, incorporating the changes in EF and CPBP methodology (MOD13628) and explaining the transition to a fully qualitative approach and exclusive reliance on Archer data.
+
+Please refer to the canvas (right panel) for the complete, consolidated text. Feel free to let me know if you need any further modifications or clarifications!
+
+
+
+
+
+
+You said:
+can you give me the updated version one more time?
+Reasoned for a couple of seconds
+Below is the updated version of the document, incorporating MOD13628. This reflects the transition of External Fraud (EF) and Clients, Products & Business Practices (CPBP) from a quantitative methodology relying on macroeconomic indicators to the same qualitative approach as the other operational risk event types, relying solely on Archer data.
+
+Updated Document Incorporating MOD13628
+
+1. Background to Qualitative Methodology:
+Operational risk forecasting in banking is a critical component of risk management, regulatory compliance, and capital planning. Traditionally, quantitative models have been employed to predict operational risk events based on macroeconomic indicators. However, these models often fail to establish a robust predictive relationship due to the inherently idiosyncratic and institution-specific nature of operational risk losses.
+
+Quantitative methodologies are often unsuitable for operational risk forecasting due to several fundamental challenges:
+
+Weak Statistical Relationship: Unlike credit or market risk, operational risk events do not exhibit strong, consistent correlations with macroeconomic variables. Losses often stem from internal control failures, fraud, legal disputes, or cyber incidents—factors that do not fluctuate predictably with economic cycles.
+High-Variance Data: Operational risk loss data is typically characterized by extreme skewness, heavy-tailed distributions, and limited data points, making it difficult to develop reliable statistical models. Many operational losses are rare but severe, further complicating forecasting.
+Evolving Risk Landscape: Operational risks change dynamically due to regulatory shifts, technological advancements, and emerging threats like cybercrime, making historical data less predictive of future trends.
+Regulatory and Industry Expectations: The regulatory frameworks acknowledge the limitations of purely quantitative operational risk models and encourage institutions to integrate expert judgment, scenario analysis, and qualitative assessments into their risk management frameworks.
+Empirical Analysis of Operational Loss Data
+Empirical analysis of operational loss data further reinforces these limitations. Out of the six operational loss event types, only two—namely External Fraud (EF) and Clients, Products & Business Practices (CPBP)—were modeled using a negative binomial regression with macroeconomic variables. Even for these, the relationships observed were weak and inconsistent.
+
+The previously developed negative binomial regression has demonstrated a negative correlation for EF events with both DOWJ Total and Financial/Accounting sector employment. As observed in Fig 1.1, a decline in DOWJ Total is not always associated with an increase in EF loss. The EF loss remains flat for most steep decreases in the DOWJ Total, with the exception of two cycles. A similar trend is evident in Fig 1.2, comparing Financial/Accounting sector employment with EF losses, where the losses remain flat even during the steepest decline in the macro-variable, yet rise as the employment macro-variable recovers.
+
+For CPBP events, a positive correlation was identified with SNP Volatility and Real GDP. However, Fig 1.3 and 1.4 illustrate that these relationships are weak as well. In Fig 1.3, historically higher losses are mostly associated with a flat change in SNP Volatility, a similar trend observed with GDP in Fig 1.4.
+
+Figures:
+Fig 1.1 - Comparison of macroeconomic variable DOWJ Total QOQ with EF Loss.
+Fig 1.2 - Comparison of macroeconomic variable Financial Act Employment QOQ with EF Loss.
+Fig 1.3 - Comparison of macroeconomic variable SNP Vol MAVG YDiff with CPBP Loss.
+Fig 1.4 - Comparison of Macroeconomic Variable Real GDP Lag2 with CPBP Loss
+Given the Model’s Limitation, an Adjustment to the Forecast Was Always Needed in Terms of an Overlay
+Figures 1.5 and 1.6 list all the overlays since the inception of the model.
+The model has over-forecasted CPBP frequency, requiring a 50%+ haircut to the loss delta in most scenarios historically.
+EF stress losses for the 2025 cycle were observed to be less than recent 9Q losses, necessitating a major adjustment.
+Consequently, the model deltas were proposed to be tripled for BHC Adverse and more than doubled for BHC Severe scenarios.
+The overall trend indicates that the model is contributing less to the forecast, requiring larger adjustments.
+Operational Risk SME Meeting Discussion
+
+The magnitude of the overlays was questioned by MRO in the Operational Risk SME Meeting (attached meeting notes).
+Model developers and SMEs recognized the model weakness and agreed to explore a qualitative approach.
+Given these limitations, the model developers propose a qualitative methodology that leverages:
+Recent historical trends in event frequency and severity.
+Expert assessments to ensure a more adaptable and institution-specific risk forecasting mechanism.
+Figures
+Fig 1.5 - Historical Overlay for EF
+
+CCAR Cycle	Scenario Type	Stress Loss ($)	Delta ($)	Overlay Delta ($)	Change in Delta (%)	Overlay Frequency Multiple
+2024	FRB Severe	478,845,296.91	366,159,886.14	278,570,490.16	-23.92%	99.7th percentile for 1 quarter
+2024	BHC Adverse	253,612,520.43	141,404,082.30	461,746,196.90	226.54%	3.5x of forecasted frequency
+2025 Proposal	BHC Severe	374,702,908.90	262,494,470.77	585,501,799.12	123.05%	3.5x of forecasted frequency
+Fig 1.6 - Historical CPBP Overlay
+
+CCAR Cycle	Scenario Type	Stress Loss ($)	Delta ($)	Overlay Delta ($)	Change in Delta (%)	Overlay Frequency Multiple
+2024	BHC Adverse	471,812,212.34	270,380,336.80	118,364,923.41	-56.22%	3x of recent history average
+2024	BHC Severe	453,409,252.51	251,977,376.98	171,664,389.90	-31.87%	3.5x of recent history average
+2024	FRB Severe	425,663,951.41	226,503,526.40	173,935,840.42	-23.21%	3.5x of recent history average
+2024	FRB Exploratory 1	120,636,373.93	257,416,865.03	120,636,373.93	-53.14%	3x of recent history average
+2024 Mid-Year	BHC Severe	674,949,947.25	458,709,516.22	210,155,300.91	-54.19%	3.5x of recent history average
+2025 Proposal	BHC Adverse	565,399,611.86	317,631,656.31	140,556,728.88	-55.75%	3x of recent history average
+2025 Proposal	BHC Severe	556,347,267.30	310,041,293.03	140,556,728.88	-54.67%	3x of recent history average
+2. Data Lineage and Controls
+
+The operational loss event data is sourced from Archer, a system of record for operational risk events.
+The CAMP team owns and controls the process of extracting, validating, and storing the data for model use.
+A structured data aggregation process is performed on the Archer dataset to calculate quarterly frequency and severity for both event types, as described in Section 2.4 - Data Aggregation and Transformations.
+Data Transformation
+Executed using a pre-defined script (details attached).
+Model developers are responsible for execution and maintenance of the aggregation code.
+Data is integrated into an Excel-based macro that facilitates stressed delta calculations.
+The model developers will collaborate with the CAMP team to productionize and automate the data aggregation process for improved efficiency and accuracy.
+Data Sources and Storage
+Description	Event Data
+Data Source	Archer
+Truist Application Identifier	APPID-31897104
+SAS Server	Prod: sas-utility.truist-prd.com 
+UAT: sas-utility-uat.truist-tst.com
+Data Elements	Basel Event Type Level 1 
+Internal Events 
+Posting Date 
+Event Record Type 
+Type of Impact
+Data Source Location	Truist Production SAS GRID: sas-utility.truist-prd.com (replace YYYYMM with CCAR cycle)
+File Path	/sasdata/capprd1/ccar/ccar_run/YYYYMM/data/ppnr_models/inputs
+Table Name	archer_report_YYYYMM.xlsx
+3. Qualitative Methodology Details
+
+Operational loss severity and frequency are largely random in nature.
+Events like theft, errors, lawsuits, and other unpredictable incidents contribute to high variability in losses.
+Additionally, idiosyncratic variance further complicates traditional quantitative modeling.
+To address these challenges:
+
+Developers and SMEs (subject matter experts) have determined that the recent 9-quarter (9Q) period best represents losses under the current control and threat environment.
+As a result, a multiplier-based approach has been adopted for stress delta forecasting.
+Stress Forecasting Calculation
+
+The following methodology ensures that forecasts are grounded in recent empirical experience, while allowing for forward-looking adjustments:
+
+Formula for Stress Forecast Calculation:
+
+Model Stress Forecast = Multiplier 3.5 × (Average Recent 9Q Frequency) × (Average Recent 9Q Severity)
+Model Baseline Forecast = (Recent 9Q Frequency) × (Recent 9Q Severity)
+Stress Delta = Model Stress Forecast - Model Baseline Forecast
+The stress delta is then incorporated into the management baseline forecast to produce stress-adjusted projections.
+An Excel macro is used as a working tool for future stress delta calculations, ensuring consistency and repeatability.
+4. Multiplier Selection
+
+Selecting an appropriate multiplier for stress delta forecasting is inherently challenging because:
+
+Operational risk losses exhibit high randomness and idiosyncratic behavior.
+Unlike credit or market risk, where statistical models provide predictive insights, operational risk events are driven by unpredictable and non-recurring factors like fraud, litigation, and cyber incidents.
+Mathematical approaches using historical events often prove inadequate.
+Challenges with Historical Multipliers
+Past multipliers become obsolete over time due to:
+Evolving control environments
+External threats
+Changing risk management practices
+Historical multipliers are often unreliable predictors of future stress losses.
+Best estimates for stress forecasting should be rooted in recent operational experience rather than modeled using uncertain future conditions.
+Alternative Methodologies for Multiplier Selection
+The model developers explored multiple methodologies, including:
+
+95th percentile to average ratios
+Maximum-to-average comparisons
+Overlays applied historically
+Stressed scenario averages compared to a 9-quarter average
+These methods produced a spectrum of possible multipliers, each with its own merits and limitations.
+
+Multiplier Spectrum Analysis
+
+The negative binomial model:
+
+Overpredicted CPBP losses
+Underpredicted EF losses, requiring frequent overlays
+Developers used rejected model outputs to determine a relevant range for multipliers.
+Figures 4.1 and 4.2 show multiplier ranges using alternative methodologies.
+
+Multiplier Range Findings
+Fig 4.3 and Fig 4.4 present a graphical representation of the multiplier spectrum.
+Lower Bound for EF observed at 2.24 (historically required overlay).
+Upper Bound for CPBP at 10.55.
+Multiplier Selection Table
+
+Testing Method	Multiplier
+M1 - 9Q MAVG max: average	3.86
+M2 - 95th percentile MAVG: average (used on dev data)	1.95
+M3 - 95th percentile MAVG: average (used on re-estimated data)	3.06
+M4 - Stress Loss output from the model: recent 9Q loss	0.94 - 2.24
+M5 - Multiplier Used in overlay	3 - 3.5
+The multiplier M4 and M5 represent the lower-to-upper bound of past overlays.
+Graphical Representations of Multiplier Spectrum
+Fig 4.3 - CPBP Multiplier Spectrum shows various multiplier evaluation scenarios.
+Fig 4.4 - EF Multiplier Spectrum presents a visual range of multipliers used historically.
+Fig 4.4 - Multiplier Spectrum for EF
+
+The selected 3.5 multiplier was not derived from a rigid mathematical formula but rather from empirical validation.
+Historical overlays, frequency averages, and expert judgment were used to arrive at a practical and defensible figure.
+Any future changes to the multiplier will be subject to SME recommendations and documented in the MDD to ensure that it continues to reflect the evolving nature of operational risk.
+Choice of Multiplier: Intuition vs. Statistical Derivation
+
+The choice of a multiplier is an exercise in expert intuition rather than a strict statistical derivation.
+Given the unpredictable nature of operational risk losses, the application of structured judgment remains the most viable approach for ensuring that stress loss estimates remain relevant and aligned with industry expectations.
+5. Assumptions and Limitations (EF & CPBP)
+
+Assumptions
+Multiplier Spectrum
+
+There is no single best methodology to determine the optimal multiplier.
+Instead, a spectrum of multipliers is derived using various established methodologies.
+This spectrum serves as a reference range, providing a relevant and justifiable basis for selecting a multiplier.
+The chosen multiplier is expected to fall within this range, ensuring robustness and consistency in decision-making.
+Relevance of Recent 9Q History
+
+The most recent nine quarters (9Q) of historical data are assumed to be the best representation of future events.
+It is not possible to quantitatively determine which dataset is optimal for forward-looking analysis.
+This selection is based on expert intuition and practical relevance.
+The assumption is that recent data better reflects current stress, threat conditions, and structural trends, making it the most suitable for modeling purposes.
+Limitations
+Severity component calculations are based on a recent 9Q average.
+For each event type, there is only one stress average, and the same stress average is used for varying stress scenarios without distinction.
+Archer Data Capture
+
+Archer data captures loss events ≥ $10,000 (net loss) and can adequately represent the most material losses from the firm.
+This is based on RMO-OMRM-PR-1100 Operational Risk Internal Loss Events Program policy instituted at Truist.
+The minimum gross loss threshold of $10,000 per event for reporting Internal Loss Events is based on:
+Regulatory guidance and banking industry standards.
+BCBS (Basel Committee on Banking Supervision) SMA (Standardized Measurement Approach) on the $10K threshold.
+A bank’s internal loss data must comprehensively capture all material activities and exposures across all appropriate subsystems and geographic locations.
+While the de minimis gross loss threshold may vary between banks, it must not exceed $10,000.
+Limited Loss Events and Data Sparsity
+
+Data only tracks back to 2005, limiting historical coverage.
+The limitation impacts both frequency and severity calculations.
+Data Aggregation Code
+
+The data aggregation code, which provides quarterly rolled-up frequency and severity, is not implemented by the CAMP team.
+Model developers own the code and execute it each cycle.
+Developers will collaborate with the CAMP team to productionize and automate the data aggregation process, improving efficiency and tracking.
+6. Monitoring Assumptions
+
+Each cycle, developers will perform the following annual exercise to ensure the assumptions remain relevant and applicable.
+
+Multiplier Spectrum
+Developers will recreate the range of multipliers and test if the chosen 3.5 multiplier is still within an acceptable range.
+Multipliers in tables GG and HH are static.
+M1 and M3 multipliers will be refreshed each cycle.
+If they exceed 3.5, developers will consult SMEs to discuss whether the 3.5 multiplier remains relevant.
+Upper bound for CPBP (10.55) is derived from the M4 multiplier (static).
+Lower bound for EF (2.24) is also derived from the M4 multiplier (static).
+Relevance of Recent 9Q History
+The most recent nine quarters (9Q) of historical data are assumed to be the best representation of future events, based on SME and developer intuition.
+This assumption cannot be monitored statistically or qualitatively.
+If the most recent 9Q deviates substantially from the average, developers will:
+Investigate whether the deviation is a data issue.
+Consult SMEs to determine if a structural change has occurred.
+Confirm with model stakeholders that the most recent history is still the most relevant.
+7. Model Owner Sign-Off
+
+The following table records model owners’ approval of changes to the methodology.
+Model change requests will be included when the plan update requires Model Risk Oversight review and approval.
+8. Summary of Changes in Methodology (MOD13628)
+
+Transition of EF and CPBP to a Qualitative Approach
+Due to the limitations discussed in the preceding sections—including weak macroeconomic relationships, high data variance, and the need for frequent overlays—the External Fraud (EF) and Clients, Products & Business Practices (CPBP) segments have also transitioned to the same qualitative methodology applied to the other four event types. Prior to MOD13628, the four other segments used a 9Q historical average approach, while EF and CPBP followed a negative binomial regression method leveraging macroeconomic variables.
+
+Under MOD13628:
+
+EF and CPBP no longer rely on macroeconomic indicators.
+Both segments now adopt the multiplier-based approach, using Archer data to derive event frequency and severity from the most recent 9Q.
+This change unifies all six operational risk segments under a consistent qualitative approach, minimizing the need for large overlays.
+Archer Data as the Sole Input
+Under the revised framework, Archer data is the single data source for all six event types. Archer is the system of record that captures operational risk events exceeding $10,000. It contains key fields such as:
+
+Posting Date of the loss event,
+Event Record Type (e.g., internal fraud, external fraud, etc.),
+Impact Type and severity details,
+Basel Event Type Level 1 classification.
+These data fields form the basis for quarterly frequency and severity calculations, which are then used to create the Model Baseline Forecast and the Model Stress Forecast (via the multiplier). With EF and CPBP also switching to this approach, macroeconomic variables are no longer used for operational risk forecasting.
+
+Rationale for the Change
+Inconsistent Macro Linkages: As described above, the negative binomial model for EF and CPBP displayed weak and inconsistent relationships with macroeconomic indicators, necessitating frequent manual overlays.
+Alignment with Other Segments: By shifting EF and CPBP to the qualitative method already used by the other four operational risk segments, the forecasting process becomes more consistent and simplified.
+Reduced Model Complexity: Removing macroeconomic variables streamlines the data requirements and assumptions, focusing on Archer data that best reflects the institution-specific nature of operational risk losses.
+Enhanced Adaptability: A purely qualitative approach that leverages recent loss data and expert judgment is better suited to adapt to emerging risks and changes in the internal control environment.
+Overall, MOD13628 consolidates all operational risk segments under a single qualitative methodology, which mitigates the deficiencies of the prior quantitative model and ensures a more institution-specific, judgment-based forecast of EF and CPBP losses.
+
+
+
+
+
+
+You said:
+give me the required model description and mode change section, not my original input
+ChatGPT said:
+Model Description
+The CCAR/DFAST Operational Loss Forecast Model was originally developed to estimate operational risk losses for Truist under different macroeconomic scenarios. This model was part of the PPNR suite of models, supporting Comprehensive Capital Analysis and Review (CCAR) and Dodd-Frank Act Stress Testing (DFAST) scenario forecasts. These annual forecasts were primarily used for capital assessment and planning.
+
+Historically, the model incorporated quantitative methodologies, leveraging macroeconomic indicators to predict operational losses. However, due to weak statistical relationships, high data variance, and inconsistent macro linkages, the model has undergone a methodology shift.
+
+Current Methodology
+
+Transition to a Qualitative Approach: Previously, four operational loss segments followed a qualitative historical average approach, while External Fraud (EF) and Clients, Products & Business Practices (CPBP) utilized a quantitative model based on macroeconomic variables. Under MOD13628, EF and CPBP have also transitioned to the qualitative approach, eliminating the use of macroeconomic indicators.
+Exclusive Use of Archer Data: The model now solely relies on Archer, the system of record for operational risk events. Archer data captures events exceeding $10,000 net loss, including details such as posting date, event type classification, impact type, and severity.
+Multiplier-Based Stress Forecasting: Instead of regression-based modeling, the stress loss calculation now applies multipliers derived from recent 9-quarter historical frequency and severity trends. This ensures that forecasts remain relevant to the current control and risk environment.
+By transitioning to a purely qualitative approach, the model improves forecast adaptability, reduces complexity, and ensures alignment across all operational risk segments.
+
+Model Change
+The following methodology changes were implemented as part of MOD13628:
+
+Elimination of Macroeconomic Variables
+Previous Approach: EF and CPBP were modeled using negative binomial regression, incorporating macroeconomic indicators such as DOWJ Total, SNP Volatility, Financial Employment, and Real GDP.
+Updated Approach: EF and CPBP now align with the other four segments, using only Archer data for frequency and severity calculations.
+Shift to a Fully Qualitative Model
+Prior to MOD13628: Four segments used a historical average approach, while EF and CPBP followed a statistical modeling approach.
+Post MOD13628: All six operational risk segments now follow the qualitative historical average approach, ensuring a consistent methodology.
+Implementation of a Multiplier-Based Forecasting Method
+The model now derives stress loss estimates by applying a 3.5x frequency multiplier to recent 9-quarter historical averages of frequency and severity.
+This replaces the previous regression model, which required manual overlays due to inconsistent macroeconomic relationships.
+Data Source Consolidation to Archer
+Macroeconomic input data has been removed.
+Archer event data is now the sole input source, ensuring a streamlined, institution-specific risk forecasting framework.
+These changes address the limitations of the prior model, enhancing forecast stability, reducing the need for overlays, and ensuring that operational risk projections align more closely with historical loss experience and expert judgment.
+
+
+
+
+
+
+You said:
+applies
+can you write for me the model description and mode change section based on the information I give you?
+
+Reasoned for 4 seconds
+Refining the model
+I’m focusing on the model details and mode change, emphasizing EF and CPBP's shift to qualitative insights, driven by their lack of dependency on macroeconomic variables and common overlays.
+
+Crafting the document
+I’m piecing together a final document, detailing the shift from partial quantitative to a singular qualitative approach, with a clear model description and changes, and references to the specified terms.
+
+Below is a concise Model Description and Model Change section derived from the information you provided. It reflects the transition of External Fraud (EF) and Clients, Products & Business Practices (CPBP) to a qualitative forecasting methodology and the removal of macroeconomic variables from the model.
+
+1. Model Description
+
+The Operational Loss Forecasting Model estimates operational risk losses under stress scenarios as part of the CCAR/DFAST framework. Historically, it used quantitative regression techniques for certain event types—particularly EF and CPBP—while the other operational loss segments relied on a qualitative approach. However, due to weak and inconsistent statistical relationships with macroeconomic indicators, EF and CPBP have transitioned to the same qualitative methodology as the other event types.
+
+Key Features of the Current Model
+Qualitative Methodology
+All six operational risk segments, including EF and CPBP, rely on institution-specific loss data rather than macroeconomic variables.
+A multiplier-based method (using recent 9Q averages of frequency and severity) provides flexibility and consistency in stress forecasting.
+Single Data Source (Archer)
+Archer—the system of record for operational risk events—supplies data for frequency and severity calculations.
+Only events exceeding $10,000 (net loss) are captured, ensuring focus on material exposures.
+Overlay Reduction
+Replacing macroeconomic regressions with a qualitative approach significantly reduces the need for manual overlays, which were frequently required to correct for weak macro linkages.
+Institution-Specific and Adaptable
+By grounding forecasts in recent internal loss trends and SME insights, the model is better suited to respond to evolving risks (e.g., cyber threats, regulatory changes).
+2. Model Change (MOD13628)
+
+MOD13628 introduced the following alterations to align EF and CPBP with the fully qualitative methodology:
+
+Removal of Macroeconomic Variables
+Negative binomial regression was retired for EF and CPBP, eliminating reliance on macroeconomic indicators such as market indices, volatility measures, and GDP.
+Unified Qualitative Approach
+EF and CPBP now adopt the same multiplier-based forecasting method used for the other four event types.
+Recent 9-quarter (9Q) averages of loss frequency and severity form the baseline; a 3.5x multiplier is applied for stress forecasts.
+Exclusive Use of Archer Data
+Archer remains the sole source of data inputs (posting date, event record type, impact type, etc.) for all six event types.
+This consolidation streamlines data management and ensures consistency across segments.
+Streamlined Oversight and Reduced Overlays
+With a more transparent and consistent approach across all event types, management overlays and adjustments have substantially decreased.
+Model performance is now monitored through qualitative review and SME judgment, rather than calibrations tied to external macroeconomic trends.
+By consolidating all operational risk segments under a single, qualitative forecasting method, MOD13628 addresses prior methodological gaps, increases forecast stability, and ensures alignment with current risk management practices.
+
+
+
+
+
+
+You said:
+well, be more conprehensive about why there is a need for methodology change, also update the sections based on the following information from MDD, note the MDD is not full updated and it may still contain outdated information related to quantitative model, but the useful information here is the methodology of the other 4 segments. DPA EPWS IF and EDPM did not change, so you can insights regarding these 4:"
+### **4. MODEL METHODOLOGY**  
+
+**Note:** The previously established modeling and quantitative methodologies for EF and CPBP are no longer valid due to their inability to produce reasonable stressed outputs. As a result, the approach has shifted from a purely quantitative framework to a qualitative methodology that better accounts for the underlying structural changes and evolving risk landscape. This transition ensures that the forecast remains relevant. The qualitative approach used in place of the prior model-based methods is detailed in Section 10.  
+
+### **4.1 Relevant Theory or Research**  
+
+#### **Frequency Estimation**  
+
+When it comes to modeling counts (i.e., whole numbers greater than or equal to 0), the Poisson regression is always the first choice where a response is assumed to have a Poisson distribution conditional on a weighted sum of predictors. A Poisson distribution is parameterized by \(\lambda\), which happens to be both its mean and variance. However, a distribution of counts will usually have a variance that is not equal to its mean.  
+
+One approach that addresses this issue is negative binomial regression. The negative binomial distribution, like the Poisson distribution, describes the probabilities of the occurrence of whole numbers greater than or equal to 0. Unlike the Poisson distribution, the variance and the mean are not equivalent. This suggests it might serve as a useful approximation for modeling counts with variability different from its mean. The variance of a negative binomial distribution is a function of its mean and has an additional parameter, \( k \), called the dispersion parameter. Assume that the count is a random variable \( Y \) from a negative binomial distribution, then the variance of \( Y \) is:
+
+\[
+var(Y) = \mu + \frac{\mu^2}{k}
+\]
+
+As the dispersion parameter gets larger and larger, the variance converges to the same value as the mean, and the negative binomial turns into a Poisson distribution.  
+
+Negative binomial regression is similar to regular multiple regression except that the dependent (\( Y \)) variable is an observed count that follows the negative binomial distribution. Thus, the possible values of \( Y \) are the nonnegative integers: 0, 1, 2, 3, and so on. Negative binomial regression is a generalization of Poisson regression, which loosens the restrictive assumption that the variance is equal to the mean made by the Poisson model. The traditional negative binomial regression model is based on the Poisson-gamma mixture distribution. This formulation is popular because it allows the modeling of Poisson heterogeneity using a gamma distribution.  
+
+Negative binomial regression can be used for over-dispersed count data, where the conditional variance exceeds the conditional mean. It can be considered a generalization of Poisson regression since it has the same mean structure as Poisson regression but includes an additional parameter to model the over-dispersion. If the conditional distribution of the outcome variable is over-dispersed, the confidence intervals for the negative binomial regression are likely to be narrower compared to those from a Poisson regression model.  
+
+### **Severity Estimation**  
+
+Operational loss severity is largely random by nature. It is not deemed correlated with macroeconomic conditions. Theft, errors, lawsuits, etc., are random events whether there is economic stress or not, and the size of the events is largely random, i.e., not apparently impacted by the economy. There is a great deal of idiosyncratic variance as well. It is likely that the majority of variance cannot be related to economic conditions.  
+
+The distribution-based forecasting approach has not proven effective in severity forecasting. Thus, the developer and the working group decided to calibrate a historical average approach to assess the magnitude of the severity to reflect the firm’s own loss experience.  
+
+---
+
+### **5. MODEL ESTIMATION PROCESS**  
+
+**Note:** The previously established modeling and quantitative methodologies for EF and CPBP are no longer valid due to their inability to produce reasonable stressed outputs. As a result, the approach has shifted from a purely quantitative framework to a qualitative methodology that better accounts for the underlying structural changes and evolving risk landscape. This transition ensures that the forecast remains relevant. The qualitative approach used in place of the prior model-based methods is detailed in Section 10.  
+
+### **5.1 Model Estimation Method**  
+
+The model has two components, **frequency** and **severity**, that use different model estimation methods. The frequency modeling framework forecasts quarterly loss event frequency using negative binomial regression or the average forecasting method, depending on whether correlated macroeconomic drivers can be found.  
+
+The severity modeling framework is based on historical averages, which are adjusted upward in stressed conditions and downward in baseline conditions. Historical loss data are used to estimate multiplicative factors that are greater than one in a stressed economic environment and less than one in favorable conditions. The adjusted average severity values are used directly in the **“frequency times severity”** formula for aggregate losses. This section presents details about the model estimation method for each component.  
+
+### **5.1.1 Frequency Component**  
+
+The number of events for Basel event types in each quarter is largely random. They may or may not be driven by macroeconomic conditions. If macroeconomic predictors are identified, negative binomial regression will be used for model estimation. Otherwise, the average forecasting method will be used.  
+
+#### **A. Negative Binomial Regression**  
+
+During the predictor selection process, the developer set up the estimation process for univariate regression, two-predictor regression, and three-predictor regression. Each process estimates a negative binomial regression for one event type with potential macroeconomic variables.  
+
+Negative binomial regression models the number of counts of an event when the event has extra-Poisson variation, i.e., when it has over-dispersion. One derivation of the negative binomial mean-dispersion model is that individual units follow a Poisson regression model, but there is an omitted variable \( v_j \), such that \( e^{v_j} \) follows a gamma distribution with mean 1 and variance \( \alpha \):
+
+\[
+y_{j,ET} \sim \text{Poisson}(\mu_{j,ET}),
+\]
+
+where
+
+\[
+\mu_{j,ET} = \exp(X_{ET} \beta + \epsilon_{j,ET})
+\]
+
+and 
+
+\[
+v_{j,ET} \sim \text{Gamma}(\frac{1}{\alpha}, \alpha).
+\]
+
+Here is the transcribed text from the additional images:
+
+---
+Here is the transcribed text from the images you provided:
+
+---
+
+### **Average Forecasting Method**
+When the predictor selection process fails to identify macroeconomic drivers or the stakeholders believe that the Basel event type is not macroeconomic-driven, the simple average forecasting method will be considered instead. As explained in section 4.1, the average forecasting method uses the average of counts in the last nine quarters as the count forecast for the current period:
+
+\[
+y_t = \frac{y_{t-1} + y_{t-2} + \dots + y_{t-k}}{k}, \quad k=9
+\]
+
+Furthermore, the developer uses historical frequency to identify stressed periods and calculate the multipliers for stressed periods (e.g., BHC Adverse, BHC Severe, and FRB Severely Adverse) and non-stressed periods (e.g., BHC Baseline and FRB Baseline). To avoid the impact of extreme values, the developer uses the **95th percentile** of stressed multipliers' distribution of historical incidents and loss severity ($) data as multipliers for stressed periods and the corresponding non-stressed multipliers for non-stressed periods.
+
+---
+
+### **5.1.2 Severity Component**
+Operational losses are viewed as largely random. Theft, errors, lawsuits, etc., are random events regardless of economic stress, and their size is also largely random, i.e., not apparently impacted by the economy. However, there is some relationship between severity and the economy, as descriptions of some of our largest losses indicate they are related. 
+
+Nevertheless, there is a great deal of **idiosyncratic variance** as well. It is likely that the majority of variance cannot be related to economic conditions.
+
+---
+
+### **Variable Selection Iterative Process**
+Based on the ideas above, Capital Analytics did not further investigate the economic sensitivity of operational loss severity. Instead, they followed the previous **multiplier approach** to form "base" and "stress" severity averages based on losses outside and inside the recent stress period. 
+
+This approach is conceptually **similar to the FRB's original severity modeling approach**. The formula for the multiplier approach is:
+
+\[
+\text{Severity}_{\text{type, ET}} = \text{multiplier}_{\text{type, ET}} \times \text{Avg Net Loss}_{\text{ET}}
+\]
+
+where **ET** refers to the seven Basel event types, and **type** refers to stress or non-stress. The **average net losses** (\(\text{Avg Net Loss}\)) are based on the **entire model development period** (2005Q1 to 2021Q4).
+
+The formula for multipliers is:
+
+\[
+\text{multiplier}_{\text{stress, ET}} = \frac{\text{Avg Net Loss}_{\text{stress, ET}}}{\text{Avg Net Loss}_{\text{ET}}}
+\]
+
+\[
+\text{multiplier}_{\text{non-stress, ET}} = \frac{\text{Avg Net Loss}_{\text{non-stress, ET}}}{\text{Avg Net Loss}_{\text{ET}}}
+\]
+
+The **average net loss for stressed periods** is based on the **current and previous eight quarters** of historical data (**nine quarters total**), while the **non-stressed average net loss** is based on the **remaining period** (excluding the nine quarters used for stress calculation). 
+
+Both stress and non-stress multipliers are **calculated for each event at the quarterly level**. This step is subsequently used to **identify the stress period for each event**.
+
+---
+
+### **5.1.3 Stress Period Selection**
+A key assumption in the current model (and the previous model) is that **all Basel event types share the same stressed periods**, specifically **2008Q1 to 2010Q1** (the Great Financial Crisis). However, this assumption is not realistic, as **not all Basel event types experienced stress in the same way during this period**. 
+
+To refine this assumption, the model now **identifies individual stress periods for each event type based on historical loss data**.
+
+The **five methods explored** for stress period identification are:
+
+1. **95th percentile method** (selected method)
+2. **Highest 9-quarter moving average (MA) loss, ending quarter of stress period**
+3. **Highest 9-quarter MA loss, mid of stress period**
+4. **Highest single event loss, ending quarter of stress period**
+5. **Continuous trend where quarterly severity exceeds the 90th percentile**
+
+The table below presents **stress periods by event type** using these five methods:
+
+| Event | Method 1 | Method 2 | Method 3 | Method 4 | Method 5 |
+|--------|------------|------------|------------|------------|------------|
+| **EF** | 2007Q4-2009Q4 | 2007Q2-2009Q2 | 2008Q2-2010Q2 | 2007Q1-2009Q1 | 2007Q2-2009Q4 |
+| **CPBP** | 2013Q2-2015Q2 | 2012Q2-2014Q2 | 2013Q2-2015Q2 | 2012Q4-2014Q4 | 2014Q2-2014Q4 |
+| **EDPM** | 2012Q2-2014Q2 | 2012Q3-2014Q3 | 2013Q3-2015Q3 | 2012Q1-2013Q1 | 2012Q3-2013Q2 |
+| **IF** | 2006Q2-2008Q2 | 2005Q2-2007Q2 | 2006Q2-2008Q2 | 2002Q3-2005Q3 | 2005Q3-2006Q2 |
+| **DPA** | 2017Q3-2019Q3 | 2016Q3-2018Q3 | 2017Q3-2019Q3 | 2015Q3-2017Q3 | 2011Q4-2014Q1; 2017Q3-2018Q3 |
+| **EPWS** | 2014Q4-2016Q4 | 2015Q1-2017Q1 | 2017Q1-2018Q1 | 2010Q2-2012Q2 | Continuous stress period not observed |
+
+---
+
+Here is the transcribed text from the latest set of images:
+
+---
+
+### **Stress Period Identification**
+- The methods used for stress period selection produce comparable results **except for method #4**, which uses quarterly data and shows more distinct differences.
+- The **moving average methods (methods #1, #2, and #3)** are considered more reliable as they indicate continuous periods of elevated severity or frequency.
+- **Method #1** has been **selected as the official stress period identification methodology**.
+
+---
+
+### **Annual Review of Stress Period**
+- **The stress period is reviewed annually** as new data points become available.
+- This **may or may not change** the stress period previously identified if newer data points do not indicate **higher severity or frequency**.
+
+---
+
+### **5.1.4 Multiplier Selection**
+- Multipliers are differentiated by **baseline (non-stress)** and **stress (adverse, severely adverse)** scenarios.
+- Applied when macroeconomic factors **have low correlation** to frequency or severity.
+- The stress multiplier is chosen based on the **95th percentile of the development period’s distribution**.
+- The **identified quarter closest to the 95th percentile is selected as the stress period ending quarter**, which lasts **nine quarters**.
+- **Multipliers are refreshed annually** in line with the stress period review.
+
+---
+
+### **Process for Stress Period and Multiplier Selection**
+- **Step 1:** Calculate multipliers for each quarter.
+- **Step 2:** Compute statistics of multipliers, including percentiles.
+- **Step 3:** Identify the **stress period’s ending quarter** (nearest to the 95th percentile).
+- **Step 4:** Select multipliers for stress and non-stress scenarios.
+
+**Example for External Fraud (EF) Event:**
+- The identified stress period ranges from **31-Dec-07 to 31-Dec-09**.
+- The **multiplier for stress is 1.7319**, and for non-stress, it is **0.8884**.
+
+---
+
+### **5.3 Severity Component**
+#### **A. Severity for Archer Data**
+- **Severity multipliers** are based on **removal of 11 abnormal high-severity events**, approved by the ORM working group.
+- **Recession period multipliers (2008Q1-2010Q1) are not comparable** to the existing model due to:
+  - **Changes in severity measurement (gross loss to net loss).**
+  - **Different recession period definitions.**
+- The **historical peak period is assumed to last nine quarters**.
+- The **95th percentile of the multiplier distribution** is used as the **stress multiplier**, assuming confidence at this level.
+
+| **Event Type** | **EF** | **CPBP** | **EDPM** | **IF** | **DPA** | **EPWS** |
+|---------------|--------|--------|--------|--------|--------|--------|
+| **Recession Period Stress Multiplier** | **1.88** | 0.92 | 0.77 | 1.15 | 0.58 | 0.80 |
+| **Non-Stress Multiplier** | **0.86** | 1.01 | 1.03 | 0.98 | 1.07 | 1.03 |
+| **Historical Peak Period Stress Multiplier** | 2.02 | 2.39 | 1.77 | 1.95 | 2.20 | 1.30 |
+| **Historical Peak Period Non-Stress Multiplier** | 0.84 | 0.79 | 0.88 | 0.86 | 0.81 | 0.95 |
+| **Stress Period** | **2007Q2-2009Q2** | 2012Q2-2014Q2 | 2012Q3-2015Q3 | 2005Q2-2007Q2 | 2016Q3-2018Q3 | 2015Q1-2017Q1 |
+| **95th Percentile Stress Multiplier** | **1.73** | **2.06** | **1.68** | **1.60** | **2.14** | **1.28** |
+| **95th Percentile Non-Stress Multiplier** | **0.89** | **0.84** | **0.90** | **0.91** | **0.82** | **0.96** |
+
+---
+
+### **Severity for GL Data**
+- **GL data** includes **low-dollar loss events** that were **not captured in Archer Data**.
+  - Represents **3% of total loss severity**.
+  - **CMD required exploration** in the **2022 model development** in response to an **Audit Finding**.
+- **Key Findings from Early Exploration:**
+  - Small GL losses (<$10,000) **map to EDPM** (Execution, Delivery, and Process Management).
+  - **Direct modeling of severity** posed an **inflated frequency concern**.
+  - **No clear macroeconomic or statistical relationship** was identified.
+- **Proposal:**
+  - If **average forecasting was applied**, the **GL-based stress multiplier** would be **1.52 (2017Q4-2019Q4)**.
+  - **Due to immaterial impact**, the working group **decided to exclude GL data** from loss forecasting **to maintain consistency**.
+
+---
+
+### **Historical Severity Distribution**
+- The **severity distribution for CPBP, EDPM, EF, and IF** is visualized in **Figure 46**, with:
+  - **LDA-defined periods** (green indicators).
+  - **Recession periods** (red indicators).
+
+---
+
+### **Transcribed Content from the Latest Images**
+
+---
+
+### **5.4 Total Operational Losses**
+The developer forecasts operational losses using a **frequency-times-severity approach**. The basic forecasting formula is:
+
+\[
+E(\text{Operational loss})_{ET} = E(\text{Frequency}_{ET}) \times E(\text{Severity}_{ET})
+\]
+
+where **ET** represents the Basel event type. Note that **severity is measured as net loss dollar per event**.
+
+#### **Aggregated Losses**
+Figure 47 presents **aggregated losses (EDPM) from GL Loss Data**, comparing **Archer total (excluding outliers), aggregate total, and GL loss data (773630 and 773650).**
+
+#### **Loss Breakdown by Scenario**
+| **Event Type** | **CCAR 2022 Scenario** | **Historical Multiplier (95th Percentile)** | **Archer Data in Model Development** | **GL Data** | **Total** |
+|--------------|-----------------|-----------------|----------------|---------|---------|
+| **Total** | BHC Adverse | N/A | 653,426,922 | - | 656,656,412 |
+|  | BHC Severe | N/A | 784,205,871 | - | 787,435,361 |
+|  | FRB Severe | N/A | 886,440,055 | - | 889,669,545 |
+| **EF** | BHC Adverse | 1.73/0.89 | 206,605,369 | - | 206,605,369 |
+|  | BHC Severe | 1.73/0.89 | 357,746,871 | - | 357,746,871 |
+|  | FRB Severe | 1.73/0.89 | 431,546,372 | - | 431,546,372 |
+| **CPBP** | BHC Adverse | 2.06/0.84 | 260,695,561 | - | 260,695,561 |
+|  | BHC Severe | 2.06/0.84 | 240,333,008 | - | 240,333,008 |
+|  | FRB Severe | 2.06/0.84 | 268,767,691 | - | 268,767,691 |
+| **EDPM** | BHC Adverse | 1.68/0.9 | 143,774,408 | 3,229,490 | 147,003,898 |
+|  | BHC Severe | 1.68/0.9 | 143,774,408 | 3,229,490 | 147,003,898 |
+| **IF** | BHC Adverse | 1.6/0.91 | 4,216,143 | - | 4,216,143 |
+
+---
+
+### **5.4.1 Deltas for Stressed Scenarios**
+To estimate **additional losses during stress scenarios**, the developer calculates the stress forecast as follows:
+
+#### **Formula for Stress Loss Forecasting**
+\[
+\text{Model Stress Forecast} = \text{Frequency Stress Multiplier} \times \text{Average 9QTR Frequency} \times \text{Stress Multiplier} \times \text{Average 9QTR Severity}
+\]
+
+\[
+\text{Model Baseline Forecast} = \text{Frequency Base Multiplier} \times \text{Average 9QTR Frequency} \times \text{Base Multiplier} \times \text{Average 9QTR Severity}
+\]
+
+\[
+\text{Stress Delta} = \text{Model Stress Forecast} - \text{Model Baseline Forecast}
+\]
+
+\[
+\text{Stress Forecast} = \text{Management Baseline Forecast} + \text{Stress Delta}
+\]
+
+#### **Forecasted Stress Losses**
+| **Event Type** | **CCAR 2022 Scenario** | **Historical Multiplier (95th Percentile)** | **NEW Model** |
+|--------------|-----------------|-----------------|-----------------|
+| **Total** | BHC Adverse | - | 381,762,918 |
+|  | BHC Severe | N/A | 512,541,867 |
+|  | FRB Severe | N/A | 613,347,351 |
+| **EF** | BHC Adverse | 1.73/0.89 | 270,509,600 |
+|  | BHC Severe | 1.73/0.89 | 340,547,562 |
+|  | FRB Severe | 1.73/0.89 | 142,292,988 |
+| **CPBP** | BHC Adverse | 2.06/0.84 | 121,930,434 |
+|  | BHC Severe | 2.06/0.84 | 152,697,956 |
+| **EDPM** | BHC Adverse | 1.68/0.9 | 96,618,283 |
+|  | BHC Severe | 1.68/0.9 | 96,618,283 |
+| **IF** | BHC Adverse | 1.6/0.91 | 2,658,147 |
+| **DPA** | BHC Adverse | 2.14/0.82 | 11,922,628 |
+
+---"
+
+Reasoned for 6 seconds
+Clarifying methodologies
+I’m detailing the shift to a qualitative approach for EF and CPBP, highlighting the abandonment of the negative binomial approach and maintaining the original models for DPA, EPWS, IF, and EDPM.
+
+Below is a Model Description and Model Change section that comprehensively explains why the methodology changed for External Fraud (EF) and Clients, Products & Business Practices (CPBP), while clarifying how the other four event types (DPA, EPWS, IF, EDPM) remain on their existing frameworks. This summary draws on the partial MDD content you provided and highlights the transition from a quantitative (negative binomial regression) approach to a predominantly qualitative (historical average multiplier) methodology.
+
+Model Description
+
+The Operational Loss Forecasting Model projects operational risk losses under baseline and stressed scenarios to support CCAR/DFAST compliance. It has two main components:
+
+Frequency of loss events (how many occur in a quarter).
+Severity of each loss event (average dollar amount per event).
+Historically, EF and CPBP leveraged negative binomial regression to capture macroeconomic influences in their frequency forecasts, while other event types (DPA, EPWS, IF, EDPM) typically followed a qualitative average-based approach if no meaningful macroeconomic predictors were identified. Severity, on the other hand, largely relied on historical averages, with additional multipliers to account for stress or non-stress scenarios.
+
+Key Elements of the Current Methodology
+Qualitative Approach for EF and CPBP
+Negative Binomial Regression Removed: EF and CPBP no longer rely on macroeconomic factors; their regression-based frameworks were retired due to weak or inconsistent relationships with economic indicators.
+9-Quarter Average & Multiplier: Both EF and CPBP now use a simple average of the last nine quarters for frequency, coupled with stress multipliers to scale up in adverse scenarios.
+No Methodology Change for the Other Four Event Types
+DPA, EPWS, IF, and EDPM continue to follow the existing approach:
+Frequency can use negative binomial regression if valid macro drivers are found, or a 9-quarter average otherwise.
+Severity is derived from historical average multipliers, which vary between baseline and stress conditions.
+Severity Modeling
+Random & Largely Non-Macroeconomic: Data indicates that theft, errors, and lawsuits exhibit high idiosyncratic variance.
+Historical Average and Stress Multipliers: The model uses a “frequency × severity” approach, applying multipliers identified from historical stress periods (e.g., based on the 95th percentile of past events).
+Stress Period Identification
+A nine-quarter window representing the most severe historical period (or event-type-specific peak) is chosen as the “stress period.”
+Multipliers—both for frequency and severity—are refreshed annually as part of the model’s monitoring to keep pace with new data.
+Data Sources
+Archer: Captures losses ≥ $10,000, serving as the primary system of record.
+If macroeconomic drivers are not found or are deemed unreliable, the model defaults to the average-based approach described above.
+Model Change (EF & CPBP Transition)
+
+Reason for Methodology Change
+Inability to Produce Reasonable Stressed Outputs: The negative binomial regression models for EF and CPBP were producing stress forecasts that required excessive manual overlays or haircuts, indicating that macroeconomic predictors were weakly correlated with actual losses.
+Underlying Structural Changes & Evolving Risk Landscape: Operational risk drivers (e.g., cyber incidents, litigation, or fraud) often do not follow predictable economic cycles. A purely quantitative framework could not capture these institution-specific and rapidly shifting risks.
+Ensuring Ongoing Relevance: The firm needed a more robust and adaptable approach that could be updated quickly and align with expert insights.
+What Changed for EF & CPBP
+Negative Binomial Regression Removed
+Economic variables (e.g., DOWJ, GDP, etc.) are no longer used in EF/CPBP frequency estimation.
+Switch to Qualitative 9Q Average
+EF/CPBP frequency is now based on the simple average of the most recent nine quarters.
+Stressed scenarios apply 95th-percentile multipliers determined from historical peak loss periods.
+Severity Remains Random & Average-Based
+EF/CPBP severity calculations now follow the historical average approach, similar to other event types.
+Random and idiosyncratic nature means macroeconomic sensitivity remains minimal.
+No Change for DPA, EPWS, IF, & EDPM
+These four event types continue to follow existing frameworks that already relied on either a negative binomial approach (if robust macro drivers were found) or a historical average approach when no meaningful macroeconomic relationship existed.
+Impact of the Change
+Reduced Overlays: Eliminates the constant adjustments previously needed to reconcile quantitative outputs with real-world EF/CPBP losses.
+Stronger Alignment Across All Event Types: Consolidates the approach so that all six Basel event types use a qualitative or partially qualitative frequency model, a historically informed severity model, and stress multipliers tailored to institution-specific data.
+Annual Monitoring & Update: The model continues to review stress periods and refresh multipliers annually, ensuring it remains current with changing risk profiles.
+By transitioning EF and CPBP to the qualitative 9Q average framework, the entire operational loss model now emphasizes the realities of internal losses and the limited predictive power of macroeconomic factors for operational events, thus enhancing forecast stability and methodological consistency across all event types.
+
+
+
+
+
+
+You said:
+how was EF and CPBP previously modeled? help me understand
+Reasoned for a couple of seconds
+EF (External Fraud) and CPBP (Clients, Products & Business Practices) were originally modeled using negative binomial regression, a statistical technique designed for count data (like the number of fraud or CPBP events). The model incorporated macroeconomic variables—for example, equity indices, GDP, and employment trends—under the assumption that external economic conditions might influence operational risk event frequency.
+
+Negative Binomial Regression
+Why negative binomial?
+Poisson regression often underestimates variance if events are “overdispersed” (variance exceeds the mean). Negative binomial regression addresses this by introducing a “dispersion parameter,” allowing the variance to grow faster than the mean.
+What did it capture?
+The frequency of EF or CPBP events in a given quarter was modeled as a function of macroeconomic inputs. In principle, if fraud or CPBP incidents spiked in downturns or expansions, the regression might capture that relationship.
+Macroeconomic Drivers
+Examples: DOWJ Total (equity market), GDP (economic growth), employment rates in financial services, etc.
+Intended benefit: If there was a strong correlation between certain macro trends and the number of EF or CPBP events, the negative binomial regression would pick this up and produce a more dynamic, scenario-based forecast.
+Challenges & Limitations
+Weak Correlations: In practice, the observed relationships with macro variables were inconsistent or too weak to reliably predict operational risk events.
+High Variance & Idiosyncrasies: EF and CPBP losses often stem from very institution-specific factors—like internal controls, legal disputes, or fraud tactics—not well captured by broad economic indicators.
+Frequent Overlays: Because forecasts frequently diverged from actual loss experience, manual adjustments (“overlays”) became routine to correct the modeled outputs.
+Ultimately, the negative binomial model for EF and CPBP proved insufficient for generating consistent, reliable stress forecasts, prompting a shift to a simpler qualitative approach (i.e., using recent historical averages of frequency and severity) that better reflects the idiosyncratic, institution-specific drivers of operational risk events.
+
+
+
+
+
+
+You said:
+I've got more information on model description from MDD, can you incorporate these? still be concise "Here is the transcribed text from the images:
+
+---
+
+### **1.1 Model’s Statement of Purpose**  
+The CCAR/DFAST Operational Loss Forecast model (henceforth ‘the model’) was developed to estimate the operational risk losses for Truist under different macroeconomic scenarios. This model is part of the PPNR suite of models used by Corporate Finance to prepare Comprehensive Capital Analysis and Review (CCAR) and Dodd Frank Act Stress Test (DFAST) scenario forecasts. The annual CCAR and DFAST forecasts are geared toward capital assessment and planning. Extending the model use would require—in addition to additional testing and expanding documentation—a separate validation and approval by the Model Risk Oversight (MRO).  
+
+The model output is reviewed by Operational Risk Management subject matter experts (SMEs). The model’s **final results** are subject to subsequent reviews and challenge by the Capital Committee. The post-overlay 9-quarter loss forecasts are mapped to the FR Y-14A reporting form, used to report Capital Assessments and Stress Testing assessments in annual CCAR submission.  
+
+---
+
+### **1.2 Overall Model Description**  
+Each year, the Federal Reserve Bank assesses the financial strength and capital adequacy of the U.S.'s largest financial institutions. The Dodd-Frank Act requires Truist Corporation to submit a capital plan and show that under the plan, the bank can maintain adequate funding, meet its obligations to creditors and other counterparties, and continue to serve as a credit intermediary, including under an adverse stress environment. Truist’s capital plan shall be supported by an analysis of the earnings impact of an adverse economic environment. The analysis shall include consideration of all sources of loss, including operational losses.  
+
+Operational risk is the risk to earnings or capital arising from inadequate or failed internal processes, people, and systems or from external events. This definition includes legal risk, which is the risk of loss arising from defective transactions, litigation or claims made, or the failure to adequately protect company-owned assets.  
+
+Operational risk can manifest itself in various ways. Examples include process errors, fraud, business interruptions, and employee misbehavior. Operational loss events fall into seven Basel defined event types:  
+
+- **IF** - Internal Fraud  
+- **EF** - External Fraud  
+- **EPWS** - Employment Practices and Workplace Safety  
+- **CPBP** - Clients, Products, and Business Practices  
+- **EDPM** - Execution, Delivery, and Process Management  
+- **DPA** - Damage to Physical Assets  
+- **BDSF** - Business Disruption and System Failures  
+
+Operational loss events resulting in a gross loss of at least $10,000 are recorded in Truist’s Archer Management Suite. All operational losses with small amounts (<$10K) are maintained in a G/L dataset with the Operational Risk Management Events team having a Tableau dashboard of all Loss GL entries tied to all Operational Loss GL Accounts. While the previous model development exclusively focused on the operational loss events that have a direct financial gross loss of $10,000 or more, the **2022 model development** also included those small operational losses in its exploratory analysis and model development. Out of the seven Basel-defined event types, six of the seven, all segments **except for BDSF**, were in the scope of this model development.  
+
+The goal of stress forecasting is to produce an estimate of **severe but plausible** operational losses conditional on a stressed environment. Where possible, we capture relationships between operational losses and economic stress quantitatively by modeling frequency and severity of losses. The frequency modeling framework forecasts quarterly loss event frequency using **Negative Binomial regression**. The severity modeling framework is based on historical average loss distribution and calibrated the stress/non-stress multipliers to forecast various economic scenarios.  
+
+---
+
+### **Capital & Model Development (CMD)**  
+CMD forecasts operational losses using the common **frequency-times-severity** approach. That is, the expected operational losses will be the expected frequency of loss events multiplied by the expected severity of the corresponding event type. The basic forecasting formula is stated as:  
+
+\[
+E(\text{Operational loss})_{ET} = E(\text{Frequency})_{ET} \times E(\text{Severity})_{ET}
+\]
+
+where the subscript, **ET**, is the event type, which includes IF, EF, CPBP, EDPM, DPA, and EPWS in the model development.  
+
+The model calculates additional losses during stress **in excess** of expected losses in the baseline scenario. The additional losses are added to management’s baseline forecast to produce **stress forecasts**, also known as **stress deltas**.  
+
+The **Negative Binomial regression approach** was utilized for modeling the frequency component of **EF and CPBP** segments. The **Multiplier approach** was used for the other four event types (IF, EDPM, DPA, and EPWS) for frequency and six Basel event types for the severity component. The results of these methodologies have been summarized in the table below.  
+
+The **model tier is assessed as Tier 2** by MRO at the time of model candidate assessment (MCA).  
+
+---
+
+### **1.3 Model Scope**  
+Operational risk is the risk to earnings or capital arising from inadequate or failed internal processes, people, and systems or from external events. This definition includes legal risk, which is the risk of loss arising from defective transactions, litigation or claims made, or the failure to adequately protect company-owned assets. To monitor and control operational risk, Truist maintains a system of **comprehensive policies** and a **control framework** designed to provide a sound and well-controlled operational environment.  
+
+The **model development scope summary** is illustrated in Figure 4, showing the aggregation of **delta stress scenarios**, **operational risk loss**, **frequency**, and **severity** components for various Basel event types.  
+
+---
+
+This transcription captures the core contents of the provided images related to the **CCAR/DFAST Operational Loss Forecast Model** used by Truist. Let me know if you need further refinements or specific details!"
+
+Reasoned for 8 seconds
+Updating the model
+The focus is on crafting a concise model description by integrating new data from the MDD, specifically highlighting the use of negative binomial regression for EF, CPBP. This integration ensures the model's description remains precise and relevant.
+
+Tracing the model's goals
+The model now leverages the CMD technique, emphasizing event type frequency and severity, and pivots to a novel EF, CPBP method.
+
+Below is a concise model description, integrating the newly provided MDD content while reflecting the latest methodology changes:
+
+Model Description
+
+The CCAR/DFAST Operational Loss Forecast Model estimates potential operational risk losses for Truist under various macroeconomic scenarios, supporting annual CCAR and DFAST stress tests and capital planning. The model is part of the PPNR suite and uses a frequency-times-severity framework: each Basel-defined event type’s expected frequency is multiplied by its expected severity to produce quarterly loss estimates. Additional stress deltas are then added to management’s baseline forecast to create severe-but-plausible CCAR projections.
+
+Scope & Purpose
+Scope: Six Basel event types are included—IF, EF, CPBP, EDPM, DPA, EPWS—while BDSF is excluded.
+Purpose: Provide credible, institution-specific operational loss forecasts under adverse conditions, aligning with Federal Reserve requirements. Model results feed into the FR Y-14A reporting form and receive challenge from the Capital Committee and Operational Risk Management SMEs.
+Methodology
 Frequency:
-
-Baseline = recent 9-quarter (9Q) moving average (no multiplier)
-
-Stress = 9Q moving average × a qualitative multiplier (e.g., 3.5)
-
+Historically, EF and CPBP used negative binomial regression to capture potential macroeconomic drivers; other event types relied on a simple 9Q average or negative binomial if strong macro correlations were discovered.
+Due to weak macroeconomic relationships, EF and CPBP now also rely on the qualitative 9Q average approach, mirroring the other four event types.
 Severity:
+Severity is largely random, showing minimal correlation with macroeconomic factors.
+The model applies historical average severity plus stress multipliers (derived from identified stress periods) to differentiate stressed vs. non-stressed conditions.
+Governance & Use
+Reviewed by SMEs in Operational Risk Management and subject to challenge by the Capital Committee.
+Mapped to FR Y-14A and other regulatory submissions for CCAR/DFAST.
+Tier 2 Model (per Model Risk Oversight) and cannot be extended beyond CCAR/DFAST without additional validation.
+By centralizing on internally observed data (Archer for ≥$10K gross losses, plus limited exploration of small GL losses), the model provides a coherent approach to capture severe but plausible operational risk losses, ensuring relevance to Truist’s evolving risk landscape.
 
-Based on a broader “development period” average.
 
-The stress multiplier is a simpler, judgment-based factor replacing the old macro-driven approach.
 
-IF, EDPM, DPA, AND EPWS (MULTIPLIER-BASED)
 
-These four segments rely on defined multipliers for frequency, derived from comparing each quarter’s 9Q moving average frequency to a ‘development average’ frequency:
 
-Step A: Compute the development average frequency over a long historical window.
-Step B: For each quarter in that window, calculate a 9Q moving average frequency.
-Step C: Form a ratio = (9Q moving average) ÷ (development average).
-Step D: Sort these ratios to find the 95th percentile, identifying a “stress threshold” and hence a stress period.
-Step E: The stress frequency multiplier is set at or near that 95th-percentile ratio.
-Step F: Exclude that stress period from the dataset and compute the ratio of the remaining data’s average frequency to the total development average. This becomes the non-stress frequency multiplier.
 
-Hence:
+You said:
+Could you review the model mythology again? First question. summarize the prior approach for EF and CPBP for me, and second question to my knowledge, the new approach for EF and CPBP is multiplier-based approach:"Formula for Stress Forecast Calculation:**
+- **Model Stress Forecast** = **Multiplier 3.5** × (**Average Recent 9Q Frequency**) × (**Average Recent 9Q Severity**)
+- **Model Baseline Forecast** = (**Recent 9Q Frequency**) × (**Recent 9Q Severity**)
+- **Stress Delta** = **Model Stress Forecast** - **Model Baseline Forecast**
 
-Baseline Frequency = (Recent 9Q Frequency) × (Non-Stress Frequency Multiplier)
+- The **stress delta** is then incorporated into the **management baseline forecast** to produce **stress-adjusted projections**." And for the approach of EPA, IF, EDPM and EPWS, baseline forecast = (**Recent 9Q Frequency**) × non_stress frequency mutilpier x development average  Severity x non stress severity multiplier, stress forecast = (**Recent 9Q Frequency**) × stress frequency mutilpier x development average  Severity x stress severity multiplier, can you verify for me if my understanding is correct?
 
-Stress Frequency = (Recent 9Q Frequency) × (Stress Frequency Multiplier)
+Reasoned for 7 seconds
+Confirming methods
+I’m validating the new techniques for EF, CPBP, EPA, IF, EDPM, and EPWS, ensuring accuracy before moving forward with calculations. Detailed stress and baseline forecasts are defined for each.
 
-Severity:
+Verifying forecast methods
+I'm confirming the user's understanding of EF, CPBP, EPA, IF, EDPM, and EPWS forecasts, including baseline and stress multipliers, ensuring the calculations are precise and aligned.
 
-Uses the development-period average severity.
+Answer to Question 1:
+Under the prior approach, External Fraud (EF) and Clients, Products & Business Practices (CPBP) relied on a negative binomial regression framework for frequency estimation. This model attempted to capture the relationship between external macroeconomic indicators (e.g., GDP, DOWJ, employment) and the quarterly counts of EF or CPBP events. Severity, meanwhile, used a historical average multiplied by stress multipliers when necessary. In practice, these macroeconomic linkages for EF and CPBP proved weak or inconsistent, often requiring manual overlays to adjust the forecasts.
 
-Baseline vs. stress severity multipliers follow a similar 95th-percentile logic, except focusing on rolling 9Q severity vs. the development average. The top 5% of severity ratios defines the stress threshold.
+Answer to Question 2:
+Yes, your understanding of the new approach appears correct:
 
-PUTTING IT ALL TOGETHER
+EF and CPBP now use a simplified, multiplier-based formula:
+Model Stress Forecast = 3.5 × (Average Recent 9Q Frequency) × (Average Recent 9Q Severity)
+Model Baseline Forecast = (Average Recent 9Q Frequency) × (Average Recent 9Q Severity)
+Stress Delta = Model Stress Forecast − Model Baseline Forecast
+Here, 3.5 is the chosen multiplier for a stress scenario, and any delta is then added to the management baseline forecast to produce the final stress-adjusted projection.
+DPA, IF, EDPM, and EPWS (the other four event types) typically use two sets of multipliers—one for non-stress (baseline) and one for stress scenarios—applied to the development average (longer historical window) for severity and the recent 9Q (more current) for frequency:
+Baseline Forecast = (Recent 9Q Frequency) × (Non-Stress Frequency Multiplier) × (Development Average Severity) × (Non-Stress Severity Multiplier)
+Stress Forecast = (Recent 9Q Frequency) × (Stress Frequency Multiplier) × (Development Average Severity) × (Stress Severity Multiplier)
+This framework allows each event type to scale both frequency and severity for different economic conditions, with separate multipliers derived from analysis of historical peak or stress periods.
 
-EF/CPBP:
 
-Baseline Forecast = (9Q Avg Frequency) × (9Q Avg Severity)
 
-Stress Forecast = (9Q Avg Frequency) × (9Q Avg Severity) × (Qualitative Stress Multiplier)
 
-IF, EDPM, DPA, EPWS:
 
-Baseline Forecast = Baseline Frequency × Baseline Severity
+You said:
+can you tell me what EF and CPBP used to do for their severity part? how they derive it
 
-Stress Forecast = Stress Frequency × Stress Severity
+Reasoned for 7 seconds
+Piecing together the severity approach
+I found that severity for EF and CPBP was addressed using a historical average or distribution-based method. Negative binomial regression specifically tackled frequency, illustrating a clear separation in modeling strategy.
 
-Where Baseline/Stress Frequency and Severity each draw on the respective multipliers identified via the 95th-percentile approach.
+Calibrating using history
+I’m digging into the calibration of severity assessment, leveraging a historical average approach with stress multipliers based on past loss reports, while potentially sidelining macro variables due to their weak correlation.
+
+From the documentation you provided, EF and CPBP did not have a separate or more advanced severity model than the other event types. Even when negative binomial regression was used for EF and CPBP frequency, severity was still derived through a historical average approach (with multipliers for stress vs. non-stress scenarios). In other words:
+
+Frequency (old approach for EF/CPBP):
+Modeled via negative binomial regression with macroeconomic variables (e.g., GDP, equity indices).
+Severity (old approach for EF/CPBP):
+Modeled by taking a historical average severity, then applying an upward or downward multiplier for stressed vs. baseline scenarios, similar to other event types.
+There was no dedicated statistical or regression-based severity model for EF/CPBP because historical data suggested minimal correlation between event severity and macroeconomic drivers.
+Hence, while EF and CPBP used a more complex (regression-based) approach for frequency, their severity piece largely matched the simpler, average-based approach used across all six operational risk segments.
+
+
+
+
+
+
+You said:
+okay now put together the model description and model changes section for me one more time, do not bold and be a little concise, look at what the blue prints asked for
+
+Reasoned for 7 seconds
+Request for final version
+I’m tasked with delivering the final version of a document, removing bold text from headings and body, and ensuring conciseness. This involves merging key points from previous "Model Description" and "Model Changes" sections.
+
+Ensuring model clarity
+I’m refining the document by avoiding bold text, removing bullet points, and integrating key concepts such as the negative binomial approach, new methodology, and references to the CCAR and DFAST suites.
+
+MODEL DESCRIPTION
+
+The CCAR/DFAST Operational Loss Forecast Model is part of the PPNR suite used for stress testing and capital planning at Truist. It covers six Basel-defined event types (IF, EF, CPBP, EDPM, DPA, and EPWS), generating quarterly operational loss estimates under baseline and stress scenarios. Results feed into the FR Y-14A reporting form and are reviewed by Operational Risk Management subject matter experts and the Capital Committee.
+
+The model uses a frequency-times-severity framework: • Frequency was originally estimated by negative binomial regression for EF and CPBP if macroeconomic correlations could be found. If no meaningful macro linkages arose, a simple nine-quarter (9Q) average of historical frequencies was used, as with the other four event types. • Severity relies on historical averages with multipliers that differentiate stressed from non-stressed conditions, reflecting idiosyncratic and largely non-macroeconomic drivers.
 
 MODEL CHANGES
 
+Removal of Negative Binomial for EF and CPBP
+EF and CPBP previously used negative binomial regression for frequency forecasting, incorporating macroeconomic indicators. Due to inconsistent or weak correlations, frequent overlays were needed to align the results with actual loss experiences. As part of the methodology update, EF and CPBP now follow the same nine-quarter average approach as the other event types.
+Adoption of a Multiplier-Based Method
+EF and CPBP frequency forecasts are scaled by a chosen multiplier (for example, 3.5) when projecting stress scenarios. Severity remains guided by historical averages with stress vs. baseline multipliers. This consolidates the approach for all six event types under one framework focused on institution-specific data.
+Improved Alignment and Reduced Overlays
+By phasing out macroeconomic factors for EF and CPBP, the model produces more consistent forecasts and reduces the need for large, judgment-based overlays. All operational risk segments now rely on recent loss trends and expert judgment, ensuring forecasts remain relevant in an evolving risk landscape.
+
+
+
+
+
+You said:
+well still try to include more details
+
+Reasoned for 11 seconds
+Crafting the final touches
+I’m focusing on enhancing the "Model Description" by integrating user requests and merging previous suggestions into a comprehensive, detailed final version, aiming for conciseness without bold text.
+
+Integrating key elements
+I’m weaving together Truist's CCAR/DFAST Operational Loss Forecast Model by detailing its Basel-defined event types, stress test scenarios, and forecasting method, without emphasizing bold text.
+
+Detailing frequency changes
+I’m explaining the shift from negative binomial regression to a nine-quarter average for EF and CPBP frequencies, along with introducing a multiplier-based method for stress scenarios while maintaining historical severity averages.
+
+Enhancing consistency
+I’m noting how removing macroeconomic factors for EF and CPBP leads to more dependable forecasts and reduces the need for extensive judgment-based adjustments, focusing purely on recent loss trends and expert insights.
+
+MODEL DESCRIPTION
+
+The CCAR/DFAST Operational Loss Forecast Model at Truist is part of the broader PPNR suite supporting stress testing and capital planning. It provides quarterly loss estimates for six Basel-defined operational risk event types: IF, EF, CPBP, EDPM, DPA, and EPWS (BDSF is excluded). Key outputs are incorporated into the FR Y-14A submission and reviewed by Operational Risk Management SMEs and the Capital Committee.
+
+The model follows a frequency-times-severity approach:
+
+• Frequency. Before the methodology change, EF and CPBP used negative binomial regression if macroeconomic predictors appeared relevant. If no significant macro linkages were found, or for the other event types (IF, EDPM, DPA, EPWS), the model applied a nine-quarter rolling average of historical events.
+• Severity. All event types relied on historical average severities. Stress vs. baseline conditions were reflected using multipliers drawn from historical peaks or stress periods. These multipliers were periodically refreshed based on updated experience.
+
+By focusing on internal Archer data (≥$10,000 net loss) and applying additional overlays or multipliers where needed, the model aims to capture both baseline expectations and plausible stress outcomes for the bank’s operational losses.
+
+MODEL CHANGES
+
+Removal of Negative Binomial for EF and CPBP.
+Originally, EF and CPBP were modeled via negative binomial regression to capture possible macroeconomic influences on event frequency. In practice, these models produced weak or inconsistent relationships, necessitating frequent manual overlays. Under the updated methodology, EF and CPBP now align with the other event types’ qualitative approach, using a simple nine-quarter historical average for frequency.
+Adoption of a Uniform Multiplier-Based Method.
+EF and CPBP stress forecasts are determined by multiplying the nine-quarter average frequency and severity by a stress factor (for example, 3.5). Other event types (IF, EDPM, DPA, EPWS) also rely on historical averages but may apply specific multipliers for baseline and stress scenarios, often derived from a longer “development” window of data and identified stress periods.
+Streamlined Forecasting and Reduced Overlays.
+By discontinuing macroeconomic variables for EF and CPBP and unifying all event types under a single multiplier-based framework, the need for large manual overlays has decreased significantly. The updated approach places greater emphasis on internal operational data and expert judgment, resulting in forecasts that better reflect Truist’s current risk environment and structural controls.
+
+
+
+
+
+You said:
+add in the formulas
+
+Reasoned for 6 seconds
+Refining event type formulas
+Linking stress and baseline forecasts, focusing on EF and CPBP, while crafting methods for other event types. Progressing, I'm refining and integrating these formulas for clarity and conciseness.
+
+Piecing together
+Analyzing Truist's capital plan with an eye on earnings from an adverse environment and operational losses, all while ensuring the final review aligns with the Capital Committee's feedback.
+
+MODEL DESCRIPTION
+
+The CCAR/DFAST Operational Loss Forecast Model at Truist produces quarterly operational loss estimates for six Basel-defined event types (IF, EF, CPBP, EDPM, DPA, and EPWS). Results feed into capital planning (FR Y-14A) and undergo review by Operational Risk Management subject matter experts and the Capital Committee.
+
+Historically, EF and CPBP used negative binomial regression if macroeconomic predictors were found, while the other event types relied on a qualitative approach (a nine-quarter rolling average for frequency). All six event types used historical average severities with multipliers to distinguish baseline vs. stress conditions.
+
+Key formulas vary slightly depending on whether an event type includes macro-based regression or not. Under the updated, fully qualitative framework:
+
+• EF and CPBP
+Model Stress Forecast = 3.5 × (Average Recent 9Q Frequency) × (Average Recent 9Q Severity)
+Model Baseline Forecast = (Average Recent 9Q Frequency) × (Average Recent 9Q Severity)
+Stress Delta = Model Stress Forecast – Model Baseline Forecast
+
+The final stress-adjusted forecast adds the Stress Delta to management’s baseline projection.
+
+• Other Event Types (IF, EDPM, DPA, EPWS)
+Baseline Forecast = (Recent 9Q Frequency) × (non-stress frequency multiplier) × (development average severity) × (non-stress severity multiplier)
+Stress Forecast = (Recent 9Q Frequency) × (stress frequency multiplier) × (development average severity) × (stress severity multiplier)
+Stress Delta = Stress Forecast – Baseline Forecast
+
+MODEL CHANGES
+
+Removal of Negative Binomial Regression for EF and CPBP
+Previously, EF and CPBP frequencies were estimated using a negative binomial model tied to macroeconomic drivers. Weak and inconsistent correlations led to frequent manual overlays. The new approach aligns EF and CPBP with the simpler nine-quarter average method, eliminating reliance on macro variables.
+Adoption of Uniform Multiplier-Based Method
+EF and CPBP now share the multiplier-based approach used by the other event types, drawing on recent quarterly data and historical multipliers to distinguish baseline vs. stress. For EF and CPBP, a fixed multiplier (for instance, 3.5) is applied directly to the nine-quarter averages in stress conditions.
+Streamlined Forecasting and Fewer Overlays
+By unifying all event types under a consistent qualitative framework, large overlays—once necessary to correct macro-driven models—are significantly reduced. Forecasts now rely on internal Archer data (≥$10,000 net loss) and reflect Truist’s current risk environment more accurately.
+
+
+
+
+
+You said:
+
+Can you help me finish this section? I was trying but don't know what to say for the EF and CPBP baseline froecats following the qualitative approach. also be a little clearer in how the other 4 segments was derived using recent 9q frequency, historical average, rolling average, 95 percentile and stress vs non stress mulitiler
+Reasoned for 8 seconds
+The model follows a frequency-times-severity approach. Below is an overview of how EF/CPBP and the other four segments (IF, EDPM, DPA, EPWS) differ in their baseline vs. stress calculations.
+
+EF and CPBP (Qualitative Approach)
+Stress Forecasts
+– Determined by multiplying the nine-quarter average frequency and severity by a qualitatively chosen stress factor (e.g., 3.5).
+– Formula:
+Stress Forecast = Stress Factor × (9Q Avg Frequency) × (9Q Avg Severity).
+Baseline Forecasts
+– Use the same nine-quarter average frequency and severity, but no additional multiplier is applied.
+– Formula:
+Baseline Forecast = (9Q Avg Frequency) × (9Q Avg Severity).
+Other Four Event Types (IF, EDPM, DPA, EPWS)
+Frequency
+– Typically derived from a rolling nine-quarter average of historical events, similar to EF/CPBP.
+– However, the baseline vs. stress frequencies are scaled by specific multipliers identified from the “development data” or “stress period.” For example:
+– Baseline Frequency Multiplier might be around 1.0 (or slightly above/below) if historical data suggests that typical conditions do not deviate much from the 9Q average.
+– Stress Frequency Multiplier (e.g., near the 95th percentile) is designed to capture severe-but-plausible spikes in frequency.
+Severity
+– Based on historical average severity from the development dataset.
+– A non-stress multiplier and a stress multiplier are applied, again determined through identified stress periods (often near the 95th percentile of historical losses).
+Putting It Together
+– Baseline Forecast = (Recent 9Q Frequency × Non-Stress Frequency Multiplier) × (Development Avg Severity × Non-Stress Severity Multiplier).
+– Stress Forecast = (Recent 9Q Frequency × Stress Frequency Multiplier) × (Development Avg Severity × Stress Severity Multiplier).
+– The difference between Stress Forecast and Baseline Forecast (the “stress delta”) represents the additional losses expected under adverse scenarios.
+By aligning EF/CPBP with a simpler qualitative factor for stress (rather than relying on macroeconomic variables) and using well-defined multipliers for the other four segments, the model ensures consistency in how operational risks are measured and scaled for both baseline and stress conditions.
+
+
+
+
+
+
+You said:
+can you review the MDD again and be more clear on the 4 segments 
+Reasoned for 15 seconds
+Below is a revised explanation of how the four segments (IF, EDPM, DPA, EPWS) operate under the model’s frequency-times-severity framework, clarifying their use of recent 9-quarter (9Q) data, historical (development) averages, and multipliers for baseline and stress scenarios:
+
+Frequency (Baseline and Stress)
+Recent 9Q Average: Each segment calculates a baseline frequency from the rolling average of its most recent nine quarters of observed events.
+Frequency Multipliers: To refine the baseline frequency and derive a stressed frequency, the model applies specific multipliers:
+• Non-Stress Frequency Multiplier: Captures typical or baseline conditions (often around 1.0, or slightly above/below).
+• Stress Frequency Multiplier: Identified from a historically “severe” period (e.g., near the 95th percentile of past frequency).
+Thus, for each segment: Baseline Frequency = (Recent 9Q Frequency) × (Non-Stress Frequency Multiplier)
+Stress Frequency = (Recent 9Q Frequency) × (Stress Frequency Multiplier)
+Severity (Baseline and Stress)
+Development Average Severity: Rather than using only the last 9 quarters, the model references a broader “development dataset” (potentially going back many years) to capture a more complete view of typical and extreme losses.
+Severity Multipliers: Similar to frequency, each segment uses multipliers to scale severity under baseline and stress conditions:
+• Non-Stress Severity Multiplier: Derived from periods considered representative of “normal” loss levels.
+• Stress Severity Multiplier: Typically selected near the 95th percentile of historical severity distribution, ensuring the stressed figure reflects elevated but plausible losses.
+Hence, for each segment: Baseline Severity = (Development Average Severity) × (Non-Stress Severity Multiplier)
+Stress Severity = (Development Average Severity) × (Stress Severity Multiplier)
+Combining Frequency and Severity
+Baseline Forecast = [Baseline Frequency] × [Baseline Severity]
+Stress Forecast = [Stress Frequency] × [Stress Severity]
+The difference between the two (Stress Forecast – Baseline Forecast) represents the “stress delta,” indicating how much higher losses might be under an adverse scenario.
+Outcome: Unified but Flexible Approach
+All four segments (IF, EDPM, DPA, and EPWS) share a consistent structure:
+• Use recent 9Q data for frequency, with multipliers to pivot between normal and stressed levels.
+• Use a development dataset for severity, also scaled by baseline vs. stress multipliers.
+This methodology captures the institution-specific nature of operational losses, while ensuring that stressed outcomes are calibrated to historically severe periods.
+
+
+
+
+
+You said:
+
+
+I think the non stress mutiliter was derived following the logic shown in this excel, can you help me evaluate and be more specific?
+Reasoned for 5 seconds
+From what the Excel screenshot suggests, each quarter’s observed severity is being compared against a broader “development average” (the “average_pool” column looks like a fixed reference, in this case 101,488). The model calculates a ratio—or multiplier—indicating how that quarter’s actual (or 9Q average) severity differs from the longer-term reference. Over multiple quarters, you see two columns for multipliers:
+
+• multiplier_stress – typically near or above 1.0, possibly pegged to a 95th percentile threshold (the “high-stress” end of the ratio distribution).
+• multiplier_nonstress – also in the range of ~0.9–1.1, representing “typical” or “baseline” severity.
+
+Here’s a likely logic chain behind the non-stress multiplier:
+
+Compute a long-run “development average” (e.g., 101,488).
+For each quarter, take that quarter’s average severity (column D or F in the spreadsheet) and divide by the development average. This gives a ratio of “this quarter’s severity vs. typical severity.”
+Aggregate these quarterly ratios to build a distribution of how severity has varied over time.
+Non-stress multiplier is then derived from the “lower” portion of the distribution. For example:
+– If the model sets non-stress to be near a 50th or 75th percentile, it might pick a ratio around ~1.0 to represent normal conditions.
+– Alternatively, if the process uses a slightly broader calculation, it could be the mean or median of those ratios, leading to a non-stress multiplier of, say, 0.95–1.05.
+By contrast, the stress multiplier often comes from a higher percentile (e.g., the 90th or 95th) where severity is significantly above average. Hence you see a separate “multiplier_stress” column in the spreadsheet (often ≥ 1.5 or 2.0).
+
+In short, the Excel file appears to:
+
+• Keep a fixed development average in one column (the “pool” number ~101,488).
+• For each quarter, calculate severity ÷ 101,488 to measure how that quarter’s severity compares to the long-run baseline.
+• Determine a non-stress multiplier by summarizing the ratio distribution around “normal” conditions (maybe near the mean/median).
+• Determine a stress multiplier by focusing on the upper tail of that same ratio distribution (e.g., a 95th percentile).
+
+
+
+
+
+
+You said:
+I think the stress multiplier is derived taking the 95th retile of all multipliers derived by rolling average 9 quarter severity(9quarter rolling of average severity)devided by average severity of development period. After the stress period is found, non stress multiplier is derived by average severity from development period excluding the stress period/ average severity of development period.
+Reasoned for 5 seconds
+Yes, that logic lines up with standard operational risk multiplier derivation practices. Essentially:
+
+Identify a Stress Period
+Calculate a rolling 9-quarter average severity for each quarter in your historical dataset (the “development period”).
+Divide that 9-quarter rolling average by the overall development average severity to form a “severity multiplier” for each quarter.
+Select the 95th percentile (or some designated high percentile) of these multipliers as your “stress threshold.”
+Whichever quarter(s) exceed that threshold define the stress period.
+Derive the Stress Multiplier
+The model may set the official “stress multiplier” to that 95th-percentile ratio (or something close to it).
+Alternatively, some teams average the top several quarters in the identified stress window to refine the multiplier.
+Derive the Non-Stress Multiplier
+Once the stress period is determined, remove or exclude those quarters from the development dataset.
+Compute an average severity for the remaining “non-stress” quarters.
+Divide that “non-stress average” by the full development average to obtain the non-stress multiplier.
+So, if the 95th percentile multiplier is, for example, 1.80, that becomes your high-end stress factor. If the rest of the data has an average ratio of about 0.95, that becomes your non-stress multiplier. It’s a neat, step-by-step way to anchor severity forecasts in concrete historical extremes (stress) versus typical conditions (non-stress).
+
+
+
+
+
+
+You said:
+okay, incorpertw it in our section of model description and model changes
+Reasoned for 5 seconds
+MODEL DESCRIPTION
+
+The CCAR/DFAST Operational Loss Forecast Model follows a frequency-times-severity framework across six Basel-defined operational risk event types (IF, EF, CPBP, EDPM, DPA, and EPWS). Historically, EF and CPBP used negative binomial regression for frequency while the other four relied on rolling 9-quarter averages and stress multipliers. Due to weak macroeconomic relationships, EF and CPBP have now joined the qualitative approach.
+
+Frequency
+• EF and CPBP: Frequency is taken as a simple nine-quarter average, multiplied by a fixed stress factor (for instance, 3.5) in stressed scenarios.
+• Other Four Event Types (IF, EDPM, DPA, EPWS): Frequency also starts from a recent nine-quarter average, but baseline vs. stress multipliers can vary based on identified stress vs. non-stress periods (e.g., 95th-percentile frequency extremes).
+Severity
+• All event types calculate baseline severity from a broader “development period” average.
+• Stress severity multipliers are derived by evaluating each quarter’s rolling nine-quarter average severity as a ratio to the overall development average. The 95th percentile of these ratios determines a “high stress” threshold and defines the historical stress period.
+• The stress multiplier is then set around that 95th-percentile ratio.
+• Non-stress multipliers come from excluding that stress window and computing the ratio of the remaining non-stress average severity to the full development average.
+MODEL CHANGES
+
 Removal of Negative Binomial Regression for EF & CPBP
-EF and CPBP previously used a macro-driven approach for frequency. Weak correlations led to large manual overlays. Now, EF and CPBP rely solely on a 9Q average for baseline and a qualitative stress factor (e.g., 3.5) for stress.
+Previously, EF and CPBP relied on negative binomial models with macroeconomic factors. These produced weak correlations and required large manual overlays. They have now moved to the same nine-quarter average frequency approach used by the other four event types.
+Uniform Multiplier-Based Method for Severity
+All event types rely on rolling nine-quarter averages for severity comparisons. To identify a stressed scenario, the model calculates severity-ratio distributions for each quarter (rolling nine-quarter average ÷ development average). The 95th-percentile ratio marks the official stress period and becomes the stress multiplier. Non-stress multipliers are then derived by removing that stress period and taking the average ratio of the remaining data.
+Consistency and Reduced Overlays
+By unifying EF/CPBP with the other segments under a single approach (rolling averages and percentile-based multipliers), the model produces more consistent forecasts that better reflect Truist’s observed loss patterns, minimizing the need for ad hoc overlays.
 
-Unified Multiplier Logic for the Other Four Segments
-IF, EDPM, DPA, and EPWS refine both frequency and severity with multipliers. They use rolling 9Q averages, a development-period average, and percentile-based thresholds (often 95th) to distinguish stress from non-stress. This ensures consistent stress quantification while retaining some customization for each event type’s historical distribution.
 
-By aligning EF/CPBP with the simpler, all-internal approach and maintaining the established multiplier-based framework for the other four, the model delivers more consistent, institution-specific forecasts without relying on tenuous macroeconomic relationships.
+
+
+
+You said:
+can you separate the EF and CPBP vs. the other 4? since the EF CPBP baseline is just the recent 9 quarter no multiplier, the stress is ravager of recent 9 quarter * qualitative derived mutilpiler, while the other four cement follow the Other Four Event Types (IF, EDPM, DPA, EPWS): Frequency also starts from a recent nine-quarter average, but baseline vs. stress multipliers can vary based on identified stress vs. non-stress periods and • All event types calculate baseline severity from a broader “development period” average.
+• Stress severity multipliers are derived by evaluating each quarter’s rolling nine-quarter average severity as a ratio to the overall development average. The 95th percentile of these ratios determines a “high stress” threshold and defines the historical stress period.
+• The stress multiplier is then set around that 95th-percentile ratio.
+• Non-stress multipliers come from excluding that stress window and computing the ratio of the remaining non-stress average severity to the full development average.
+Reasoned for a couple of seconds
+MODEL DESCRIPTION
+
+The CCAR/DFAST Operational Loss Forecast Model uses a frequency-times-severity framework for six Basel-defined operational risk event types (IF, EF, CPBP, EDPM, DPA, and EPWS). Due to weak macroeconomic correlations, EF and CPBP have transitioned to a simpler qualitative approach. The other four event types continue to use a more detailed method of baseline vs. stress multipliers.
+
+EF AND CPBP (QUALITATIVE)
+• Frequency
+– Baseline = recent nine-quarter (9Q) average frequency
+– Stress = recent 9Q average frequency × a qualitatively derived multiplier (e.g., 3.5)
+• Severity
+– Baseline and stress severities both start from a “development period” average.
+– Stress multipliers are selected qualitatively (previously macro-driven, but now institution-specific factors).
+IF, EDPM, DPA, AND EPWS (MULTIPLIER-BASED)
+• Frequency
+– Baseline = (recent 9Q average frequency) × (non-stress frequency multiplier)
+– Stress = (recent 9Q average frequency) × (stress frequency multiplier), where both multipliers are derived from historic “stress vs. non-stress” patterns.
+• Severity
+– Baseline severity = (development-period average severity) × (non-stress severity multiplier)
+– Stress severity = (development-period average severity) × (stress severity multiplier)
+HOW STRESS VS. NON-STRESS MULTIPLIERS ARE DERIVED FOR SEVERITY
+• Each quarter’s rolling 9Q average severity is divided by the overall development-period average, forming a severity ratio.
+• The 95th percentile of these severity ratios defines the “high-stress” threshold and identifies the historical stress period.
+• The stress severity multiplier is set around this 95th-percentile ratio.
+• The non-stress severity multiplier comes from excluding the identified stress period and calculating the ratio of the remaining (“normal”) severity to the development average.
