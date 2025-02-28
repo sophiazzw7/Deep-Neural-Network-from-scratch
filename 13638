@@ -1,37 +1,130 @@
+### **7. Change in Model Code**  
+
+- **Transition from Quantitative to Qualitative Approach:**  
+  - Since the model is no longer using a **negative binomial regression framework** for EF and CPBP, the associated **SAS code for regression-based frequency estimation** has been removed.  
+  - The code now follows a **simpler multiplier-based approach**, calculating frequency and severity directly from **Archer data** without macroeconomic dependencies.  
+
+- **Data Handling Adjustments:**  
+  - **Previously, the model code only stored raw data for IF, EDPM, DPA, and EPWS.**  
+  - Now, **EF and CPBP loss event data are also stored**, ensuring **consistent input handling across all six event types**.  
+  - The data aggregation process remains **SAS-based** and continues to extract data from **Archer**, but with adjustments to accommodate the **qualitative methodology**.  
+
+- **Removal of Negative Binomial Components:**  
+  - Any **references to negative binomial regression estimation, dispersion parameters, and macroeconomic variables** have been eliminated from the production model.  
+  - **Sophia confirmed** that these changes were necessary to align the model code with the updated methodology.  
+
+- **Code Execution and Testing Considerations:**  
+  - The **data pooling logic remains unchanged**, but minor adjustments were required to integrate EF and CPBP event types into the updated frequency calculations.  
+  - The production model will **no longer perform regression-based estimates or use economic scenario projections** for EF and CPBP.  
+  - Developers will need to verify that **all frequency and severity calculations align with the newly adopted methodology** before finalizing implementation.  
+
+### **Next Steps for Model Code Review and Validation**  
+- **Validation Team Review:**  
+  - Ensure that the **updated model code properly reflects the revised qualitative approach**.  
+  - Confirm that **EF and CPBP data integration is complete and consistent with the methodology update**.  
+  - Validate that the **frequency and severity calculations align with the documented model methodology**.  
+
+- **Execution Control Review:**  
+  - **Jane suggested reviewing Section 8 (Model Execution Controls)** to remove outdated references to **quantitative methods and overlays**.  
+  - Execution controls may need further updates after full validation of the **new multiplier-based implementation**.  
+
+- **Final Testing & Deployment Considerations:**  
+  - Ensure that the **qualitative framework is correctly applied in the final production version**.  
+  - Remove all obsolete references to **macro-driven modeling logic** from the documentation and implementation notes.  
+  - Developers will need to provide final validation of the **adjusted data extraction and multiplier-based calculations** before release.  
+
+---
+
+### **Action Items for Model Code Updates**  
+✔ **Confirm final removal of regression-based modeling elements.**  
+✔ **Verify correct implementation of frequency/severity calculations for all six event types.**  
+✔ **Ensure EF and CPBP data integration is properly handled in data storage.**  
+✔ **Update documentation to reflect execution control changes post-transition.**  
+✔ **Perform final validation before updating production deployment.**  
+
 ### **Meeting Notes – Model Transition and Archer Finding Review**  
 **Date:** [Insert Date]  
-**Attendees:** Sophia, Rashmi, Jane  
+**Attendees:** **Sophia, Rashmi, Jane**  
 
-#### **1. Overview of Model Transition and Testing Considerations**  
-- Discussion on the revised methodology for EF and CPBP, which now relies on a **nine-quarter average frequency** without a predictive component.  
+---
+
+### **1. Overview of Model Transition and Testing Considerations**  
+- Discussion on the revised methodology for **EF and CPBP**, which now relies on a **nine-quarter average frequency** without a predictive component.  
 - Rashmi emphasized that **comparison testing**, rather than traditional statistical backtesting, is appropriate. Since the model does not claim predictive ability, drawing conclusions from past behavior to forecast the future is challenging.  
-- The methodology change is not just about transitioning EF and CPBP to a qualitative approach but also updating **model limitations** to acknowledge the non-predictive nature of recent data.  
+- The methodology change is not just about transitioning EF and CPBP to a **qualitative approach**, but also updating **model limitations** to acknowledge the **non-predictive nature** of recent data.  
 
-#### **2. Next Steps for Archer Issue and Performance Testing Review**  
-- Alex raised concerns regarding performance testing. A follow-up meeting with Alex early next week is planned to determine the best course of action.  
+**Key Discussion Points:**  
+- There was agreement that while past losses provide **historical context**, they do not serve as strong predictors of future losses.  
+- Traditional statistical backtesting is not meaningful in this context because the model does not assume a predictive relationship between past and future losses.  
+- The **recent nine-quarter period** is considered the best available representation of current risk exposure, **not a forecast of future losses**.  
+
+---
+
+### **2. Next Steps for Archer Issue and Performance Testing Review**  
+- **Alex raised concerns regarding performance testing.** A follow-up meeting with Alex early next week is planned to determine the best course of action.  
 - There is **no longer an OGM plan** governing the model’s performance, eliminating the need for traditional model performance monitoring.  
-- Sophia noted that **outdated references to backtesting still exist in documentation**, particularly in **Section 6** of the Model Testing framework, which might have triggered the ongoing Archer issue.  
+- **Rashmi suggested discussing the issue with Alex** to clarify whether further action is required.  
+- **Sophia noted** that outdated references to **backtesting still exist in documentation**, particularly in **Section 6 of the Model Testing framework**, which might have triggered the **ongoing Archer issue**.  
 
-#### **3. Handling the OGM Plan and Documentation Updates**  
-- Rashmi suggested that rather than raising a sub-issue, the OGM plan removal should be handled as a **direct documentation update** by the deadline (6th).  
-- Jane confirmed that other documentation updates, such as removing outdated references to **GL data** and ensuring the model methodology accurately reflects the new framework, could also be incorporated without requiring additional sub-issues.  
-- Sophia will review the **execution controls** section, ensuring it remains relevant after transitioning away from a **quantitative modeling approach**.  
+---
 
-#### **4. Model Change Impact Analysis**  
+### **3. Handling the OGM Plan and Documentation Updates**  
+- **Jane suggested that rather than raising a sub-issue, the OGM plan removal should be handled as a direct documentation update.**  
+- Sophia agreed and confirmed that **removing the outdated OGM plan references** would be incorporated in the final documentation update before the deadline (6th).  
+- Jane also recommended that other documentation updates, such as **removing outdated references to GL data** and ensuring the model methodology accurately reflects the new framework, could be handled **without requiring additional sub-issues**.  
+- **Sophia will review the execution controls section**, ensuring it remains relevant after transitioning away from a **quantitative modeling approach**.  
+
+**Action Items:**  
+- **Remove references to the OGM plan** and ensure documentation clearly states the updated monitoring framework.  
+- **Ensure Section 6 of Model Testing is updated**, removing references to outdated backtesting language.  
+- **Clarify in the documentation that the model does not require an OGM plan**, thus resolving **Archer Finding FND 12620126**.  
+
+---
+
+### **4. Model Change Impact Analysis**  
 - Since the model is shifting from **a quantitative to a qualitative framework**, traditional impact analysis methods do not apply.  
-- The primary **impact of the change** is the elimination of large overlays, as EF and CPBP now rely on a simpler **multiplier-based approach**.  
-- Sophia will include an **explanation of how the transition affects stress forecasting** in the model memo, ensuring TAS has clarity on what testing is appropriate.  
+- The primary impact of the change is the **elimination of large overlays**, as **EF and CPBP now rely on a simpler multiplier-based approach**.  
+- Sophia emphasized that previous reliance on overlays was a workaround to correct inconsistent model outputs. The new approach is designed to remove the need for such adjustments.  
 
-#### **5. Root Cause Analysis and Sub-Issue Categorization**  
-- Governance requires categorization of sub-issues into **People, Process, System, or Governance** buckets. Rashmi proposed initial classifications.  
-- Sophia and Jane agreed to review the proposed categories before submission.  
-- A separate meeting with Alex will be set up to finalize the **performance testing Archer issue**.  
+**Key Discussion Points:**  
+- **Operational loss severity and frequency** are largely **random in nature** and **do not exhibit consistent macroeconomic relationships**.  
+- **EF and CPBP previously used a negative binomial regression model**, which failed to establish robust predictive relationships. The model frequently required large overlays to correct **misaligned stress forecasts**.  
+- The shift to **a qualitative multiplier-based approach** ensures a more **stable and institution-specific** methodology.  
+- **Jane proposed documenting the impact as a reduction in post-model adjustments**, since overlays will no longer be needed to bring the forecasts in line with observed risk patterns.  
 
-#### **6. Next Steps and Action Items**  
-- **By the 6th:** Finalize documentation updates, including OGM plan removal and clarifications in methodology.  
-- **Monday:** Working session to finalize documentation updates and sub-issue categorization.  
-- **Early Next Week:** Meeting with Alex to determine how to handle the **Archer performance testing issue**.  
-- Sophia will **send the updated list of pending questions** to ensure all necessary revisions are captured before submission.  
+**Action Items:**  
+- **Sophia will include an explanation** in the model memo detailing the impact of moving away from overlays.  
+- **Clarify in the impact analysis section** that the new methodology leads to a more stable, expert-driven assessment rather than an over-reliance on a model requiring frequent manual corrections.  
 
-#### **Conclusion**  
-The meeting focused on ensuring documentation updates accurately reflect the transition to a **qualitative model** and that issues related to the **Archer finding and performance testing expectations** are properly addressed. Further discussions with Alex will determine the final approach to these matters.
+---
+
+### **5. Root Cause Analysis and Sub-Issue Categorization**  
+- Governance requires categorization of sub-issues into **People, Process, System, or Governance** categories.  
+- **Rashmi proposed initial classifications** for review by the group.  
+- Sophia and Jane agreed to **review the proposed sub-issue categories** before final submission.  
+- The group agreed that a **separate meeting with Alex** is needed to finalize **the performance testing Archer issue**.  
+
+---
+
+### **6. Next Steps and Action Items**  
+
+#### **By the 6th:**  
+- Finalize **documentation updates**, including **OGM plan removal** and clarifications in methodology.  
+- Remove outdated references to **GL data** and align model documentation with the **new qualitative framework**.  
+- Ensure **backtesting references** are removed from **Model Testing Section 6**.  
+
+#### **Monday:**  
+- **Working session** to finalize **documentation updates** and **sub-issue categorization**.  
+- Plan out how to communicate these changes in the next review cycle.  
+
+#### **Early Next Week:**  
+- **Meeting with Alex** to determine how to handle the **Archer performance testing issue** and whether additional clarifications are needed in the final submission.  
+
+**Final Review:**  
+- Sophia will send an **updated list of pending questions** to ensure all necessary revisions are captured before submission.  
+
+---
+
+### **Conclusion**  
+The meeting focused on ensuring that **documentation updates** accurately reflect the transition to a **qualitative model** and that issues related to the **Archer finding and performance testing expectations** are properly addressed.  
+Further discussions with **Alex** will determine the final approach to resolving outstanding concerns.
