@@ -1,1 +1,37 @@
-Because the Operational Loss Forecast Model no longer relies on a macro-based (quantitative) framework, the traditional OGM plan it once fell under is no longer applicable. The new, fully qualitative approach uses a 3.5 multiplier with recent nine-quarter data, with approval and annual review from subject matter experts to confirm or revise those assumptions. As a result, the Archer finding (FND 12620126) is fully resolved; the model’s monitoring now centers on validating the reasonableness of the qualitative multiplier and updated 9Q data rather than following the legacy OGM plan provisions.
+### **Meeting Notes – Model Transition and Archer Finding Review**  
+**Date:** [Insert Date]  
+**Attendees:** Sophia, Rashmi, Jane  
+
+#### **1. Overview of Model Transition and Testing Considerations**  
+- Discussion on the revised methodology for EF and CPBP, which now relies on a **nine-quarter average frequency** without a predictive component.  
+- Rashmi emphasized that **comparison testing**, rather than traditional statistical backtesting, is appropriate. Since the model does not claim predictive ability, drawing conclusions from past behavior to forecast the future is challenging.  
+- The methodology change is not just about transitioning EF and CPBP to a qualitative approach but also updating **model limitations** to acknowledge the non-predictive nature of recent data.  
+
+#### **2. Next Steps for Archer Issue and Performance Testing Review**  
+- Alex raised concerns regarding performance testing. A follow-up meeting with Alex early next week is planned to determine the best course of action.  
+- There is **no longer an OGM plan** governing the model’s performance, eliminating the need for traditional model performance monitoring.  
+- Sophia noted that **outdated references to backtesting still exist in documentation**, particularly in **Section 6** of the Model Testing framework, which might have triggered the ongoing Archer issue.  
+
+#### **3. Handling the OGM Plan and Documentation Updates**  
+- Rashmi suggested that rather than raising a sub-issue, the OGM plan removal should be handled as a **direct documentation update** by the deadline (6th).  
+- Jane confirmed that other documentation updates, such as removing outdated references to **GL data** and ensuring the model methodology accurately reflects the new framework, could also be incorporated without requiring additional sub-issues.  
+- Sophia will review the **execution controls** section, ensuring it remains relevant after transitioning away from a **quantitative modeling approach**.  
+
+#### **4. Model Change Impact Analysis**  
+- Since the model is shifting from **a quantitative to a qualitative framework**, traditional impact analysis methods do not apply.  
+- The primary **impact of the change** is the elimination of large overlays, as EF and CPBP now rely on a simpler **multiplier-based approach**.  
+- Sophia will include an **explanation of how the transition affects stress forecasting** in the model memo, ensuring TAS has clarity on what testing is appropriate.  
+
+#### **5. Root Cause Analysis and Sub-Issue Categorization**  
+- Governance requires categorization of sub-issues into **People, Process, System, or Governance** buckets. Rashmi proposed initial classifications.  
+- Sophia and Jane agreed to review the proposed categories before submission.  
+- A separate meeting with Alex will be set up to finalize the **performance testing Archer issue**.  
+
+#### **6. Next Steps and Action Items**  
+- **By the 6th:** Finalize documentation updates, including OGM plan removal and clarifications in methodology.  
+- **Monday:** Working session to finalize documentation updates and sub-issue categorization.  
+- **Early Next Week:** Meeting with Alex to determine how to handle the **Archer performance testing issue**.  
+- Sophia will **send the updated list of pending questions** to ensure all necessary revisions are captured before submission.  
+
+#### **Conclusion**  
+The meeting focused on ensuring documentation updates accurately reflect the transition to a **qualitative model** and that issues related to the **Archer finding and performance testing expectations** are properly addressed. Further discussions with Alex will determine the final approach to these matters.
