@@ -1,130 +1,113 @@
-### **7. Change in Model Code**  
-
-- **Transition from Quantitative to Qualitative Approach:**  
-  - Since the model is no longer using a **negative binomial regression framework** for EF and CPBP, the associated **SAS code for regression-based frequency estimation** has been removed.  
-  - The code now follows a **simpler multiplier-based approach**, calculating frequency and severity directly from **Archer data** without macroeconomic dependencies.  
-
-- **Data Handling Adjustments:**  
-  - **Previously, the model code only stored raw data for IF, EDPM, DPA, and EPWS.**  
-  - Now, **EF and CPBP loss event data are also stored**, ensuring **consistent input handling across all six event types**.  
-  - The data aggregation process remains **SAS-based** and continues to extract data from **Archer**, but with adjustments to accommodate the **qualitative methodology**.  
-
-- **Removal of Negative Binomial Components:**  
-  - Any **references to negative binomial regression estimation, dispersion parameters, and macroeconomic variables** have been eliminated from the production model.  
-  - **Sophia confirmed** that these changes were necessary to align the model code with the updated methodology.  
-
-- **Code Execution and Testing Considerations:**  
-  - The **data pooling logic remains unchanged**, but minor adjustments were required to integrate EF and CPBP event types into the updated frequency calculations.  
-  - The production model will **no longer perform regression-based estimates or use economic scenario projections** for EF and CPBP.  
-  - Developers will need to verify that **all frequency and severity calculations align with the newly adopted methodology** before finalizing implementation.  
-
-### **Next Steps for Model Code Review and Validation**  
-- **Validation Team Review:**  
-  - Ensure that the **updated model code properly reflects the revised qualitative approach**.  
-  - Confirm that **EF and CPBP data integration is complete and consistent with the methodology update**.  
-  - Validate that the **frequency and severity calculations align with the documented model methodology**.  
-
-- **Execution Control Review:**  
-  - **Jane suggested reviewing Section 8 (Model Execution Controls)** to remove outdated references to **quantitative methods and overlays**.  
-  - Execution controls may need further updates after full validation of the **new multiplier-based implementation**.  
-
-- **Final Testing & Deployment Considerations:**  
-  - Ensure that the **qualitative framework is correctly applied in the final production version**.  
-  - Remove all obsolete references to **macro-driven modeling logic** from the documentation and implementation notes.  
-  - Developers will need to provide final validation of the **adjusted data extraction and multiplier-based calculations** before release.  
+Here's the revised report with all bold formatting removed:
 
 ---
 
-### **Action Items for Model Code Updates**  
-✔ **Confirm final removal of regression-based modeling elements.**  
-✔ **Verify correct implementation of frequency/severity calculations for all six event types.**  
-✔ **Ensure EF and CPBP data integration is properly handled in data storage.**  
-✔ **Update documentation to reflect execution control changes post-transition.**  
-✔ **Perform final validation before updating production deployment.**  
+### 4.1.2 Data Quality Analysis Performed by MRO
 
-### **Meeting Notes – Model Transition and Archer Finding Review**  
-**Date:** [Insert Date]  
-**Attendees:** **Sophia, Rashmi, Jane**  
+MRO carried out additional checks on the Archer dataset (raw) and three processed tables (event_w_exclusion, event_w_exclusion_dedup, event_w_exclusion_agg) to verify completeness, consistency, and conformity with the MDD. MRO also examined each Basel Event Type segment in the final aggregated form for missingness, duplicates, and extreme outliers.
+
+MRO notes that the developer did not conduct or document formal data quality testing, contrary to MDD guidelines. This absence of developer-driven checks is being raised as a formal finding. Accordingly, MRO performed all data quality verifications independently.
 
 ---
 
-### **1. Overview of Model Transition and Testing Considerations**  
-- Discussion on the revised methodology for **EF and CPBP**, which now relies on a **nine-quarter average frequency** without a predictive component.  
-- Rashmi emphasized that **comparison testing**, rather than traditional statistical backtesting, is appropriate. Since the model does not claim predictive ability, drawing conclusions from past behavior to forecast the future is challenging.  
-- The methodology change is not just about transitioning EF and CPBP to a **qualitative approach**, but also updating **model limitations** to acknowledge the **non-predictive nature** of recent data.  
+#### A. Raw Archer_data
 
-**Key Discussion Points:**  
-- There was agreement that while past losses provide **historical context**, they do not serve as strong predictors of future losses.  
-- Traditional statistical backtesting is not meaningful in this context because the model does not assume a predictive relationship between past and future losses.  
-- The **recent nine-quarter period** is considered the best available representation of current risk exposure, **not a forecast of future losses**.  
+- Over 111,000 records, with key numeric fields (Gross Loss Amount, Recovery Amount).  
+- MRO observed no negative Gross Loss or positive Recovery, matching MDD Section 2.6’s requirement that Gross Loss ≥ 0 and recoveries ≤ 0.  
+- Approximately 10,062 duplicates at (Internal Event, Posting Date). MRO confirmed these often represent partial or multi-line G/L postings for the same event.  
+- Outlier testing showed net losses could exceed millions, and occasionally be negative if recoveries overshadow gross. MRO flagged both extremes for SME review.
 
 ---
 
-### **2. Next Steps for Archer Issue and Performance Testing Review**  
-- **Alex raised concerns regarding performance testing.** A follow-up meeting with Alex early next week is planned to determine the best course of action.  
-- There is **no longer an OGM plan** governing the model’s performance, eliminating the need for traditional model performance monitoring.  
-- **Rashmi suggested discussing the issue with Alex** to clarify whether further action is required.  
-- **Sophia noted** that outdated references to **backtesting still exist in documentation**, particularly in **Section 6 of the Model Testing framework**, which might have triggered the **ongoing Archer issue**.  
+#### B. event_w_exclusion (Intermediate)
+
+- Approximately 103,081 records after applying exclusions per MDD Section 2.4 (credit boundary, EDPM G/L codes, 2018Q4 ACH fraud, etc.).  
+- MRO observed 9,399 duplicates remaining. Negative net losses and large outliers persisted, consistent with multi-line postings.  
+- Domain checks again showed no negative Gross or positive Recovery. The net_loss field captured both large positive and negative totals.
+
+MRO identified specific negative net losses in the top 200 by absolute severity, led by a −$8.44 million entry (ET7, 31MAR2015) and repeated −$5.73 million entries (ET4, 31DEC2016). These large negatives may represent overshoot recoveries or data anomalies that require additional SME validation.
 
 ---
 
-### **3. Handling the OGM Plan and Documentation Updates**  
-- **Jane suggested that rather than raising a sub-issue, the OGM plan removal should be handled as a direct documentation update.**  
-- Sophia agreed and confirmed that **removing the outdated OGM plan references** would be incorporated in the final documentation update before the deadline (6th).  
-- Jane also recommended that other documentation updates, such as **removing outdated references to GL data** and ensuring the model methodology accurately reflects the new framework, could be handled **without requiring additional sub-issues**.  
-- **Sophia will review the execution controls section**, ensuring it remains relevant after transitioning away from a **quantitative modeling approach**.  
+#### C. event_w_exclusion_dedup (De-Duplicated)
 
-**Action Items:**  
-- **Remove references to the OGM plan** and ensure documentation clearly states the updated monitoring framework.  
-- **Ensure Section 6 of Model Testing is updated**, removing references to outdated backtesting language.  
-- **Clarify in the documentation that the model does not require an OGM plan**, thus resolving **Archer Finding FND 12620126**.  
+- Roughly 38,784 records retained after removing exact duplicates. MRO confirmed 0 duplicates remain for (Internal Event, gl_date).  
+- MRO ran additional outlier testing. A “top 50 outliers by absolute severity” displayed multi-million-dollar positives (notably EF and CPBP) and negatives (IF, EDPM, etc.).  
+
+Among the negatives, the same −$8.44 million EDPM (31MAR2015) and −$5.73 million CPBP (31DEC2016) entries appear, alongside smaller negatives (e.g., −$509k, −$250k). The developer clarified that negative net losses could be legitimate over-recovery scenarios or data anomalies, pending further validation.
 
 ---
 
-### **4. Model Change Impact Analysis**  
-- Since the model is shifting from **a quantitative to a qualitative framework**, traditional impact analysis methods do not apply.  
-- The primary impact of the change is the **elimination of large overlays**, as **EF and CPBP now rely on a simpler multiplier-based approach**.  
-- Sophia emphasized that previous reliance on overlays was a workaround to correct inconsistent model outputs. The new approach is designed to remove the need for such adjustments.  
+#### D. event_w_exclusion_agg (Aggregated)
 
-**Key Discussion Points:**  
-- **Operational loss severity and frequency** are largely **random in nature** and **do not exhibit consistent macroeconomic relationships**.  
-- **EF and CPBP previously used a negative binomial regression model**, which failed to establish robust predictive relationships. The model frequently required large overlays to correct **misaligned stress forecasts**.  
-- The shift to **a qualitative multiplier-based approach** ensures a more **stable and institution-specific** methodology.  
-- **Jane proposed documenting the impact as a reduction in post-model adjustments**, since overlays will no longer be needed to bring the forecasts in line with observed risk patterns.  
+- Data aggregated to quarter (gl_date) and Basel Event Type. MRO reviewed top severity outliers, which exceeded tens of millions in EF.  
+- The resulting quarterly freq = distinct events, severity = sum of net_loss. This is consistent with MDD Section 2.7 guidance on final modeling data structure.
 
-**Action Items:**  
-- **Sophia will include an explanation** in the model memo detailing the impact of moving away from overlays.  
-- **Clarify in the impact analysis section** that the new methodology leads to a more stable, expert-driven assessment rather than an over-reliance on a model requiring frequent manual corrections.  
+When looking at the aggregated net_loss (event_w_exclusion_agg_net_loss), MRO noted only one negative severity in the top 200 list, −$57.58k (ET1 – Internal Fraud, 31MAR2013). While smaller in magnitude compared to other outliers, it still underscores the need to confirm these negative values as valid recoveries vs. potential miscodings.
 
 ---
 
-### **5. Root Cause Analysis and Sub-Issue Categorization**  
-- Governance requires categorization of sub-issues into **People, Process, System, or Governance** categories.  
-- **Rashmi proposed initial classifications** for review by the group.  
-- Sophia and Jane agreed to **review the proposed sub-issue categories** before final submission.  
-- The group agreed that a **separate meeting with Alex** is needed to finalize **the performance testing Archer issue**.  
+#### E. Segment-Level Checks
+
+MRO examined the final quarterly datasets for EDPM, CPBP, EF, IF, DPA, and EPWS, each containing 80 quarters (31MAR2005 to 30JUN2024):
+
+1) EDPM  
+   No missing severity. Maximum near 34 million, indicating a strongly right-skewed distribution.  
+   One of the largest negative net-loss events in the unaggregated data (−$8.44 million) fell under EDPM in 2015.
+
+2) CPBP  
+   No missing severity. Some outliers above 57 million. MRO requested developer confirmation on these extremely large values.  
+   Repeated −$5.73 million entries also appear at 31DEC2016 in the unaggregated views.
+
+3) EF  
+   No missing severity. Outliers can approach 66 million. Developers confirmed that the 66 million figure in EF (30SEP2008) arises from 1,042 events in that quarter, thus reflecting cumulative impacts rather than erroneous data. MRO has accepted this explanation and does not view the 66M as a data issue.
+
+4) IF  
+   Three quarters were initially missing severity but are zero-loss events. One negative severity (around −$57.58k) remains in 31MAR2013, requiring explanation regarding over-recovery or data error.
+
+5) DPA  
+   Some quarters initially showed missing severity, clarified by the developer to be zero-loss quarters (i.e., no loss events occurred). Highest severity ~3.17 million, smaller than other segments but still skewed.
+
+6) EPWS  
+   No missing severity. Some extremes in the 50–70 million range. MRO asked developers to validate these unusually large events.
 
 ---
 
-### **6. Next Steps and Action Items**  
+### 4.1.3 Data Quality Assessment
 
-#### **By the 6th:**  
-- Finalize **documentation updates**, including **OGM plan removal** and clarifications in methodology.  
-- Remove outdated references to **GL data** and align model documentation with the **new qualitative framework**.  
-- Ensure **backtesting references** are removed from **Model Testing Section 6**.  
+Source Variables  
+Archer is recognized as the bank’s official operational loss system, consistent with MDD references. MRO deems the source reputable for operational risk events. Data definitions appear consistent with the intended net loss usage.
 
-#### **Monday:**  
-- **Working session** to finalize **documentation updates** and **sub-issue categorization**.  
-- Plan out how to communicate these changes in the next review cycle.  
+Testing Adequacy  
+MRO’s independent checks largely align with the developer’s outcomes, but further responses are needed to confirm:
 
-#### **Early Next Week:**  
-- **Meeting with Alex** to determine how to handle the **Archer performance testing issue** and whether additional clarifications are needed in the final submission.  
+- Negative net loss cases, especially in IF (−$57.58k), CPBP (−$5.73M), and EDPM (−$8.44M).  
+- Extremely large outliers in EF, CPBP, and EPWS. Developers confirmed that, in EF, the 66M severity is driven by 1,042 events, not data errors.  
+- Verification that the final two quarters of data were excluded: MRO discovered this step was performed manually in Excel, not in the SAS code, which may conflict with MDD automation guidelines.  
 
-**Final Review:**  
-- Sophia will send an **updated list of pending questions** to ensure all necessary revisions are captured before submission.  
+Additionally, MRO is formally raising a finding that the developer did not conduct any documented data quality testing. This gap could impede timely detection of issues in the pipeline and needs remediation.
+
+Overall, MRO judges the developer’s data pipeline consistent with the heavy-tail risk profile in Archer, but recommends verifying all major outliers and negative entries with SMEs before final modeling.
 
 ---
 
-### **Conclusion**  
-The meeting focused on ensuring that **documentation updates** accurately reflect the transition to a **qualitative model** and that issues related to the **Archer finding and performance testing expectations** are properly addressed.  
-Further discussions with **Alex** will determine the final approach to resolving outstanding concerns.
+### 4.2.2 Data Appropriateness Testing Performed by MRO
+
+MRO compared the final SAS flow with the MDD:
+
+1) Single Pull (July 15, 2022) and Exclusion of Recent Quarters  
+   MRO observed references to the single date. However, the developer did not implement the last two-quarter exclusion in the SAS code; instead, MRO confirmed the developer applied this in Excel as a manual step. MRO awaits a formal code-based or documented approach to ensure reproducibility.
+
+2) Net Loss (Gross + Recovery)  
+   MRO checked that Recovery Amount is stored as a negative and thus effectively subtracts from Gross. This is consistent with MDD Section 2.6’s net-loss decision.
+
+3) Aggregation from G/L Lines to Event, Then to Quarter  
+   MRO verified the code’s use of min(Posting Date) for each event (earliest date) and the final grouping by gl_date (quarter). This step meets Section 2.3.1’s “use earliest posting date as event charge-off date.”
+
+4) Manual Exclusions  
+   The code excludes credit boundary, mis-categorized EDPM accounts, 2018Q4 ACH Fraud, and outliers from Exclusion_IE.xlsx. MRO confirmed each rule matches the MDD’s “Approved Data Exclusions.”
+
+5) Addressing Missing Data and Duplicates  
+   MRO validated that in IF and DPA, quarters appearing to have missing severity were zero-loss quarters with no events. Duplicates are resolved in event_w_exclusion_dedup. MRO finds these transformations appropriate for operational risk modeling.
+
+As with data quality, the developer also did not document any independent data appropriateness testing procedures. MRO thus conducted these checks autonomously and is raising a finding regarding the lack of developer-driven validation.
