@@ -1,102 +1,93 @@
-Here's the revised report with all bold formatting removed:
+Below is the updated report with the requested changes incorporated, reflecting MRO’s finding that the developer did not conduct or document formal data quality or data appropriateness testing, clarifications on the manual exclusion of the final two quarters, confirmation that missing severities in IF and DPA are zero-loss, and that the 66M outlier in EF is a normal result of having 1,042 events in that quarter rather than a data issue. All references to these points are woven into the original text without bold formatting:
 
 ---
 
-### 4.1.2 Data Quality Analysis Performed by MRO
+4.1 Data Quality
+
+4.1.1 Data Quality Analysis Performed by Model Developer
+
+The developer relies on Archer data pulled on July 15, 2022, consistent with Section 2.3.1 of the MDD, which prescribes a static snapshot to avoid restatement issues. Section 2.3 further states that the last two quarters of data should be excluded to mitigate the “dynamic entry issue,” wherein net loss amounts can be updated post-event.
+
+Although the developer’s documentation references certain checks—such as retaining only records labeled “Event with GL Impact 10K+,” excluding credit boundary events, specific EDPM G/L codes, 2018Q4 ACH fraud, and 11 identified outliers (Exclusion_IE.xlsx)—MRO observed no formal, documented data quality or data appropriateness testing procedures conducted by the developer. The developer’s code did not explicitly exclude the final two quarters; instead, MRO confirmed that step was performed manually in Excel. These points are raised as findings for remediation.
+
+The developer’s approach also aggregates Archer’s G/L-level entries to the event level, assigning each event’s date to the earliest posting date. Section 2.3.1 calls for monthly data to be rolled to quarterly for final modeling. The developer indicates that large outliers reflect actual high-impact operational loss events unless proven otherwise, and that negative severity values (if recoveries exceed gross loss) are typically retained unless excluded by policy.
+
+4.1.2 Data Quality Analysis Performed by MRO
 
 MRO carried out additional checks on the Archer dataset (raw) and three processed tables (event_w_exclusion, event_w_exclusion_dedup, event_w_exclusion_agg) to verify completeness, consistency, and conformity with the MDD. MRO also examined each Basel Event Type segment in the final aggregated form for missingness, duplicates, and extreme outliers.
 
-MRO notes that the developer did not conduct or document formal data quality testing, contrary to MDD guidelines. This absence of developer-driven checks is being raised as a formal finding. Accordingly, MRO performed all data quality verifications independently.
-
----
-
-#### A. Raw Archer_data
+A. Raw Archer_data
 
 - Over 111,000 records, with key numeric fields (Gross Loss Amount, Recovery Amount).  
 - MRO observed no negative Gross Loss or positive Recovery, matching MDD Section 2.6’s requirement that Gross Loss ≥ 0 and recoveries ≤ 0.  
 - Approximately 10,062 duplicates at (Internal Event, Posting Date). MRO confirmed these often represent partial or multi-line G/L postings for the same event.  
 - Outlier testing showed net losses could exceed millions, and occasionally be negative if recoveries overshadow gross. MRO flagged both extremes for SME review.
 
----
-
-#### B. event_w_exclusion (Intermediate)
+B. event_w_exclusion (Intermediate)
 
 - Approximately 103,081 records after applying exclusions per MDD Section 2.4 (credit boundary, EDPM G/L codes, 2018Q4 ACH fraud, etc.).  
 - MRO observed 9,399 duplicates remaining. Negative net losses and large outliers persisted, consistent with multi-line postings.  
 - Domain checks again showed no negative Gross or positive Recovery. The net_loss field captured both large positive and negative totals.
 
-MRO identified specific negative net losses in the top 200 by absolute severity, led by a −$8.44 million entry (ET7, 31MAR2015) and repeated −$5.73 million entries (ET4, 31DEC2016). These large negatives may represent overshoot recoveries or data anomalies that require additional SME validation.
-
----
-
-#### C. event_w_exclusion_dedup (De-Duplicated)
+C. event_w_exclusion_dedup (De-Duplicated)
 
 - Roughly 38,784 records retained after removing exact duplicates. MRO confirmed 0 duplicates remain for (Internal Event, gl_date).  
 - MRO ran additional outlier testing. A “top 50 outliers by absolute severity” displayed multi-million-dollar positives (notably EF and CPBP) and negatives (IF, EDPM, etc.).  
+- The developer clarified that negative net losses could be legitimate over-recovery scenarios or data anomalies, pending further validation.
 
-Among the negatives, the same −$8.44 million EDPM (31MAR2015) and −$5.73 million CPBP (31DEC2016) entries appear, alongside smaller negatives (e.g., −$509k, −$250k). The developer clarified that negative net losses could be legitimate over-recovery scenarios or data anomalies, pending further validation.
-
----
-
-#### D. event_w_exclusion_agg (Aggregated)
+D. event_w_exclusion_agg (Aggregated)
 
 - Data aggregated to quarter (gl_date) and Basel Event Type. MRO reviewed top severity outliers, which exceeded tens of millions in EF.  
 - The resulting quarterly freq = distinct events, severity = sum of net_loss. This is consistent with MDD Section 2.7 guidance on final modeling data structure.
 
-When looking at the aggregated net_loss (event_w_exclusion_agg_net_loss), MRO noted only one negative severity in the top 200 list, −$57.58k (ET1 – Internal Fraud, 31MAR2013). While smaller in magnitude compared to other outliers, it still underscores the need to confirm these negative values as valid recoveries vs. potential miscodings.
-
----
-
-#### E. Segment-Level Checks
+E. Segment-Level Checks
 
 MRO examined the final quarterly datasets for EDPM, CPBP, EF, IF, DPA, and EPWS, each containing 80 quarters (31MAR2005 to 30JUN2024):
 
 1) EDPM  
-   No missing severity. Maximum near 34 million, indicating a strongly right-skewed distribution.  
-   One of the largest negative net-loss events in the unaggregated data (−$8.44 million) fell under EDPM in 2015.
+   No missing severity. Maximum near 34 million, indicating a strongly right-skewed distribution.
 
 2) CPBP  
-   No missing severity. Some outliers above 57 million. MRO requested developer confirmation on these extremely large values.  
-   Repeated −$5.73 million entries also appear at 31DEC2016 in the unaggregated views.
+   No missing severity. Some outliers above 57 million. MRO requested developer confirmation on these extremely large values.
 
 3) EF  
-   No missing severity. Outliers can approach 66 million. Developers confirmed that the 66 million figure in EF (30SEP2008) arises from 1,042 events in that quarter, thus reflecting cumulative impacts rather than erroneous data. MRO has accepted this explanation and does not view the 66M as a data issue.
+   No missing severity. Outliers can approach 66 million. Developers explained that in at least one quarter, the 66M figure results from 1,042 events in that period, indicating a cumulative effect rather than a data error.
 
 4) IF  
-   Three quarters were initially missing severity but are zero-loss events. One negative severity (around −$57.58k) remains in 31MAR2013, requiring explanation regarding over-recovery or data error.
+   Three quarters were initially missing severity, which the developer clarified are zero-loss quarters where no events occurred. One negative severity of about -57,584 was identified, requiring explanation regarding over-recovery or data error.
 
 5) DPA  
-   Some quarters initially showed missing severity, clarified by the developer to be zero-loss quarters (i.e., no loss events occurred). Highest severity ~3.17 million, smaller than other segments but still skewed.
+   Eight quarters initially missing severity, which the developer explained are also zero-loss quarters. Highest severity ~3.17 million, smaller than other segments but still skewed.
 
 6) EPWS  
    No missing severity. Some extremes in the 50–70 million range. MRO asked developers to validate these unusually large events.
 
----
-
-### 4.1.3 Data Quality Assessment
+4.1.3 Data Quality Assessment
 
 Source Variables  
 Archer is recognized as the bank’s official operational loss system, consistent with MDD references. MRO deems the source reputable for operational risk events. Data definitions appear consistent with the intended net loss usage.
 
 Testing Adequacy  
-MRO’s independent checks largely align with the developer’s outcomes, but further responses are needed to confirm:
+MRO’s independent checks largely align with the developer’s outcomes, though further responses are needed to confirm:
 
-- Negative net loss cases, especially in IF (−$57.58k), CPBP (−$5.73M), and EDPM (−$8.44M).  
-- Extremely large outliers in EF, CPBP, and EPWS. Developers confirmed that, in EF, the 66M severity is driven by 1,042 events, not data errors.  
-- Verification that the final two quarters of data were excluded: MRO discovered this step was performed manually in Excel, not in the SAS code, which may conflict with MDD automation guidelines.  
+- Negative net loss cases, especially in IF.  
+- Extremely large outliers in EF, CPBP, and EPWS.  
+- The explicit implementation of excluding the last two quarters from 2022, which MRO found is being done manually outside the SAS code.  
 
-Additionally, MRO is formally raising a finding that the developer did not conduct any documented data quality testing. This gap could impede timely detection of issues in the pipeline and needs remediation.
+MRO also notes that the developer did not document any formal data quality testing, which is being raised as a finding. Despite these issues, the Archer dataset’s heavy-tail risk profile is not unexpected, and large or negative values may still be valid events. MRO recommends verifying all major outliers and negative entries with SMEs before final modeling.
 
-Overall, MRO judges the developer’s data pipeline consistent with the heavy-tail risk profile in Archer, but recommends verifying all major outliers and negative entries with SMEs before final modeling.
+4.2 Data Appropriateness
 
----
+4.2.1 Data Appropriateness Testing Performed by Model Developer
 
-### 4.2.2 Data Appropriateness Testing Performed by MRO
+The developer’s documented approach—aggregating multiple G/L postings per event, applying exclusions from Section 2.4, and rolling monthly data to a quarterly severity/frequency time series—aligns with MDD requirements in principle. However, as with data quality, the developer did not provide evidence of formal data appropriateness testing, relying on informal checks instead. MRO considers this an additional process gap requiring remediation.
+
+4.2.2 Data Appropriateness Testing Performed by MRO
 
 MRO compared the final SAS flow with the MDD:
 
 1) Single Pull (July 15, 2022) and Exclusion of Recent Quarters  
-   MRO observed references to the single date. However, the developer did not implement the last two-quarter exclusion in the SAS code; instead, MRO confirmed the developer applied this in Excel as a manual step. MRO awaits a formal code-based or documented approach to ensure reproducibility.
+   MRO observed references to the single date but limited evidence in code of explicit two-quarter removal. This exclusion was confirmed to be a manual Excel step rather than embedded in the SAS workflow.
 
 2) Net Loss (Gross + Recovery)  
    MRO checked that Recovery Amount is stored as a negative and thus effectively subtracts from Gross. This is consistent with MDD Section 2.6’s net-loss decision.
@@ -108,6 +99,14 @@ MRO compared the final SAS flow with the MDD:
    The code excludes credit boundary, mis-categorized EDPM accounts, 2018Q4 ACH Fraud, and outliers from Exclusion_IE.xlsx. MRO confirmed each rule matches the MDD’s “Approved Data Exclusions.”
 
 5) Addressing Missing Data and Duplicates  
-   MRO validated that in IF and DPA, quarters appearing to have missing severity were zero-loss quarters with no events. Duplicates are resolved in event_w_exclusion_dedup. MRO finds these transformations appropriate for operational risk modeling.
+   MRO validated that missing severity in IF and DPA corresponded to zero-loss quarters. Duplicates are resolved in event_w_exclusion_dedup. MRO finds these transformations appropriate for operational risk modeling but notes a lack of formal developer-led testing to confirm overall data appropriateness.
 
-As with data quality, the developer also did not document any independent data appropriateness testing procedures. MRO thus conducted these checks autonomously and is raising a finding regarding the lack of developer-driven validation.
+4.2.3 Data Appropriateness Assessment
+
+MRO concludes the dataset is relevant and representative for operational risk modeling, capturing quarterly frequency and severity by Basel Event Type. The final transformations mostly align with the MDD, though certain details require further clarity:
+
+- Verifying the cutoff for excluding the most recent two quarters is consistently applied and documented in code or a reproducible workflow.  
+- Finalizing validation on extremely large outliers (such as the 66M in EF) and negative net losses.  
+- Ensuring version control for the Archer data pull to prevent restatement risks.  
+
+These issues do not invalidate the dataset but highlight key process gaps. Most notably, the absence of formal data quality and data appropriateness testing by the developer is a significant finding. MRO’s own checks indicate that once these points are addressed, the data cleaning, outlier handling, and aggregation processes should be suitable for the model’s objectives.
