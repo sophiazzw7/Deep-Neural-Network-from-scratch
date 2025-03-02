@@ -1,26 +1,7 @@
-### **Data Checks Performed and Findings**  
+MRO concludes the dataset is relevant and representative for operational risk modeling, capturing quarterly frequency and severity by Basel Event Type. The final transformations mostly align with the MDD, though certain details require further clarity:
 
-We conducted a series of data checks to ensure that net losses were not **double-counted prior to final aggregation**. Our approach included the following key steps:  
+- Verifying **negative net losses** (especially −\$8.44M EDPM, −\$5.73M CPBP, and −\$57.58k IF).  
+- **Confirming that manual exclusion of the final two quarters has been correctly applied** and updating the code or documentation accordingly.  
+- Ensuring version control for the Archer data pull to prevent restatement risks.
 
-#### **1. Checking for Large Differences in Total Net Loss Across Processing Stages**  
-- We examined `total_net_loss_exclusion`, `total_net_loss_dedup`, and `total_net_loss_agg` to see if large discrepancies existed.  
-- **Findings:**  
-  - `total_net_loss_exclusion` was **significantly higher** (\$2.09×10^10) compared to `total_net_loss_dedup` and `total_net_loss_agg` (\$2.30×10^9).  
-  - The difference of \$1.86×10^10 (`diff_excl_dedup`) suggests that **duplicate losses were present in the exclusion dataset** but removed in the de‐duplication step.  
-  - `diff_dedup_agg = 0`, confirming that **no further loss inflation occurs after deduplication**.  
-
-#### **2. Identifying Duplicate Entries in the Exclusion Dataset**  
-- We reviewed the **Top 20 Duplicate Events** in `event_w_exclusion` to check for multiple occurrences of the same events.  
-- **Findings:**  
-  - Several internal events had repeated occurrences, with some appearing **up to 11 times**.  
-  - This confirmed that the **inflated total in `exclusion` was due to duplicate records** that had not yet been removed.  
-
-#### **3. Verifying That Aggregation Did Not Reintroduce Double-Counting**  
-- We compared **net loss totals** between `event_w_exclusion_dedup` and its final aggregated version to ensure consistency.  
-- We specifically examined the **Quarters with Net Loss Discrepancies (Dedup vs. Aggregation)** table to check if aggregation introduced unintended inflation.  
-- **Findings:**  
-  - While individual quarter-level differences existed, the **overall sum of `sum_dedup` and `sum_agg` matched exactly**.  
-  - This confirms that **aggregation did not introduce additional double-counting**, and any discrepancies were due to different grouping methods rather than duplication.  
-
-### **Conclusion**  
-The checks **confirmed that net losses were not double-counted in the final aggregated results**. While the **exclusion dataset contained duplicate events**, these were successfully **removed in `event_w_exclusion_dedup`**, and the final aggregation process preserved consistency. **No further double-counting occurred after the de-duplication step.**
+**MRO also highlights the lack of developer-run data quality and data appropriateness testing.** These issues do not necessarily invalidate the dataset but represent significant process gaps. Once resolved, MRO considers the data cleaning, outlier handling, and aggregation processes adequately suited for the model’s objectives.
