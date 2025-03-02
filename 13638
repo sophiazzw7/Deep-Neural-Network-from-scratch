@@ -1,29 +1,26 @@
-Below is an integrated summary of the data processing observations, presented from the perspective of an independent validator assessing whether the SAS code and decisions made during data preparation align with the business rules and requirements outlined in the model development document (often referred to as the MOD13638 Data MDD). The following six points correspond to the document’s major steps for collecting, cleaning, and transforming Archer data into a final quarterly dataset of frequency and severity.
+### **Data Checks Performed and Findings**  
 
-1) Using Archer Data Pulled on July 15, 2022, and Excluding the Most Recent Two Quarters
+We conducted a series of data checks to ensure that net losses were not **double-counted prior to final aggregation**. Our approach included the following key steps:  
 
-The documentation specifies using a static Archer data pull dated 07/15/2022. It also states that the most recent two quarters should be removed to mitigate the “dynamic entry issue,” where net loss amounts can be restated over time. In the code, the proc import step references a file name that suggests a single, fixed pull date (for example, “Model_Report_20220715.xlsx”). However, the explicit filtering to exclude the last two quarters is not immediately visible in the shared code snippets. MRO have confirmed with the developer that the logic is implemented in 
+#### **1. Checking for Large Differences in Total Net Loss Across Processing Stages**  
+- We examined `total_net_loss_exclusion`, `total_net_loss_dedup`, and `total_net_loss_agg` to see if large discrepancies existed.  
+- **Findings:**  
+  - `total_net_loss_exclusion` was **significantly higher** (\$2.09×10^10) compared to `total_net_loss_dedup` and `total_net_loss_agg` (\$2.30×10^9).  
+  - The difference of \$1.86×10^10 (`diff_excl_dedup`) suggests that **duplicate losses were present in the exclusion dataset** but removed in the de‐duplication step.  
+  - `diff_dedup_agg = 0`, confirming that **no further loss inflation occurs after deduplication**.  
 
-2) Dynamic Entry Issue and Net Loss Instead of Gross
+#### **2. Identifying Duplicate Entries in the Exclusion Dataset**  
+- We reviewed the **Top 20 Duplicate Events** in `event_w_exclusion` to check for multiple occurrences of the same events.  
+- **Findings:**  
+  - Several internal events had repeated occurrences, with some appearing **up to 11 times**.  
+  - This confirmed that the **inflated total in `exclusion` was due to duplicate records** that had not yet been removed.  
 
-The Archer data can include multiple G/L entries (gross losses, partial recoveries, adjustments) for the same event. The documentation specifies using net loss (gross minus recoveries) and acknowledges that amounts may shift until the event stabilizes. The code does appear to implement net_loss as (Gross Loss Amount + Recovery Amount). This works properly if Recovery Amount is stored as a negative number for actual recoveries, effectively subtracting it from gross loss. From an independent review perspective, this aligns with the document’s instruction to capture net operational loss.
+#### **3. Verifying That Aggregation Did Not Reintroduce Double-Counting**  
+- We compared **net loss totals** between `event_w_exclusion_dedup` and its final aggregated version to ensure consistency.  
+- We specifically examined the **Quarters with Net Loss Discrepancies (Dedup vs. Aggregation)** table to check if aggregation introduced unintended inflation.  
+- **Findings:**  
+  - While individual quarter-level differences existed, the **overall sum of `sum_dedup` and `sum_agg` matched exactly**.  
+  - This confirms that **aggregation did not introduce additional double-counting**, and any discrepancies were due to different grouping methods rather than duplication.  
 
-3) Aggregation at the Event Level, Then Monthly/Quarterly Roll-Ups
-
-The document indicates Archer data is initially at a G/L-entry level and must be aggregated to the event level (one event can have multiple postings), then ultimately rolled up to quarterly data for modeling. The code uses the earliest posting date for each event (min(Posting_Date)) to define the event date, which matches the documentation’s approach of using the earliest G/L entry as the charge-off date. The code also demonstrates monthly or date-level data being consolidated into quarters, using INTNX('QTR', ...). This process is consistent with the MDD statements that monthly Archer data should be aggregated to a quarterly timeframe for final modeling.
-
-4) Exclusions: Credit Boundary, Certain Fraud Periods, and Mis-Categorized Events
-
-The MDD lists several exclusions: removing credit boundary events, excluding specific EDPM entries under GL 865400, omitting 2018Q4 ACH Fraud, and removing any events not labeled “Event with GL Impact 10K+.” The code shows a table (exclusion_event) or logic statements that match these conditions (for example, excluding events if they fall under credit boundary, certain G/L accounts, or are explicitly identified in Exclusion_IE.xlsx). This matches the manual exclusion rules the document describes. A validator would confirm each rule is represented in the SAS where clauses or data merges. If all rules (ACH Fraud in 2018Q4, EDPM 865400, credit boundary, etc.) are present, then the exclusions are consistent with the documentation.
-
-5) Final Output: Quarterly Frequency and Severity by Basel Event Type
-
-The final modeling dataset is supposed to have one record per quarter, per Basel Event Type, with columns such as freq (number of events) and severity (sum of net loss). The code culminating in event_w_exclusion_agg or similarly named output tables does precisely that: it groups by quarter (gl_date) and Basel event type, then counts distinct events for frequency and sums net_loss for severity. This matches the MDD’s description of how the final data should look before modeling.
-
-6) Alignment with Basel SMA Guidance (Net Loss with Verified Recoveries)
-
-The MDD references Basel requirements allowing banks to use net loss if recoveries are tracked and verified. The Archer data is presumed to meet this condition, and the SAS code’s net_loss calculation supports that approach. The actual verification of recoveries is a business process rather than a coding step, but from a data-handling standpoint, using net_loss is consistent with the regulatory guidance cited in the documentation.
-
-Summary of Validator Perspective
-
-Overall, the SAS data-processing steps appear to align with the major points outlined in the model development document. The code handles Archer data as net losses, aggregates multiple G/L entries per event, filters out known exclusions, and rolls up monthly postings into quarterly segments for modeling. One area to confirm is the explicit exclusion of the last two quarters (to mitigate dynamic restatements) if it is not visibly coded. Otherwise, the approach—importing a single Archer data pull, creating net_loss, excluding credit boundary or specific mis-categorized events, and finalizing quarterly frequency/severity—matches the MDD requirements. It is also important to note that negative net losses can appear when recoveries exceed gross losses, which can be valid but warrants business review. Large outliers should similarly be reviewed to confirm they are genuine operational events. If these final checks are satisfied, the data processing logic is consistent with both the MDD and Basel SMA guidelines.
+### **Conclusion**  
+The checks **confirmed that net losses were not double-counted in the final aggregated results**. While the **exclusion dataset contained duplicate events**, these were successfully **removed in `event_w_exclusion_dedup`**, and the final aggregation process preserved consistency. **No further double-counting occurred after the de-duplication step.**
