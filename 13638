@@ -1,7 +1,89 @@
-MRO concludes the dataset is relevant and representative for operational risk modeling, capturing quarterly frequency and severity by Basel Event Type. The final transformations mostly align with the MDD, though certain details require further clarity:
+**Model Methodology IVR Report Section**
 
-- Verifying **negative net losses** (especially −\$8.44M EDPM, −\$5.73M CPBP, and −\$57.58k IF).  
-- **Confirming that manual exclusion of the final two quarters has been correctly applied** and updating the code or documentation accordingly.  
-- Ensuring version control for the Archer data pull to prevent restatement risks.
+This section evaluates the model’s approach, method, logic, and assumptions, with particular focus on the changes for External Fraud (EF) and Clients, Products & Business Practices (CPBP). It also reviews the theoretical and empirical underpinnings of the chosen techniques, the role of qualitative assumptions, the reasonableness of data utilized (summarized in Section 4), and the appropriateness of technical specifications.
 
-**MRO also highlights the lack of developer-run data quality and data appropriateness testing.** These issues do not necessarily invalidate the dataset but represent significant process gaps. Once resolved, MRO considers the data cleaning, outlier handling, and aggregation processes adequately suited for the model’s objectives.
+-------------------------------------------------------------------------------
+1. Reasonableness of Model Approach, Method, and Logic
+-------------------------------------------------------------------------------
+
+The developer’s operational risk forecasting model aims to project quarterly frequency and severity of loss events under both baseline and stressed conditions. For four event types—Damage to Physical Assets (DPA), Employment Practices & Workplace Safety (EPWS), Internal Fraud (IF), and Execution, Delivery & Process Management (EDPM)—the model retains either a negative binomial regression or a rolling-average approach (depending on the availability of meaningful macro drivers). 
+
+By contrast, the methodology for EF and CPBP has changed from negative binomial regression to a qualitative approach that relies on:
+- A rolling average of the most recent nine quarters (9Q) to establish baseline frequency, and
+- Stress multipliers (e.g., 3.0 to 3.5) derived from historical peaks or percentile thresholds for adverse scenarios.
+
+These changes address historical weaknesses in the negative binomial models, which showed weak correlations with macroeconomic variables, required frequent overlays, and did not produce reliable stressed forecasts. The move to a simpler average-based technique with expert-driven multipliers appears reasonable given the inherently idiosyncratic nature of EF and CPBP operational losses.
+
+-------------------------------------------------------------------------------
+2. Theoretical and Empirical Support
+-------------------------------------------------------------------------------
+
+a. Theoretical Foundation  
+Operational risk losses often lack consistent economic drivers, unlike credit or market risk. Theoretical literature and regulatory guidance acknowledge that operational losses can be volatile and institution-specific, making purely quantitative, macro-based models less reliable. 
+
+b. Empirical Evidence  
+Empirical analyses provided by the developers confirm that EF and CPBP exhibited weak relationships with common economic indicators (e.g., DOWJ, GDP, sector employment). Moreover, the model’s historical outputs for these two event types required large “haircuts” or multipliers to align with actual outcomes. These ongoing adjustments suggest that the negative binomial framework offered limited practical utility. The revised approach—using recent actual losses, internal controls, and SME judgment—aligns better with the observed data patterns and recognized industry practice for high-variance, low-correlation operational losses.
+
+-------------------------------------------------------------------------------
+3. Assessment of Qualitative Judgment
+-------------------------------------------------------------------------------
+
+The qualitative elements primarily revolve around:
+1. Selecting the nine-quarter window to represent current business conditions and recent control environments.
+2. Determining stress multipliers (e.g., 3.0 to 3.5) grounded in past overlays, historical maximum-to-average ratios, and SME input.
+
+Given the limited predictive value of macro variables, these judgmental components are appropriate for EF and CPBP. The developer documents the rationale for multiplier choices (including references to 95th-percentile analyses, overlays, and historical maxima), which indicates a defensible, if not strictly statistical, basis. This structured use of expert input is consistent with accepted practices for operational risk modeling when statistical approaches do not yield robust results.
+
+-------------------------------------------------------------------------------
+4. Data Quality and Reasonableness (High-Level Summary)
+-------------------------------------------------------------------------------
+
+Section 4 of this report provides a detailed review of the input data’s completeness, accuracy, and suitability. In summary:
+- The Archer dataset capturing operational losses ≥ $10,000 was found to be reasonably comprehensive. 
+- Negative or extremely large net losses were evaluated and determined to reflect actual events rather than systematic data errors.
+- For EF and CPBP, the nine-quarter window is deemed representative of the current environment.  
+
+MRO concludes that the developer’s data usage is of sufficient quality for the revised EF and CPBP approach, and the assumptions underlying data selection (recent 9Q horizon) are acceptable given the high volatility and idiosyncrasy of operational risk losses.
+
+-------------------------------------------------------------------------------
+5. Assumptions and Limitations
+-------------------------------------------------------------------------------
+
+Key assumptions include:
+- The 9Q rolling average is the best proxy for near-future operational risk, reflecting present-day controls and threat conditions.
+- A single stress multiplier per event type is adequate, rather than distinct multipliers for different stress scenarios.
+- EF and CPBP do not exhibit stable or material correlations with macroeconomic factors.
+
+Limitations involve:
+- Reliance on a short historical window (nine quarters) that may not capture infrequent but severe event types.
+- Potential obsolescence of stress multipliers if the risk profile changes abruptly.
+- Absence of a strictly quantitative method to confirm the “optimal” multiplier.
+
+These assumptions and limitations are explicitly recognized by the developer, who plans annual reviews and monitoring to verify ongoing suitability of the multipliers and data window.
+
+-------------------------------------------------------------------------------
+6. Technical Specifications and Computational Roles
+-------------------------------------------------------------------------------
+
+The model relies on a straightforward “frequency × severity” framework. Frequency is derived from the simple 9Q average (with or without negative binomial regression, depending on the event type), and severity applies historical averages supplemented by stress multipliers. Technical details, such as use of a 95th-percentile analysis to support multiplier selection, are documented, and the computational logic (including the Excel-based macro) appears transparent and replicable.
+
+For EF and CPBP specifically:
+- Frequency is no longer calculated via negative binomial regressions. 
+- A unified method combines baseline and stress calculations using a single multiplier table.
+
+From a risk management perspective, this technical design is sufficiently robust for forecasting operational losses, provided that annual SME reviews continue to validate the multipliers and the chosen 9Q horizon.
+
+-------------------------------------------------------------------------------
+7. Conclusion
+-------------------------------------------------------------------------------
+
+In light of the above assessments:
+
+1. The model’s revised approach for EF and CPBP is logical and aligns better with the empirical evidence that macroeconomic variables offer limited predictive value for these event types.
+2. The theoretical rationale for employing a historical average plus stress multiplier approach is well-supported in current operational risk management principles, especially given high variance and idiosyncrasy.
+3. Qualitative judgments—particularly the nine-quarter window and multiplier selection—are clearly explained and reasonably justified.
+4. Data quality is acceptable, as detailed in Section 4, and consistent with the methodology’s demands.
+5. The model’s assumptions and limitations are identified, and the developer’s plan for annual monitoring addresses potential shifts in the risk environment.
+6. The technical specifications (simple average-based frequency, standardized multipliers for stress) are appropriate for capturing high-level loss trends and producing forecast results without excessive complexity.
+
+Overall, the revised methodology for EF and CPBP, alongside the existing frameworks for DPA, EPWS, IF, and EDPM, is considered reasonable for operational risk forecasting purposes, subject to ongoing reviews and adherence to stated monitoring procedures.
