@@ -1,9 +1,41 @@
-MRO identified specific negative net losses in the top 200 by absolute severity, led by a −$8.44 million entry (ET7, 31MAR2015) and repeated −$5.73 million entries (ET4, 31DEC2016). These large negatives may represent overshoot recoveries or data anomalies that require additional SME validation.
+6. Review of Model Assumptions and Limitations
 
+6.1 Model Assumptions
 
-Among the negatives, the same −$8.44 million EDPM (31MAR2015) and −$5.73 million CPBP (31DEC2016) entries appear, alongside smaller negatives (e.g., −$509k, −$250k).
+Overview of Key Assumptions  
+1) Multiplier Spectrum  
+   The model selects a multiplier (3.5 in this case) for stress calculations from a range of possible values rather than through a single statistical technique. Developers evaluated various methodologies (historical overlays, 95th-percentile ratios, maximum-to-average comparisons) to arrive at a practical and justifiable multiplier. MRO finds that using 3.5 for EF and CPBP is sufficiently conservative, aligns with past overlay practices, and remains supportable as long as the developer consults SMEs annually to confirm ongoing relevance.
 
-Deduplication revealed 50 distinct negative net losses, five times more than initially observed in event_w_exclusion, indicating that prior duplication masked the true count of extreme negative losses.
-The aggregation process in event_w_exclusion_agg offset most negative losses, leaving only one instance of negative severity, reducing visibility into outlier loss patterns.
-MRO recommends further SME review to confirm whether extreme negative losses reflect true business losses or data anomalies.
-Additional verification is needed for event_w_exclusion_agg to assess whether extreme losses were appropriately handled or if adjustments are required to prevent the underestimation of risk.
+2) Nine-Quarter Historical Data Window  
+   The model assumes that the most recent nine quarters (9Q) best represent future conditions. Although there is no strict quantitative test confirming 9Q is the optimal horizon, the development team relies on expert judgment to conclude that 9Q reflects current threat levels and operational control environments. If observed data significantly deviate from prior patterns, the team intends to investigate whether this shift is due to data anomalies or a true structural change.
+
+Support and Reasonableness of Assumptions  
+• The multiplier spectrum leverages a combination of empirical evidence and SME input, providing multiple cross-checks that mitigate the risk of selecting an arbitrarily high or low multiplier.  
+• Limiting the historical dataset to 9Q ensures the model remains aligned with recent trends and conditions, although the choice is not formally validated with statistical analyses.  
+• MRO concludes that both assumptions have an appropriate degree of conservatism, helping maintain reliability of the forecast in near-term applications. Over the longer term, the developer’s planned annual reviews should revalidate whether these assumptions remain effective.
+
+Distributional Assumptions  
+• Because the model is not macro-driven and does not use regression-based frequency distributions for EF or CPBP, there are no formal distributional assumptions (e.g., negative binomial or Poisson) to verify for these segments. For the other four event types (DPA, EPWS, IF, EDPM), any existing distributional assumptions remain unchanged and are discussed in the original documentation.
+
+Conclusions on Reliability  
+• Given the fairly high level of conservatism in the multiplier and the recent nature of the 9Q data, MRO finds the model reasonably sound for near-term risk forecasting.  
+• Over the long term, reliability depends on whether future data deviate significantly from the historical patterns embedded in these assumptions. If conditions change drastically, recalibrating the multiplier or altering the 9Q window may become necessary.
+
+6.2 Model Limitations
+
+Summary of Limitations  
+1) Single Stress Average for All Stress Scenarios  
+   The same 9Q average severity and a single 3.5 multiplier are used for any adverse or severely adverse environment. This uniform approach does not differentiate between varying degrees of stress, reducing flexibility but simplifying the model. It also ensures a conservative stance by always applying the highest level of severity.
+
+2) Data Coverage and Minimum Loss Threshold  
+   Archer data captures net losses over 10,000 dollars beginning in 2005. This excludes smaller incidents and limits visibility into potential tail events preceding 2005. While these constraints align with regulatory and institutional policy, they reduce the model’s capacity to assess or incorporate extremely rare or pre-2005 events.
+
+3) Data Aggregation Process Ownership  
+   Model developers, rather than the CAMP team, own and execute the aggregation code each cycle. Although they plan to collaborate with CAMP to automate the process, potential manual steps and partial oversight remain a limitation until fully productionized.
+
+Impact of Limitations on Model Use  
+• Applying one stress average (and a single 3.5 multiplier) for both adverse and severely adverse scenarios may yield conservative but less granular forecasts. However, MRO sees no immediate conflict with current usage, since the institution has elected to plan for worst-case outcomes.  
+• The Archer threshold and historical cutoff mean the model focuses primarily on mid-sized to large losses and cannot systematically capture trends below 10,000 dollars or prior to 2005. This is acceptable for tracking major operational events but may overlook smaller repetitive losses or older tail scenarios.  
+• The partially manual data aggregation process does not invalidate the model’s results, though it introduces potential operational risk until fully automated.  
+
+Overall, these limitations do not prevent the model from fulfilling its intended operational loss forecasting role. They simply reflect pragmatic choices made by the developers to keep the model focused on the most material losses, adopt a conservative stance for all stress scenarios, and rely on a relatively short and recent historical window. MRO considers these trade-offs acceptable, provided ongoing monitoring and periodic updates confirm that model outcomes remain aligned with institutional needs.
