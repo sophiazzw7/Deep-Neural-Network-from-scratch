@@ -1,5 +1,31 @@
-Unlike traditional risk models, this model is not macroeconomically driven—meaning it does not rely on external economic conditions to differentiate stress levels.
-As a result, the developers determined that it does not make sense to distinguish between "adverse" and "severely adverse" scenarios in terms of multiplier selection.
-The same 3.5 multiplier and loss value are applied regardless of the severity of the stress scenario, meaning the delta remains constant across all stress cases.
-This approach is consistent with the other four segments (DPA, EPWS, IF, EDPM), which also do not differentiate between adverse and severe stress scenarios.
-The developers made a judgmental decision to prepare for the worst—ensuring the model remains conservative by always assuming a severe stress impact.
+8. Review of Computation Code
+
+Note: A review is required only if there are changes made to the code.
+
+Based on the model developer’s confirmation, code updates were introduced to accommodate the transition from a negative binomial regression framework to a simpler, multiplier-based approach for EF and CPBP. This section summarizes the changes in code logic, verifies alignment with the documentation (MOD13638 Data MDD), and assesses how missing and duplicate data are handled.
+
+Changes in Model Code  
+• Transition from Quantitative to Qualitative: Code previously supporting negative binomial regressions for EF and CPBP has been removed. The current approach calculates frequency and severity directly from Archer data, applying a fixed stress multiplier rather than macroeconomic drivers.  
+• Data Handling Adjustments: The model now stores EF and CPBP loss events alongside the other four event types (IF, EDPM, DPA, EPWS), ensuring a uniform data flow for all six categories. The SAS-based aggregation process remains the same but no longer includes regression or scenario-based calculations for EF and CPBP.  
+• Removal of Negative Binomial Components: All references to regression-based routines and macroeconomic variables have been eliminated.  
+• Code Execution and Testing: The data extraction, grouping, and summation logic has minor modifications for EF and CPBP to incorporate the simpler multiplier-based frequency calculations. Macroeconomic scenario projections are not used for these two types.
+
+Cross-Walk of Code Logic vs. Documentation  
+1) Use of Net Loss (Gross – Recoveries)  
+Documentation indicates net loss should be gross loss plus recovery amount (negative) to capture the true severity of each event. In code, net_loss = (Gross Loss Amount + Recovery Amount). This matches the MDD requirement and correctly reflects net losses.  
+
+2) Earliest Posting Date as Event Date  
+The MDD prescribes using the earliest posting date among the G/L lines for each event. The code implements this by creating min_date from the Posting Date grouped by Internal Event. This ensures frequency counts and severity calculations attribute each event to its earliest posting date.  
+
+3) Aggregation to the Quarterly Level  
+The code uses INTNX('QTR', min_date, 0, 'E') to create a gl_date field, then groups by gl_date to produce one record per quarter for each Basel Event Type. Frequency is counted as the distinct number of Internal Events, while severity is summed across all G/L lines for those events. This aligns with the MDD’s quarterly roll-up requirement.  
+
+4) Manual Exclusions  
+Section 2.4 of the MDD specifies exclusion of credit boundary events, EDPM events with GL 865400, 2018Q4 ACH fraud, and events not labeled “Event with GL Impact 10K+.” The code applies these conditions in the SQL where clause, matching the documented rules.  
+
+5) Handling of Missing Data and Duplicates  
+• Missing Data: The Archer dataset rarely contains missing numeric values for gross loss and recovery; the code adds them directly. If any fields are missing, SAS treats them as missing, but this has minimal impact given Archer’s completeness.  
+• Duplicates: Multiple G/L lines per event are aggregated by counting distinct event IDs (frequency) and summing net losses (severity). This ensures partial G/L postings for a single event do not inflate frequency.  
+
+Conclusion  
+The revised code is consistent with the MDD’s guidance on data exclusions, net loss calculation, earliest posting date usage, and quarterly aggregation. Eliminating the negative binomial components and macroeconomic references for EF and CPBP aligns with the new qualitative modeling strategy. The final code now applies a uniform procedure to all six event types, with EF and CPBP following a multiplier-based approach rather than a regression-based approach. The handling of missing values, duplicates, and updated data storage for EF and CPBP appear properly implemented, supporting accuracy and consistency in the model’s results.
