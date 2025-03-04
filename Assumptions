@@ -1,84 +1,64 @@
-Below is a concise review of the assumptions and limitations as they apply to the four quantitative segments—**IF**, **DPA**, **EPWS**, and **EDPM**—along with clarification on **EF** and **CPBP**, and notes on data sourcing and GL references.
+Below is a concise summary of the **key assumptions** and **key limitations** for the **four quantitative segments**—Internal Fraud (IF), Damage to Physical Assets (DPA), Employment Practices and Workplace Safety (EPWS), and Execution, Delivery, and Process Management (EDPM)—based on the provided material.
 
 ---
 
-## 1. Overview of Segments
+## 1. **Key Assumptions**
 
-1. **Quantitative Segments:**
-   - **IF** (Internal Fraud)
-   - **DPA** (Damage to Physical Assets)
-   - **EPWS** (Employment Practices and Workplace Safety)
-   - **EDPM** (Execution, Delivery, and Process Management)
+1. **Loss Distribution & Non-Regression Multiplier**  
+   - The model uses a Loss Distribution Approach (LDA) combined with a “non-regression multiplier” for severity.  
+   - It assumes that operational loss frequency and average severity can be treated separately, with minimal correlation between the two.
 
-2. **Qualitative Segments:**
-   - **EF** (External Fraud)
-   - **CPBP** (Clients, Products, and Business Practices)
+2. **Severity Calculation**  
+   - Severity is determined by comparing a non-stress average vs. a stress average over a 9-quarter window.  
+   - Each event type has **one** stress average, applied uniformly across all stress scenarios.  
+   - The severity does **not** directly rely on macroeconomic variables; rather, it hinges on whether a scenario is “baseline” or “stress.”
 
-Originally, **EF** and **CPBP** were modeled using a negative binomial distribution with macroeconomic factors, but **they have since shifted to a qualitative approach.** Their updated assumptions and limitations are documented elsewhere.
+3. **Archer Data Source**  
+   - **All event data** at or above \$10K net loss is pulled from Archer, capturing the most material operational losses.  
+   - The data set spans **2005.Q1–2021.Q4**, assumed to be representative of both normal and stressed economic conditions (including the Great Financial Crisis).
 
----
+4. **Historical Representativeness**  
+   - The historical loss frequency and severity from Archer are presumed sufficient for projecting future losses via the multiplier method.  
+   - Data cleansing and manual exclusions are done carefully, and the team relies on these processes to ensure data accuracy.
 
-## 2. Assumptions & Limitations for IF, DPA, EPWS, and EDPM
-
-From the document text, the following assumptions and limitations apply to the four quantitative segments (IF, DPA, EPWS, EDPM):
-
-### **Assumptions**
-
-1. **Model Framework (Loss Distribution Approach / Multiplier Methodology)**
-   - Uses historical loss events from Archer (≥10K net loss).
-   - Assumes the frequency of operational loss events and their average severity can be treated separately (weak correlation).
-   - Frequency is typically estimated using standard count-data models (Poisson, Negative Binomial, etc.), but the model here uses a **non-regression multiplier** for severity.
-   - One “stress average” severity multiplier applies across different stress scenarios (no distinction by scenario).
-
-2. **Archer Data Coverage**
-   - Loss data is captured from **Archer** at or above $10,000, which is the recommended industry threshold.
-   - Data from 2005 to 2021.Q4 is treated as representative of the firm’s operational loss frequency and severity.
-
-3. **Historical Representativeness**
-   - Includes major economic downturns (e.g., Great Financial Crisis), assumed to sufficiently cover stress conditions.
-   - Data cleansing and manual exclusions are performed, under the assumption they are properly executed.
-
-### **Limitations**
-
-1. **Variability in Operational Losses**
-   - Operational losses have **high variance** (heavy-tailed, skewed distributions).
-   - Randomness in frequency and severity can challenge accurate statistical estimation.
-
-2. **Single Severity Multiplier**
-   - Only one average severity multiplier is used for stress, reducing scenario granularity.
-
-3. **Data Sparsity**
-   - Historical coverage starts in 2005; some event types have limited observations.
-   - This can affect reliability of frequency and severity estimates.
-
-4. **Manual Data Processes**
-   - Data standardization and recovery restatements rely on subject-matter experts; subject to potential human error or incomplete coverage.
-
-5. **Past Model Stability Issues**
-   - The quantitative model faced stability challenges, leading to the eventual qualitative shift for EF and CPBP.
+5. **Model Execution Assumptions**  
+   - The approach follows standard count-data assumptions for frequency (though the actual method here is a multiplier rather than regression).  
+   - Model execution relies on timely and accurate data availability; no ad-hoc process deviations are planned once the approach is approved.
 
 ---
 
-## 3. Clarifications on EF and CPBP
+## 2. **Key Limitations**
 
-- **EF** and **CPBP** were once modeled with a negative binomial distribution incorporating macroeconomic variables.
-- **They now follow a qualitative methodology**, with their assumptions and limitations maintained in **a separate document** (not in this version).
-- Therefore, **this old document should not contain** any active assumptions or limitations pertaining to EF and CPBP’s previous quantitative approach. If any references remain, they are outdated and should be removed or clearly marked as legacy.
+1. **Single Stress Average Severity**  
+   - Using **one** stress average multiplier for each event type reduces scenario specificity (e.g., no differentiation among mild, moderate, or severe economic downturns).
+
+2. **Data Sparsity & Variability**  
+   - Some event types have **limited historical observations**, complicating frequency or severity estimates.  
+   - Operational losses tend to be random and can be **heavy-tailed**, introducing volatility in model predictions.
+
+3. **Historical Bias**  
+   - Reliance on past data (2005 onward) may not capture future structural changes or emerging risks.  
+   - If new loss behaviors deviate significantly from historical patterns, the multiplier approach may be less reliable.
+
+4. **Manual Data Processes**  
+   - Potential inconsistencies exist in data entry and recovery restatement, requiring subject-matter expert review.  
+   - Capping, exclusions, or reversals could alter the data set, and the model depends on how accurately these adjustments are documented.
+
+5. **Model Stability**  
+   - Past stress-testing cycles revealed that purely quantitative methods faced stability issues (one factor prompting a qualitative approach for certain segments).  
+   - Heavy reliance on historical severity distributions means the model may require overlays to generate reasonable outputs under drastically changing conditions.
 
 ---
 
-## 4. Removal of GL Data References
+## 3. **Additional Context: Qualitative vs. Quantitative Segments**
 
-- The developer confirmed that **only Archer** is used as the data source for loss events.  
-- References to **GL data** in the document (e.g., mention of low-dollar GL entries <10K or difficulty mapping GL to Basel event types) are **no longer applicable** and **should be removed**, since they do not pertain to current data sourcing.
+- **EF (External Fraud)** and **CPBP (Clients, Products, and Business Practices)** transitioned to a **qualitative** approach due to the model’s inability to capture those segments effectively with purely quantitative methods.  
+- The assumptions and limitations summarized here apply to the **four quantitative segments**—IF, DPA, EPWS, and EDPM.
 
 ---
 
-## 5. Summary of Recommended Document Edits
+### **In Summary**
 
-1. **Retain** assumptions and limitations relevant to IF, DPA, EPWS, and EDPM as they currently appear (Loss Distribution Approach, severity multiplier method, Archer data source, etc.).
-2. **Remove** or clearly mark as “legacy” any statements about EF and CPBP using negative binomial or macroeconomic factors, as those two segments are now qualitative.
-3. **Delete** references to “GL data assumptions and limitations,” since the developer clarified only Archer data is in scope.
-4. **Ensure** the final document reflects the correct number of quantitative segments (4) and that EF and CPBP’s assumptions or limitations are documented elsewhere.
-
-By following these steps, the document will accurately describe the assumptions and limitations for the four **quantitative** event-type segments and align with the **updated** data sourcing confirmation (Archer only) and the **qualitative** treatment for EF and CPBP.
+- **Four Segments (IF, DPA, EPWS, EDPM)** rely on a non-regression multiplier approach for severity, supported by Archer data (≥\$10K) from 2005 to 2021.  
+- Key **assumptions** center on the sufficiency and representativeness of historical loss data, an independently modeled frequency and severity framework, and stable data processes.  
+- Key **limitations** include a single stress multiplier for severity, potential data sparsity in some event types, the inherently random nature of operational losses, and reliance on manual data entry and adjustments.
