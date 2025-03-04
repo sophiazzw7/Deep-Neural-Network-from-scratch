@@ -1,353 +1,84 @@
-Below is a **point‐by‐point** reconciliation of the **SAS code** provided against the **requirements** from the **“blue‐text” template report** (the one detailing how to do data checks, outlier detection, duplicates, missing values, final aggregation, etc.). I’ll highlight how each requirement is addressed in the code snippets and, where relevant, indicate any additional small tweaks you might consider.
+Below is a concise review of the assumptions and limitations as they apply to the four quantitative segments—**IF**, **DPA**, **EPWS**, and **EDPM**—along with clarification on **EF** and **CPBP**, and notes on data sourcing and GL references.
 
 ---
 
-## 1. Missing Value Checks
+## 1. Overview of Segments
 
-**Template Requirement:**  
-- Check for missing values in key numeric and categorical fields.
+1. **Quantitative Segments:**
+   - **IF** (Internal Fraud)
+   - **DPA** (Damage to Physical Assets)
+   - **EPWS** (Employment Practices and Workplace Safety)
+   - **EDPM** (Execution, Delivery, and Process Management)
 
-**Code Provided:**  
-- We used:
-  ```sas
-  proc means data=archer_data n nmiss mean std min max;
-      var 'Gross Loss Amount'n 'Recovery Amount'n;
-      title "Numeric Variables Missing Value Check";
-  run;
+2. **Qualitative Segments:**
+   - **EF** (External Fraud)
+   - **CPBP** (Clients, Products, and Business Practices)
 
-  proc freq data=archer_data;
-      tables 'Basel Event Type Level 1'n 'Internal Events'n / missing;
-      title "Categorical Variables Missing Value Check";
-  run;
-  ```
-  - **What it does**: Summarizes how many observations (`n`), how many missing (`nmiss`), plus basic stats for numeric columns. Then it does frequency counts (including missing) for key categorical fields.  
-  - **Meets Template**: Yes, it directly handles the missing‐value requirement for both numeric and character fields.
+Originally, **EF** and **CPBP** were modeled using a negative binomial distribution with macroeconomic factors, but **they have since shifted to a qualitative approach.** Their updated assumptions and limitations are documented elsewhere.
 
 ---
 
-## 2. Duplicates
+## 2. Assumptions & Limitations for IF, DPA, EPWS, and EDPM
 
-**Template Requirement:**  
-- Check for duplicated rows or IDs that shouldn’t be duplicated.
+From the document text, the following assumptions and limitations apply to the four quantitative segments (IF, DPA, EPWS, EDPM):
 
-**Code Provided:**  
-- We used:
-  ```sas
-  proc sort data=archer_data out=archer_data_sorted;
-      by 'Internal Events'n 'Posting Date'n;
-  run;
+### **Assumptions**
 
-  data duplicates;
-      set archer_data_sorted;
-      by 'Internal Events'n 'Posting Date'n;
-      if not (first.'Posting Date'n and last.'Posting Date'n) then output;
-  run;
+1. **Model Framework (Loss Distribution Approach / Multiplier Methodology)**
+   - Uses historical loss events from Archer (≥10K net loss).
+   - Assumes the frequency of operational loss events and their average severity can be treated separately (weak correlation).
+   - Frequency is typically estimated using standard count-data models (Poisson, Negative Binomial, etc.), but the model here uses a **non-regression multiplier** for severity.
+   - One “stress average” severity multiplier applies across different stress scenarios (no distinction by scenario).
 
-  proc print data=duplicates;
-      title "Potential Duplicate Records";
-  run;
-  ```
-  - **What it does**: Sorts by event ID + posting date, flags any row that is not the unique first/last occurrence. That identifies duplicates.  
-  - **Meets Template**: Yes, it satisfies the “detect duplicates” step.  
+2. **Archer Data Coverage**
+   - Loss data is captured from **Archer** at or above $10,000, which is the recommended industry threshold.
+   - Data from 2005 to 2021.Q4 is treated as representative of the firm’s operational loss frequency and severity.
 
-*(Optional variant: If you have a single ID that should be unique, you can do a `proc sort nodupkey; by 'Internal Events'n;` as well.)*
+3. **Historical Representativeness**
+   - Includes major economic downturns (e.g., Great Financial Crisis), assumed to sufficiently cover stress conditions.
+   - Data cleansing and manual exclusions are performed, under the assumption they are properly executed.
 
----
+### **Limitations**
 
-## 3. Domain/Consistency Checks
+1. **Variability in Operational Losses**
+   - Operational losses have **high variance** (heavy-tailed, skewed distributions).
+   - Randomness in frequency and severity can challenge accurate statistical estimation.
 
-**Template Requirement:**  
-- Ensure numeric variables fall within expected ranges (e.g., no negative gross amounts if that’s not allowed, or check if recoveries are positive/negative based on your convention).
+2. **Single Severity Multiplier**
+   - Only one average severity multiplier is used for stress, reducing scenario granularity.
 
-**Code Provided:**  
-- The snippet below handles that:
-  ```sas
-  data domain_checks;
-      set archer_data;
-      if 'Gross Loss Amount'n < 0 then flag_gross_neg=1;
-      else flag_gross_neg=0;
+3. **Data Sparsity**
+   - Historical coverage starts in 2005; some event types have limited observations.
+   - This can affect reliability of frequency and severity estimates.
 
-      if 'Recovery Amount'n > 0 then flag_recovery_pos=1;
-      else flag_recovery_pos=0; 
-  run;
+4. **Manual Data Processes**
+   - Data standardization and recovery restatements rely on subject-matter experts; subject to potential human error or incomplete coverage.
 
-  proc freq data=domain_checks;
-      tables flag_gross_neg flag_recovery_pos / missing;
-      title "Domain Checks for Negative Gross or Unexpected Recovery Sign";
-  run;
-  ```
-  - **What it does**: Identifies how often `Gross Loss Amount` is < 0, or `Recovery Amount` is > 0.  
-  - **Meets Template**: Yes, it covers basic domain checks to see if data is in the expected sign or range.
+5. **Past Model Stability Issues**
+   - The quantitative model faced stability challenges, leading to the eventual qualitative shift for EF and CPBP.
 
 ---
 
-## 4. Outlier Detection
+## 3. Clarifications on EF and CPBP
 
-**Template Requirement:**  
-- Check for extreme values using an IQR (interquartile range) approach or some other method.
-
-**Code Provided:**  
-- We have:
-  ```sas
-  data archer_data_net;
-      set archer_data;
-      net_loss = 'Gross Loss Amount'n + 'Recovery Amount'n;
-  run;
-
-  proc univariate data=archer_data_net noprint;
-      var net_loss;
-      output out=_stats_ pctlpts=25,75 pctlpre=P_;
-  run;
-
-  data _null_;
-      set _stats_;
-      iqr = P_75 - P_25;
-      lower = P_25 - 1.5*iqr;
-      upper = P_75 + 1.5*iqr;
-      call symputx('lower_cut', lower);
-      call symputx('upper_cut', upper);
-  run;
-
-  data outliers;
-      set archer_data_net;
-      if net_loss < &lower_cut or net_loss > &upper_cut then outlier_flag=1;
-      else outlier_flag=0;
-  run;
-
-  proc print data=outliers (where=(outlier_flag=1));
-      title "Potential Net Loss Outliers (IQR Method)";
-  run;
-  ```
-  - **What it does**: Creates an IQR range for `net_loss` and flags any row outside `[Q1 - 1.5IQR, Q3 + 1.5IQR]` as an outlier.  
-  - **Meets Template**: Yes, that’s a standard outlier detection technique.  
+- **EF** and **CPBP** were once modeled with a negative binomial distribution incorporating macroeconomic variables.
+- **They now follow a qualitative methodology**, with their assumptions and limitations maintained in **a separate document** (not in this version).
+- Therefore, **this old document should not contain** any active assumptions or limitations pertaining to EF and CPBP’s previous quantitative approach. If any references remain, they are outdated and should be removed or clearly marked as legacy.
 
 ---
 
-## 5. Filtering/Exclusions
+## 4. Removal of GL Data References
 
-**Template Requirement:**  
-- Possibly exclude certain records (credit boundary events, etc.) based on business rules, produce a “clean” dataset.
-
-**Code Provided:**  
-- We have sample code:
-  ```sas
-  proc sql;
-      create table exclusion_event as
-      select distinct 'Internal Events'n
-      from archer_prep
-      where 
-          'Type of Impact'n in ('Credit Boundary')
-          /* OR exclude certain Basel event + date combos */
-          OR ( 'Basel Event Type Level 1'n = 'ET2 - External Fraud'
-               and year('Posting Date'n)=2018
-               and qtr('Posting Date'n)=4 )
-          ...
-      ;
-  quit;
-
-  proc sql;
-      create table event_w_exclusion as
-      select *
-      from archer_prep
-      where 'Internal Events'n not in (
-          select 'Internal Events'n from exclusion_event
-      );
-  quit;
-  ```
-  - **What it does**: Identifies events to exclude based on your rules, then filters the main dataset accordingly.  
-  - **Meets Template**: Yes, it addresses the approach of removing specific out‐of‐scope or test records.
+- The developer confirmed that **only Archer** is used as the data source for loss events.  
+- References to **GL data** in the document (e.g., mention of low-dollar GL entries <10K or difficulty mapping GL to Basel event types) are **no longer applicable** and **should be removed**, since they do not pertain to current data sourcing.
 
 ---
 
-## 6. Aggregation to Quarterly Frequency/Severity
+## 5. Summary of Recommended Document Edits
 
-**Template Requirement:**  
-- Summarize the data by quarter (or month, then quarter), getting total frequency (event count) and total severity (sum of net loss).
+1. **Retain** assumptions and limitations relevant to IF, DPA, EPWS, and EDPM as they currently appear (Loss Distribution Approach, severity multiplier method, Archer data source, etc.).
+2. **Remove** or clearly mark as “legacy” any statements about EF and CPBP using negative binomial or macroeconomic factors, as those two segments are now qualitative.
+3. **Delete** references to “GL data assumptions and limitations,” since the developer clarified only Archer data is in scope.
+4. **Ensure** the final document reflects the correct number of quantitative segments (4) and that EF and CPBP’s assumptions or limitations are documented elsewhere.
 
-**Code Provided:**  
-- We see:
-  ```sas
-  proc sql;
-      create table event_w_exclusion_agg as
-      select 
-          'Basel Event Type Level 1'n,
-          min('Posting Date'n) as min_date format=date9.,
-          intnx('qtr', min('Posting Date'n), 0, 'E') as gl_date format=date9.,
-          count(distinct 'Internal Events'n) as freq,
-          sum(net_loss) as severity
-      from event_w_exclusion
-      group by 'Basel Event Type Level 1'n, 
-               intnx('qtr', 'Posting Date'n, 0, 'E')
-      ;
-  quit;
-  ```
-  - **What it does**: Groups by Basel Event Type + quarter, counts distinct events, sums net loss.  
-  - **Meets Template**: Yes, this is exactly how to create frequency and severity at the quarterly level.
-
----
-
-## 7. Creating Full Quarter Range & Merging to Fill Missing Quarters With Zeros
-
-**Template Requirement:**  
-- Ensure you have **all quarters** from start to end, even if no losses in certain quarters. Fill in freq/severity = 0.
-
-**Code Provided:**  
-- Code snippet:
-  ```sas
-  proc sql noprint;
-      select min(gl_date) into :qtr_begin from event_w_exclusion_agg;
-      select max(gl_date) into :qtr_end   from event_w_exclusion_agg;
-  quit;
-
-  data qtr_range;
-      format qtr date9.;
-      n_qtr = intck('qtr', &qtr_begin, &qtr_end);
-      do i=0 to n_qtr;
-         qtr = intnx('qtr', &qtr_begin, i, 'E');
-         output;
-      end;
-      drop i n_qtr;
-  run;
-
-  %macro prep_data(et, et2);
-  proc sql;
-      create table &et2._dataset as
-      select gl_date, freq, severity
-      from event_w_exclusion_agg
-      where 'Basel Event Type Level 1'n = "&et"
-      ;
-  quit;
-
-  proc sql;
-      create table &et2._dataset2 as
-      select t1.qtr as gl_date format=date9.,
-             coalesce(t2.freq, 0) as freq,
-             coalesce(t2.severity, 0) as severity
-      from qtr_range t1
-      left join &et2._dataset t2
-         on t1.qtr = t2.gl_date
-      ;
-  quit;
-  %mend;
-  ```
-  - **What it does**: Creates a continuous quarter list (`qtr_range`) from earliest to latest date, then left‐joins the aggregated data. Missing freq/severity become 0.  
-  - **Meets Template**: Yes, exactly matches the standard approach for filling zero events in empty quarters.
-
----
-
-## 8. Final Data Checks on the Output Datasets
-
-**Template Requirement:**  
-- After producing the final quarterly tables (e.g., `IF_dataset2`, `EF_dataset2`), run checks: missing values in freq/severity, duplicates on gl_date, outliers, etc.
-
-**Code Provided:**  
-- We have a macro `check_output_data`:
-  ```sas
-  %macro check_output_data(segment_ds=, seg_name=);
-
-    proc means data=&segment_ds n nmiss mean std min max;
-      var freq severity;
-    run;
-
-    proc sort data=&segment_ds out=_sorted_ dupout=_duplicates_ nodupkey;
-      by gl_date;
-    run;
-
-    /* Outlier detection using IQR */
-    proc univariate data=&segment_ds noprint;
-      var severity;
-      output out=_stats_ pctlpts=25,75 pctlpre=P_;
-    run;
-    /* ... etc. */
-  %mend;
-  ```
-  - **What it does**: Repeats the same kind of numeric summary, duplicate check, and outlier detection for each final dataset.  
-  - **Meets Template**: Yes, it ensures your final aggregated tables are validated before feeding the model.
-
----
-
-## Overall Conclusion
-
-**Yes**, the code you have **covers all the major requirements** that were laid out in the “blue text” template for **data‐quality checks** and **final aggregation**:
-
-1. **Missing Values** (numeric/categorical)  
-2. **Duplicates**  
-3. **Domain/Sign Checks**  
-4. **Outlier Detection**  
-5. **Filtering/Exclusions** (credit boundary, mis‐categorization, etc.)  
-6. **Quarterly Aggregation** with frequency/severity  
-7. **Full Quarter Range** (fill zero freq/severity)  
-8. **Post‐Aggregation Validation** (outliers, duplicates, missing checks in the final tables)
-
-The **only** additional notes might be:
-
-- **Ensure** you customize the actual **WHERE** clauses or **exclusion** conditions to match your real business rules (e.g., specific G/L accounts, 2018Q4 external fraud, etc.).  
-- If you have a **renaming** step, you can avoid the named‐literal syntax, but that’s purely optional.  
-- Make sure that if you **truncate data to December 2021** (as discussed in the doc) that step is done **before** or **within** your SAS code (if not already in the input file).
-
-Otherwise, the code fully addresses the template’s data‐quality and final data‐preparation guidelines.
-
-
-
-=================
-
-
-%let archer_dt = 2022_7152022226PM;
-%let data_loc = /sasdata/sasdata2/ctmd2/ppnr/model_dev/MOD13638_Ops Risk/SUBMISSION;
-LIBNAME input "&data_loc";
-
-/* Import Archer Data */
-PROC IMPORT OUT=archer_data DATAFILE= "&data_loc./Model_Report_&archer_dt..xlsx"
-    DBMS=xlsx REPLACE;
-    GETNAMES=YES;
-RUN;
-
-/* Import Exclusion List */
-PROC IMPORT OUT=Exclusion_IE DATAFILE= "&data_loc./Exclusion_IE.xlsx"
-    DBMS=xlsx REPLACE;
-    GETNAMES=YES;
-RUN;
-
-/* Convert Posting Date */
-DATA archer_data;
-    SET archer_data;
-    formatted_posting_date = INPUT('Posting Date'n, MMDDYY10.);
-    FORMAT formatted_posting_date DATE9.;
-RUN;
-
-/* Apply Exclusions Before Aggregation */
-PROC SQL;
-    CREATE TABLE archer_prep AS 
-    SELECT *, ('Gross Loss Amount'n + 'Recovery Amount'n) AS net_loss
-    FROM archer_data
-    WHERE formatted_posting_date <= '31DEC2021'd 
-          AND UPCASE(STRIP('Internal Events'n)) NOT IN 
-             (SELECT DISTINCT UPCASE(STRIP('Internal Events'n)) FROM Exclusion_IE);
-QUIT;
-
-/* Aggregate Before De-Duplication */
-PROC SQL;
-    CREATE TABLE event_w_exclusion_dedup AS 
-    SELECT 'Basel Event Type Level 1'n, YEAR(formatted_posting_date) AS year_event, 
-           INTNX('QTR', formatted_posting_date, 0, 'E') AS qtr_event,
-           COUNT(DISTINCT 'Internal Events'n) AS freq, 
-           SUM(net_loss) AS severity
-    FROM archer_prep
-    GROUP BY 1, 2, 3;
-QUIT;
-
-/* Data Quality Checks */
-PROC MEANS DATA=event_w_exclusion_dedup N NMISS MEAN STD MIN MAX;
-    VAR freq severity;
-    TITLE "Final Data Quality Check - Frequency & Severity";
-RUN;
-
-/* Check for Negative Values */
-PROC SQL;
-    SELECT * FROM event_w_exclusion_dedup WHERE freq < 0 OR severity < 0;
-QUIT;
-
-/* Final Output */
-PROC PRINT DATA=event_w_exclusion_dedup (OBS=20);
-RUN;
-
+By following these steps, the document will accurately describe the assumptions and limitations for the four **quantitative** event-type segments and align with the **updated** data sourcing confirmation (Archer only) and the **qualitative** treatment for EF and CPBP.
