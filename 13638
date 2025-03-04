@@ -1,41 +1,98 @@
-6. Review of Model Assumptions and Limitations
+**Meeting Notes: Discussion on Archer Issue FND1734827**
 
-6.1 Model Assumptions
+**Date:** [Insert Date]  
+**Attendees:** Sophia, Alex, Jane, Rashmi, Simon (via email), Rami, Andre
 
-Overview of Key Assumptions  
-1) Multiplier Spectrum  
-   The model selects a multiplier (3.5 in this case) for stress calculations from a range of possible values rather than through a single statistical technique. Developers evaluated various methodologies (historical overlays, 95th-percentile ratios, maximum-to-average comparisons) to arrive at a practical and justifiable multiplier. MRO finds that using 3.5 for EF and CPBP is sufficiently conservative, aligns with past overlay practices, and remains supportable as long as the developer consults SMEs annually to confirm ongoing relevance.
+### **Key Discussion Points:**
+1. **Background on Issue FND1734827**
+   - Simon from TAS emailed regarding the remaining issue, stating that backtesting results for IF, DPA, EDPM, and EPWS are still relevant.
+   - Model developers, however, indicate that backtesting is no longer applicable.
 
-2) Nine-Quarter Historical Data Window  
-   The model assumes that the most recent nine quarters (9Q) best represent future conditions. Although there is no strict quantitative test confirming 9Q is the optimal horizon, the development team relies on expert judgment to conclude that 9Q reflects current threat levels and operational control environments. If observed data significantly deviate from prior patterns, the team intends to investigate whether this shift is due to data anomalies or a true structural change.
+2. **Clarifications on Model Scope and Impact**
+   - Jane sought confirmation on whether other models are related to this issue.
+   - Rashmi confirmed that this issue pertains only to one model.
+   - The discussion centered on whether Simon's concerns stem from external fraud and CPBP or other segments.
+   - Rashmi explained that Simon's concerns likely arise from changes to external fraud and CPBP while backtesting was initially performed on all six event types. However, the other four event types were always qualitative, making backtesting irrelevant.
+   - The current methodology is entirely qualitative, meaning backtesting is not appropriate or meaningful.
 
-Support and Reasonableness of Assumptions  
-• The multiplier spectrum leverages a combination of empirical evidence and SME input, providing multiple cross-checks that mitigate the risk of selecting an arbitrarily high or low multiplier.  
-• Limiting the historical dataset to 9Q ensures the model remains aligned with recent trends and conditions, although the choice is not formally validated with statistical analyses.  
-• MRO concludes that both assumptions have an appropriate degree of conservatism, helping maintain reliability of the forecast in near-term applications. Over the longer term, the developer’s planned annual reviews should revalidate whether these assumptions remain effective.
+3. **Next Steps: Communication with Simon**
+   - Jane proposed drafting an email to reiterate the message that backtesting is no longer relevant and to clarify the changes.
+   - If Simon remains unconvinced, further discussions will be needed.
 
-Distributional Assumptions  
-• Because the model is not macro-driven and does not use regression-based frequency distributions for EF or CPBP, there are no formal distributional assumptions (e.g., negative binomial or Poisson) to verify for these segments. For the other four event types (DPA, EPWS, IF, EDPM), any existing distributional assumptions remain unchanged and are discussed in the original documentation.
+4. **Potential Model Retirement and Replacement**
+   - Jane suggested an option to retire the model and implement a Model Change Approval (MCA) for a new qualitative methodology.
+   - Alex agreed that the cleanest approach is to retire and replace the model but raised concerns about execution time constraints.
+   - Given the regulatory meeting this week, the urgency of closing the issue was emphasized.
+   - Alex indicated that Jane and Rashmi could proceed with documentation for a new model, but the transition would take time.
 
-Conclusions on Reliability  
-• Given the fairly high level of conservatism in the multiplier and the recent nature of the 9Q data, MRO finds the model reasonably sound for near-term risk forecasting.  
-• Over the long term, reliability depends on whether future data deviate significantly from the historical patterns embedded in these assumptions. If conditions change drastically, recalibrating the multiplier or altering the 9Q window may become necessary.
+5. **Pending MRO Review & Regulatory Considerations**
+   - Simon is still awaiting MRO responses, which may influence his opinion on the issue.
+   - Jane suggested using email correspondence as a formal record of agreements to help move the issue toward resolution.
+   - If Simon remains resistant, a follow-up call may be necessary to clarify concerns and expedite closure.
 
-6.2 Model Limitations
+6. **Review Timeline**
+   - If Simon continues to consider backtesting applicable, the team will review updated documentation either this week or the following week.
+   - The goal is to ensure the interpretation and results are appropriately documented.
 
-Summary of Limitations  
-1) Single Stress Average for All Stress Scenarios  
-   The same 9Q average severity and a single 3.5 multiplier are used for any adverse or severely adverse environment. This uniform approach does not differentiate between varying degrees of stress, reducing flexibility but simplifying the model. It also ensures a conservative stance by always applying the highest level of severity.
+7. **Action Items:**
+   - **Jane** to draft an email clarifying why backtesting is no longer applicable and copy all attendees.
+   - **Team** to await Simon's response and be prepared for a follow-up call if necessary.
+   - **Rashmi & Jane** to evaluate feasibility and timing for retiring the model and submitting MCA documentation.
+   - **Sophia & Team** to review updated documentation as needed.
 
-2) Data Coverage and Minimum Loss Threshold  
-   Archer data captures net losses over 10,000 dollars beginning in 2005. This excludes smaller incidents and limits visibility into potential tail events preceding 2005. While these constraints align with regulatory and institutional policy, they reduce the model’s capacity to assess or incorporate extremely rare or pre-2005 events.
+### **Conclusion**
+- The priority is to communicate clearly with Simon regarding the irrelevance of backtesting given the model's qualitative nature.
+- If necessary, a meeting will be scheduled to address remaining concerns.
+- The regulatory timeline adds urgency to resolving the issue efficiently.
 
-3) Data Aggregation Process Ownership  
-   Model developers, rather than the CAMP team, own and execute the aggregation code each cycle. Although they plan to collaborate with CAMP to automate the process, potential manual steps and partial oversight remain a limitation until fully productionized.
+**Meeting Adjourned.**
 
-Impact of Limitations on Model Use  
-• Applying one stress average (and a single 3.5 multiplier) for both adverse and severely adverse scenarios may yield conservative but less granular forecasts. However, MRO sees no immediate conflict with current usage, since the institution has elected to plan for worst-case outcomes.  
-• The Archer threshold and historical cutoff mean the model focuses primarily on mid-sized to large losses and cannot systematically capture trends below 10,000 dollars or prior to 2005. This is acceptable for tracking major operational events but may overlook smaller repetitive losses or older tail scenarios.  
-• The partially manual data aggregation process does not invalidate the model’s results, though it introduces potential operational risk until fully automated.  
+=====
 
-Overall, these limitations do not prevent the model from fulfilling its intended operational loss forecasting role. They simply reflect pragmatic choices made by the developers to keep the model focused on the most material losses, adopt a conservative stance for all stress scenarios, and rely on a relatively short and recent historical window. MRO considers these trade-offs acceptable, provided ongoing monitoring and periodic updates confirm that model outcomes remain aligned with institutional needs.
+**Meeting Notes: Discussion on Negative Net Loss Observations**
+
+**Date:** [Insert Date]  
+**Attendees:** Sophia, Rashmi, Jane
+
+### **Key Discussion Points:**
+
+1. **Observation of Negative Net Loss in Event Data**
+   - Sophia inquired about negative net loss observed in `event_w_exclusion` and `event_w_exclusion_dedup`, asking Rashmi to confirm if these were data anomalies.
+   - Rashmi clarified that these are not anomalies but represent actual historical financial events over the past nine quarters.
+   - The negative net losses reflect the inclusion of recovery mechanisms and do not indicate an issue with data integrity.
+   - Rashmi emphasized that removing these gains might misrepresent the actual loss experienced by the bank.
+   - The team agreed that further investigation is needed to determine whether these negative net losses should be included in the model.
+
+2. **Impact on Risk Categorization**
+   - Sophia highlighted the need for a solid confirmation that these represent legitimate gains and are not data anomalies.
+   - The confirmation will impact the categorization of this risk item.
+   - Sophia proposed obtaining an email confirmation and sign-off for documentation purposes to ensure clarity in governance reviews.
+
+3. **Addressing Documentation Gaps**
+   - Rashmi acknowledged that there was no prior discussion on this in the previous Model Development Document (MDD).
+   - The goal is to address this documentation gap and properly document the rationale for including or excluding these gains.
+   - Rashmi reiterated that this is part of due diligence and that the exercise is focused on documentation rather than the immediate removal of gains.
+
+4. **Planned Next Steps**
+   - Rashmi will conduct further testing and document findings regarding negative net losses.
+   - Sophia will follow up on obtaining email confirmation and sign-off to support documentation and governance review.
+   - Rashmi will finalize responses on outstanding issues and provide an update by [insert date].
+
+5. **Clarification on Model Code Versions**
+   - Sophia sought clarification on whether the provided code snippet represents the production version or the most recent CCAR cycle version.
+   - Rashmi explained that the code is a combination of both, but the production version still contains elements that need to be cleaned up.
+   - The primary difference between the pre-qualitative change version and the current version is the removal of the model component and the inclusion of EF and CPBP outputs.
+   - No major logic changes were made aside from output modifications.
+   - Sophia confirmed that the only adjustments involved accommodating EF and CPBP in the outputs while removing the modeling component.
+
+### **Action Items:**
+   - **Rashmi** to further investigate the appropriateness of including negative net loss data in the model.
+   - **Sophia** to seek email confirmation and sign-off to validate the legitimacy of gains and ensure alignment with governance requirements.
+   - **Rashmi** to finalize documentation updates and submit findings by [insert date].
+   
+### **Conclusion**
+- The discussion aimed to clarify the nature of negative net losses and their role in the modeling process.
+- Further testing and documentation updates will ensure the issue is properly addressed and well-documented for governance review.
+
+**Meeting Adjourned.**
+
