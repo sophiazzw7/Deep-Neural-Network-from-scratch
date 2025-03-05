@@ -1,131 +1,54 @@
-Below is **your original text** for Section 3, **followed by an assessment** of which documentation requirements (from the “Assessment of Model Documentation Adequacy” list) may still be missing or need more clarity. After that, you’ll find **drafted bullets** to address those missing points, tying them to information already provided about this model.
-
----
-
-## 3. Review of Model Documentation  
-*(Your Original Text)*
-
-As part of the Annual Review, MRO reviewed the model documentation with the most recent updated documentation, which includes the model methodology change for EF and CPBP segment that is “MOD13638 Operational Risk Loss Forecast Model with qualitative methodology 02132024.” MRO noted that the updated model methodology documentation has been attached as a memo in Section 10 of the model document.
-
-The current methodology for these segments makes the model a qualitative model as such many of the earlier documented performance testing is currently not applicable and should be removed and updated along with details related to earlier methodology for EF and CPBP segments. However, due to limited time available for making documentation changes, the development team did not make any changes but they have added a note with minor information regarding the methodology change regarding EF and CPBP and to refer to section 10 of the model document. So given the short time available, MRO has decided to raise a sub-issue for documentation such that at a later point, the required changes are made. Below are the following issues noted:
-
-1) The model documentation does not have a model risk tier table attached to it. And MRO also suggests the development team to update MCA for this model since there has been a model change.
-
-2) Figure 3 in section 1.2 should be updated to align with the changes made to the model methodology. Similarly, in section 1.5, MRO notes that there are still Assumptions and Limitations which are regarding previous methodology, therefore suggests to update the section and also incorporate assumption and limitation stated in the memo for the updated methodology for EF and CPBP. Furthermore, no information regarding GL data is mentioned in the development team has confirmed that this data it is not being used in the capital forecasting.
-
-3) During our discussion with the development team, they mentioned that GL data is not used due to data entry problems. However, in Section 2 of the model document, there are several sub-sections where the development team has discussed that GL data impacts or at least they have used some GL accounts data for the EDPM. Therefore, the development team should clarify whether this data is used for development of EDPM segment and will not be used in future capital forecasting. Or if it is not used at all, then it should be clearly stated. And also should remove figures where it appears GL data was used to calculate Total Operational Loss, for example, Figure 48 under Section 5.4 clearly states that for event type EDPM, GL data was used, which is contradictory to our discussion with the development team and would be misleading.
-
-4) Discussions related to the variable selection process for EF and CPBP under Section 3 should be updated or removed as applicable for the model change. Similar updates should be made in Section 4.3 Methodology Assumptions, Risks, and Limitations.
-
-5) Under Section 5 Model Estimation process, MRO noted that though for the other four components (i.e., IF, EDPM, DPA, and EPWS), the model document has documented the stress period quarters and the multipliers for the severity components, the same has not been done in the frequency component for these segments. MRO have noted the stress period and multiplier of these segments under section 5 of these documents from the file “aggregate_loss_final_version_CCAR2027.” Finally, the MRO would suggest the development team to confirm and document the stress period and multiplier for the frequency component in the model document.
-
-6) Model Implementation:  
-   For Model Implementation, the development team has informed us that production code is yet to be finalized, as such an implementation sub-issue would be raised as part of this validation. Therefore, as and when the Implementation plan is finalized, the development team should update Section 7 Model Implementation and Section 8 Model Use Controls, which has not been updated after the model methodology change.
-
-After reviewing the model documentation, MRO notes the following sub-issue mentioned above. MRO also reviewed the updated documentation in Section 10 for the EF and CPBP segments and noted that all the necessary information and analysis was performed and have been attached in the document.
-
----
-
-## Assessment Against Documentation Requirements
-
-The **Model Documentation Adequacy** list requires certain components be present. Below is a **checklist** showing which bullets your section **already addresses** and which may be **missing** or need additional details:
-
-1. **All business objectives, major assumptions, limitations, and intended use**  
-   - Partially addressed: You mention the new qualitative approach for EF/CPBP, but an explicit summary of the **business objective** (e.g., CCAR/DFAST capital forecasting), **assumptions** (why 9Q?), and **limitations** (high idiosyncrasy, not predictive) should appear in the doc.  
-   - Missing detail: Clear statement that the model is used for **CCAR/DFAST** and references the need for capital planning.  
-
-2. **Compliance with specific regulatory requirements**  
-   - Not explicitly stated if there are any specific regulatory or accounting requirements (beyond CCAR).  
-   - If none apply, clarify that it is strictly for CCAR compliance, so no unique IFRS/GAAP rule is triggered.  
-
-3. **Model methodology: logic, input data, data treatment, and flow; key risk drivers or assumptions; formulas/equations; performance monitoring plan**  
-   - Partially addressed: You note that **prior performance testing is no longer valid** under the new approach.  
-   - Missing detail: Summaries of the logic (multiplier-based approach for EF/CPBP), and **data flows** for the other four event types remain somewhat scattered.  
-
-4. **Relevant industry/research literature**  
-   - Not mentioned. If the dev team used references or conceptual reasoning for choosing 9Q historical data, that might be cited. If not, a statement clarifying “No external literature was used” might suffice.  
-
-5. **Alternative conceptual approaches considered**  
-   - Partially addressed: The doc references removing negative binomial for EF/CPBP. If so, mention that other approaches (like distribution-based) were not suitable.  
-
-6. **List of key model stakeholders (owner, developer, user, third party)**  
-   - Partially addressed: You mention an “implementation sub-issue” for a future date. Usually, this bullet requires a simple table listing stakeholder roles.  
-
-7. **Updated information for the annual tiering assessment**  
-   - Not explicitly addressed: The doc is missing a **model risk tier table**. This ties in with your item (1): a new MCA is recommended.  
-
-8. **Details on model implementation and change control**  
-   - Partially addressed: You note that the code is not finalized and an implementation sub-issue will be raised. That’s good, but the doc should contain at least a placeholder statement in Section 7 or 8 about how the final code will be tested or controlled.  
-
-9. **MRO’s assessment and findings**  
-   - Sufficiently addressed: You clearly list the sub-issues.  
-
----
-
-## Drafted Bullets to Cover Missing Pieces
-
-Based on the **information previously provided** and the **doc requirements**, here are **short bullet points** you can incorporate into Section 3 (or a nearby section) to fill the gaps:
-
-1. **Business Objectives and Use**  
-   “The primary objective of this operational loss forecast model is to provide stressed loss estimates for Truist’s CCAR/DFAST submissions. As such, the model underpins capital planning decisions and ensures regulatory compliance with Federal Reserve stress-testing requirements.”
-
-2. **Regulatory and Accounting Requirements**  
-   “No additional accounting rules (e.g., IFRS, US GAAP) specifically govern this model beyond standard operational risk capture. The model solely aligns with CCAR guidance for operational risk, which is described under SR 15-18/19 and subsequent Federal Reserve guidelines.”
-
-3. **Model Logic and Data Flow**  
-   “Under the updated methodology, EF and CPBP use a qualitative multiplier-based framework derived from the recent 9Q of Archer loss data. For the other four event types, frequency and severity remain partially data-driven with stress multipliers identified from historical peak periods. All references to prior negative binomial logic are now obsolete and will be removed.”
-
-4. **Industry/Research References**  
-   “Because operational risk modeling can be idiosyncratic, no specific industry or academic study is directly cited for this 9Q approach. However, the selection of a rolling 9Q window is based on internal SME judgment and prior practice in operational risk stress modeling within Truist.”
-
-5. **Alternate Approaches**  
-   “Prior negative binomial regression for EF/CPBP did not yield consistent macroeconomic relationships. Hence, the model was transitioned to a purely qualitative approach that better suits the firm’s event distribution and control environment.”
-
-6. **List of Key Stakeholders and Tier Update**  
-   “The model owner is [Name], with development and data extraction managed by [Team]. The model is currently classified as Tier [X], pending final MCA updates to reflect the new qualitative methodology.”
-
-7. **Implementation and Change Control**  
-   “Full production code for the revised EF/CPBP approach is pending. Section 7 and 8 will be updated with final code controls and sign-offs once the changes have been validated by the development team and MRO.”
-
----
-
-### How to Incorporate
-
-You can **append** these bullets at the end of your Section 3 or embed them in the relevant subsections (e.g., Section 1.2, 1.5, 2, 7, 8) to ensure the final documentation comprehensively meets all **model documentation standards**. Make sure references to GL data usage are **consistent** with the final resolution (whether partially used or fully excluded).
-
-**Note:** If any item does **not** apply—e.g., no external literature or zero relevant accounting rule—simply **state that explicitly** so reviewers see you checked the requirement and concluded it is not applicable.
-
----
-
-## Final Note
-
-Below is an **improved version** of your Section 3 **with polished language**. The **meaning** and **content** remain the same, but the wording is more concise and clear:
+Below is an **updated Section 3** that incorporates **all your new points** while preserving the **original content and meaning**. Each added bullet point or clarification is woven into the text for better continuity and readability.
 
 ---
 
 ### 3. Review of Model Documentation
 
-As part of the Annual Review, MRO examined the most recent model documentation, which includes the updated methodology for the EF and CPBP segments (documented in “MOD13638 Operational Risk Loss Forecast Model with qualitative methodology 02132024”). This updated approach, referenced in Section 10 of the model document, transitions EF and CPBP from a quantitative to a qualitative methodology.
+As part of the Annual Review, MRO examined the most recently updated model documentation, which includes the new qualitative methodology for the EF and CPBP segments (documented in “MOD13638 Operational Risk Loss Forecast Model with qualitative methodology 02132024”). This updated approach, referenced in Section 10 of the model document, changes EF and CPBP from a quantitative to a qualitative model framework.
 
-Because the current methodology for EF and CPBP is now qualitative, most of the previously documented performance testing is no longer applicable and should be removed or updated. However, given the limited time to revise the documentation, the development team only provided a brief note regarding these changes, referring readers to Section 10 for further details. MRO has therefore decided to raise a sub-issue so these documentation updates can be addressed more thoroughly at a later stage. The following issues have been noted:
+Because the current methodology for EF and CPBP is now qualitative, many of the previously documented performance testing methods (e.g., backtesting or formal overlays) are no longer applicable and should be removed or updated. However, given the limited time available for revisions, the development team only provided a brief note about these changes, directing readers to Section 10 for more details. Therefore, MRO will raise a documentation sub-issue so that comprehensive updates can be made at a later stage.
 
-1. **Model Risk Tier Table and MCA Updates**  
-   The model documentation does not include a model risk tier table. Given the change in methodology, MRO also suggests the development team update the Model Change Approval (MCA) to reflect the new qualitative framework.
+Below are the issues and additional points noted during this review:
 
-2. **Figure 3 and Assumptions/Limitations**  
-   Figure 3 in Section 1.2 should be revised to align with the new methodology. Furthermore, Section 1.5 retains assumptions and limitations pertaining to the previous approach. MRO recommends updating this section to include assumptions and limitations for EF and CPBP in line with the qualitative approach.  
-   In addition, the development team has confirmed that GL data is not used in capital forecasting, yet this is not explicitly stated in the documentation.
+1. **Regulatory Requirements and Policy References**  
+   - For models subject to specific regulatory requirements (e.g., CCAR/DFAST), the documentation should explicitly state which requirements apply and how they have been addressed.  
+   - [Risk Item] Any existing references to policies or procedures (e.g., older references to negative binomial) should be reassessed, updated, or removed if they no longer apply to the model in its qualitative form.
 
-3. **Use of GL Data**  
-   Although the development team indicated that GL data is not used due to data entry issues, Section 2 of the model document references GL accounts for EDPM. The development team must clarify whether GL data is used for EDPM model development and whether it will remain excluded from future capital forecasting. If GL data is not used at all, the documentation should clearly reflect this. Any figures (e.g., Figure 48 under Section 5.4) suggesting that GL data was applied to calculate total operational loss should be removed or amended to avoid confusion.
+2. **Model Risk Tier Table and MCA Updates**  
+   - The model documentation does not include a model risk tier table. Given the methodology change, MRO also suggests that the development team update the Model Change Approval (MCA) to accurately reflect the new qualitative approach.
 
-4. **Variable Selection Process for EF and CPBP**  
-   Section 3 still describes the macro-driven variable selection process for EF and CPBP, which is now obsolete. Similar content appears in Section 4.3 under Methodology Assumptions, Risks, and Limitations. These references should be revised or removed to reflect the updated qualitative methodology.
+3. **Model Methodology, Logic, and Input Data**  
+   - EF and CPBP methodology is described in the memo (Section 10). However, for the other four segments (IF, EDPM, DPA, and EPWS), the documentation remains unclear on certain points (e.g., frequency stress periods).  
+   - Input data is generally specified, but since **GL data is not used** (per the development team), references to GL datasets should be removed for clarity. Data flow and treatment descriptions (particularly in Section 2.5 of the MDD) still contain obsolete or conflicting information.  
+   - [Risk Item] Developer’s data quality and data appropriateness testing are **not provided**. MRO identified a negative severity value (-57,583.81) in the IF segment that needs investigation. The development team should confirm the appropriateness of including negative loss events in both Event_w_exclusion and Event_w_exclusion_dedup. Additional data controls may be warranted.  
+   - Any sections still referencing the **negative binomial regression** for EF/CPBP should be updated or removed.
 
-5. **Frequency Multipliers for IF, EDPM, DPA, and EPWS**  
-   In Section 5 (Model Estimation), while the documentation includes stress periods and multipliers for the severity component of IF, EDPM, DPA, and EPWS, it omits equivalent details for frequency. However, these frequency stress periods and multipliers appear in the file “aggregate_loss_final_version_CCAR2027.” MRO recommends the development team confirm and document these frequency stress periods and multipliers within the model documentation itself for completeness.
+4. **Assumptions, Key Risk Drivers, Model Specifications, and Formulas**  
+   - The assumptions for EF and CPBP are included in the memo, and MRO’s assessment can be found in Section 6 of this IVR.  
+   - For the other four segments, assumptions about frequency and severity still need clarity in the main body of the model documentation (Sections 1.5, 3, and 4.3).  
+   - Mathematical formulas for the updated model approach are partially detailed, but any reference to out-of-date equations should be removed.  
+   - Outcome analysis: Because the model has shifted to a qualitative approach, **traditional backtesting, stability testing, or stress scenario comparisons** are not applicable. Consequently, references to such analyses should be eliminated or reframed (see Section 6 of this IVR for MRO’s discussion on non-predictive models).
 
-6. **Model Implementation**  
-   The development team reported that the production code for the revised methodology is not yet final. Consequently, MRO will raise an implementation sub-issue as part of this validation. Once the implementation plan is finalized, the development team should update Sections 7 (Model Implementation) and 8 (Model Use Controls) to reflect the new methodology. Currently, these sections have not been revised to match the qualitative changes introduced.
+5. **Performance Monitoring Plan and OGM Updates**  
+   - With the qualitative approach, the **traditional OGM plan does not apply**. Instead, the development team should outline how they will annually reassess the EF/CPBP multiplier(s) and the recent 9Q data. Enhanced data control measures are also recommended, given the reliance on internal Archer data.  
+   - [Risk Item] Updates to the OGM plan should reflect its **complete removal**, as previously used performance metrics are no longer relevant.
 
-After reviewing the updated document in Section 10, MRO notes that it contains the necessary technical details and analysis supporting the new EF and CPBP methodology. However, additional revisions are needed throughout the main body of the model documentation to ensure it fully aligns with the qualitative approach and no longer references the obsolete quantitative framework.
+6. **Use of GL Data**  
+   - While the development team indicated that GL data is excluded due to data entry problems, multiple sections (e.g., Section 2, Figure 48 under Section 5.4) refer to GL data usage for EDPM. The team must clarify whether GL data was used in past developments or remains entirely excluded from future capital forecasting. If GL data is not used, the references and figures implying otherwise should be removed to avoid confusion.
+
+7. **List of Key Model Stakeholders**  
+   - [Risk Item] The documentation should include the names (or roles) of the model owner, model developer, model user, and any relevant third-party vendors. MRO recommends the development team confirm the current stakeholder list and update it accordingly.
+
+8. **Business Continuity and Contingency Plan**  
+   - The documentation should contain or reference a **business continuity/contingency plan**. This plan was not found in the current document set. MRO requests that the development team include or reference it in alignment with standard operational risk model documentation practices.
+
+9. **Model Exposure**  
+   - The scope or “exposure” of the model (i.e., the business areas, portfolios, or risk types impacted) should be clearly stated. This helps stakeholders understand the model’s reach within Truist’s operational risk framework.
+
+10. **Model Implementation**  
+   - The development team reports that the production code for EF/CPBP’s revised methodology is still pending finalization. An implementation sub-issue will be raised as part of this validation. Sections 7 (Model Implementation) and 8 (Model Use Controls) must be updated once the code and controls are finalized.
+
+11. **Template Alignment**  
+   - Lastly, MRO recommends updating the model documentation to meet the **newest MDD Template** standards. This includes reorganizing or removing obsolete references, clarifying data usage, and ensuring all relevant business objectives, assumptions, regulatory requirements, and stakeholder details appear in the correct format.
+
+After reviewing the updated Section 10 (EF and CPBP memo), MRO affirms that it contains the necessary technical details and analysis for the qualitative approach. However, the broader model document requires the aforementioned revisions to ensure consistency with the new methodology, removal of outdated references (including GL data, negative binomial regression, and OGM), and inclusion of appropriate data controls and stakeholder information.
