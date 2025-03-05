@@ -99,4 +99,33 @@ You can **append** these bullets at the end of your Section 3 or embed them in t
 
 ## Final Note
 
-In your text, you have **highlighted sub-issues** that match many of the points from the requirement list—missing tier info, older references to negative binomial, confusion around GL data. By adding **these new bullets** under “Additional Documentation Considerations” (or weaving them into existing paragraphs), you align your section with the **complete documentation checklist** and ensure clarity for both developers and governance reviewers.
+Below is an **improved version** of your Section 3 **with polished language**. The **meaning** and **content** remain the same, but the wording is more concise and clear:
+
+---
+
+### 3. Review of Model Documentation
+
+As part of the Annual Review, MRO examined the most recent model documentation, which includes the updated methodology for the EF and CPBP segments (documented in “MOD13638 Operational Risk Loss Forecast Model with qualitative methodology 02132024”). This updated approach, referenced in Section 10 of the model document, transitions EF and CPBP from a quantitative to a qualitative methodology.
+
+Because the current methodology for EF and CPBP is now qualitative, most of the previously documented performance testing is no longer applicable and should be removed or updated. However, given the limited time to revise the documentation, the development team only provided a brief note regarding these changes, referring readers to Section 10 for further details. MRO has therefore decided to raise a sub-issue so these documentation updates can be addressed more thoroughly at a later stage. The following issues have been noted:
+
+1. **Model Risk Tier Table and MCA Updates**  
+   The model documentation does not include a model risk tier table. Given the change in methodology, MRO also suggests the development team update the Model Change Approval (MCA) to reflect the new qualitative framework.
+
+2. **Figure 3 and Assumptions/Limitations**  
+   Figure 3 in Section 1.2 should be revised to align with the new methodology. Furthermore, Section 1.5 retains assumptions and limitations pertaining to the previous approach. MRO recommends updating this section to include assumptions and limitations for EF and CPBP in line with the qualitative approach.  
+   In addition, the development team has confirmed that GL data is not used in capital forecasting, yet this is not explicitly stated in the documentation.
+
+3. **Use of GL Data**  
+   Although the development team indicated that GL data is not used due to data entry issues, Section 2 of the model document references GL accounts for EDPM. The development team must clarify whether GL data is used for EDPM model development and whether it will remain excluded from future capital forecasting. If GL data is not used at all, the documentation should clearly reflect this. Any figures (e.g., Figure 48 under Section 5.4) suggesting that GL data was applied to calculate total operational loss should be removed or amended to avoid confusion.
+
+4. **Variable Selection Process for EF and CPBP**  
+   Section 3 still describes the macro-driven variable selection process for EF and CPBP, which is now obsolete. Similar content appears in Section 4.3 under Methodology Assumptions, Risks, and Limitations. These references should be revised or removed to reflect the updated qualitative methodology.
+
+5. **Frequency Multipliers for IF, EDPM, DPA, and EPWS**  
+   In Section 5 (Model Estimation), while the documentation includes stress periods and multipliers for the severity component of IF, EDPM, DPA, and EPWS, it omits equivalent details for frequency. However, these frequency stress periods and multipliers appear in the file “aggregate_loss_final_version_CCAR2027.” MRO recommends the development team confirm and document these frequency stress periods and multipliers within the model documentation itself for completeness.
+
+6. **Model Implementation**  
+   The development team reported that the production code for the revised methodology is not yet final. Consequently, MRO will raise an implementation sub-issue as part of this validation. Once the implementation plan is finalized, the development team should update Sections 7 (Model Implementation) and 8 (Model Use Controls) to reflect the new methodology. Currently, these sections have not been revised to match the qualitative changes introduced.
+
+After reviewing the updated document in Section 10, MRO notes that it contains the necessary technical details and analysis supporting the new EF and CPBP methodology. However, additional revisions are needed throughout the main body of the model documentation to ensure it fully aligns with the qualitative approach and no longer references the obsolete quantitative framework.
