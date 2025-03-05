@@ -1,98 +1,33 @@
-**Meeting Notes: Discussion on Archer Issue FND1734827**
+### **Proposed Risk Items for Model Documentation and Implementation**
 
-**Date:** [Insert Date]  
-**Attendees:** Sophia, Alex, Jane, Rashmi, Simon (via email), Rami, Andre
+1. **Model Documentation Incompleteness and Outdated Content**
+   - The model documentation lacks a **Model Risk Tier Table** and has not been updated to reflect changes in methodology. The MCA form should also be updated accordingly.
+   - Figure 3 in Section 1.2, and Sections 1.5, 3, and 4.3 retain outdated assumptions and limitations from the previous quantitative approach. These sections should be revised to align with the new methodology.
+   - The documentation still references the **variable selection process** for EF and CPBP under Section 3, which is now obsolete and should be removed.
+   - The description of model methodology is unclear for IF, EDPM, DPA, and EPWS, particularly regarding the derivation of frequency and severity multipliers, and stress period determination.
 
-### **Key Discussion Points:**
-1. **Background on Issue FND1734827**
-   - Simon from TAS emailed regarding the remaining issue, stating that backtesting results for IF, DPA, EDPM, and EPWS are still relevant.
-   - Model developers, however, indicate that backtesting is no longer applicable.
+2. **Data Integrity and Appropriateness Issues**
+   - The model documentation references **GL data**, despite confirmation from the development team that it is not used due to data entry issues. Section 2 and figures such as **Figure 48 in Section 5.4** should be updated or removed to prevent confusion.
+   - Data flow and treatment descriptions (e.g., **Section 2.5 of the MDD**) contain obsolete or conflicting information and need to be revised.
+   - **Negative severity values** (e.g., **-57,583.81 in the IF segment**) were identified, requiring investigation into their appropriateness.
+   - The presence of **negative loss values in Event_w_exclusion and Event_w_exclusion_dedup** should be assessed for validity, and additional data controls may be necessary.
+   - Developer’s **data quality and appropriateness testing** are not documented. A clear framework for data validation should be established.
 
-2. **Clarifications on Model Scope and Impact**
-   - Jane sought confirmation on whether other models are related to this issue.
-   - Rashmi confirmed that this issue pertains only to one model.
-   - The discussion centered on whether Simon's concerns stem from external fraud and CPBP or other segments.
-   - Rashmi explained that Simon's concerns likely arise from changes to external fraud and CPBP while backtesting was initially performed on all six event types. However, the other four event types were always qualitative, making backtesting irrelevant.
-   - The current methodology is entirely qualitative, meaning backtesting is not appropriate or meaningful.
+3. **Model Implementation Gaps**
+   - The **production code** for the revised methodology is **not yet finalized**, and an implementation sub-issue should be raised.
+   - Sections **7 (Model Implementation) and 8 (Model Use Controls)** have not been revised to reflect qualitative methodology changes and require updates upon finalization.
 
-3. **Next Steps: Communication with Simon**
-   - Jane proposed drafting an email to reiterate the message that backtesting is no longer relevant and to clarify the changes.
-   - If Simon remains unconvinced, further discussions will be needed.
+4. **Regulatory and Policy Compliance**
+   - **Policy and procedure references** should be reassessed and updated to ensure alignment with the new qualitative model framework.
+   - The model exposure, including **portfolio size or risk types impacted**, should be explicitly stated in the documentation.
+   - The documentation lacks a **Business Continuity and Contingency Plan**, which should be provided.
 
-4. **Potential Model Retirement and Replacement**
-   - Jane suggested an option to retire the model and implement a Model Change Approval (MCA) for a new qualitative methodology.
-   - Alex agreed that the cleanest approach is to retire and replace the model but raised concerns about execution time constraints.
-   - Given the regulatory meeting this week, the urgency of closing the issue was emphasized.
-   - Alex indicated that Jane and Rashmi could proceed with documentation for a new model, but the transition would take time.
+5. **Performance Monitoring and OGM Plan Updates**
+   - With the qualitative transition, the **traditional OGM plan no longer applies** and should be removed. Instead, the **EF/CPBP multipliers and recent 9Q data should be reassessed annually**.
+   - The **stress period for IF, EDPM, DPA, and EPWS should be reviewed annually**, and **enhanced data control measures** are recommended.
 
-5. **Pending MRO Review & Regulatory Considerations**
-   - Simon is still awaiting MRO responses, which may influence his opinion on the issue.
-   - Jane suggested using email correspondence as a formal record of agreements to help move the issue toward resolution.
-   - If Simon remains resistant, a follow-up call may be necessary to clarify concerns and expedite closure.
+6. **Stakeholder Review and Documentation Updates**
+   - The **list of key model stakeholders** should be reviewed and confirmed to reflect current ownership and responsibilities.
+   - The model documentation should be updated to conform to the **latest MDD template standards**.
 
-6. **Review Timeline**
-   - If Simon continues to consider backtesting applicable, the team will review updated documentation either this week or the following week.
-   - The goal is to ensure the interpretation and results are appropriately documented.
-
-7. **Action Items:**
-   - **Jane** to draft an email clarifying why backtesting is no longer applicable and copy all attendees.
-   - **Team** to await Simon's response and be prepared for a follow-up call if necessary.
-   - **Rashmi & Jane** to evaluate feasibility and timing for retiring the model and submitting MCA documentation.
-   - **Sophia & Team** to review updated documentation as needed.
-
-### **Conclusion**
-- The priority is to communicate clearly with Simon regarding the irrelevance of backtesting given the model's qualitative nature.
-- If necessary, a meeting will be scheduled to address remaining concerns.
-- The regulatory timeline adds urgency to resolving the issue efficiently.
-
-**Meeting Adjourned.**
-
-=====
-
-**Meeting Notes: Discussion on Negative Net Loss Observations**
-
-**Date:** [Insert Date]  
-**Attendees:** Sophia, Rashmi, Jane
-
-### **Key Discussion Points:**
-
-1. **Observation of Negative Net Loss in Event Data**
-   - Sophia inquired about negative net loss observed in `event_w_exclusion` and `event_w_exclusion_dedup`, asking Rashmi to confirm if these were data anomalies.
-   - Rashmi clarified that these are not anomalies but represent actual historical financial events over the past nine quarters.
-   - The negative net losses reflect the inclusion of recovery mechanisms and do not indicate an issue with data integrity.
-   - Rashmi emphasized that removing these gains might misrepresent the actual loss experienced by the bank.
-   - The team agreed that further investigation is needed to determine whether these negative net losses should be included in the model.
-
-2. **Impact on Risk Categorization**
-   - Sophia highlighted the need for a solid confirmation that these represent legitimate gains and are not data anomalies.
-   - The confirmation will impact the categorization of this risk item.
-   - Sophia proposed obtaining an email confirmation and sign-off for documentation purposes to ensure clarity in governance reviews.
-
-3. **Addressing Documentation Gaps**
-   - Rashmi acknowledged that there was no prior discussion on this in the previous Model Development Document (MDD).
-   - The goal is to address this documentation gap and properly document the rationale for including or excluding these gains.
-   - Rashmi reiterated that this is part of due diligence and that the exercise is focused on documentation rather than the immediate removal of gains.
-
-4. **Planned Next Steps**
-   - Rashmi will conduct further testing and document findings regarding negative net losses.
-   - Sophia will follow up on obtaining email confirmation and sign-off to support documentation and governance review.
-   - Rashmi will finalize responses on outstanding issues and provide an update by [insert date].
-
-5. **Clarification on Model Code Versions**
-   - Sophia sought clarification on whether the provided code snippet represents the production version or the most recent CCAR cycle version.
-   - Rashmi explained that the code is a combination of both, but the production version still contains elements that need to be cleaned up.
-   - The primary difference between the pre-qualitative change version and the current version is the removal of the model component and the inclusion of EF and CPBP outputs.
-   - No major logic changes were made aside from output modifications.
-   - Sophia confirmed that the only adjustments involved accommodating EF and CPBP in the outputs while removing the modeling component.
-
-### **Action Items:**
-   - **Rashmi** to further investigate the appropriateness of including negative net loss data in the model.
-   - **Sophia** to seek email confirmation and sign-off to validate the legitimacy of gains and ensure alignment with governance requirements.
-   - **Rashmi** to finalize documentation updates and submit findings by [insert date].
-   
-### **Conclusion**
-- The discussion aimed to clarify the nature of negative net losses and their role in the modeling process.
-- Further testing and documentation updates will ensure the issue is properly addressed and well-documented for governance review.
-
-**Meeting Adjourned.**
-
+This structured risk summary consolidates key issues, eliminating redundancy while maintaining clarity and completeness. Let me know if you need further refinements.
