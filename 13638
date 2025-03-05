@@ -1,33 +1,32 @@
 ### **Proposed Risk Items for Model Documentation and Implementation**
 
-1. **Model Documentation Incompleteness and Outdated Content**
-   - The model documentation lacks a **Model Risk Tier Table** and has not been updated to reflect changes in methodology. The MCA form should also be updated accordingly.
-   - Figure 3 in Section 1.2, and Sections 1.5, 3, and 4.3 retain outdated assumptions and limitations from the previous quantitative approach. These sections should be revised to align with the new methodology.
-   - The documentation still references the **variable selection process** for EF and CPBP under Section 3, which is now obsolete and should be removed.
-   - The description of model methodology is unclear for IF, EDPM, DPA, and EPWS, particularly regarding the derivation of frequency and severity multipliers, and stress period determination.
+1. **Documentation Gaps & Outdated Content**  
+   - Missing **Model Risk Tier Table**; MCA form requires an update.  
+   - Outdated assumptions, limitations, and methodology references in **Sections 1.2, 1.5, 3, and 4.3** need revision.  
+   - Remove obsolete **variable selection process** for EF and CPBP.  
+   - Clarify methodology for IF, EDPM, DPA, and EPWS, particularly **multiplier derivation and stress period determination**.
 
-2. **Data Integrity and Appropriateness Issues**
-   - The model documentation references **GL data**, despite confirmation from the development team that it is not used due to data entry issues. Section 2 and figures such as **Figure 48 in Section 5.4** should be updated or removed to prevent confusion.
-   - Data flow and treatment descriptions (e.g., **Section 2.5 of the MDD**) contain obsolete or conflicting information and need to be revised.
-   - **Negative severity values** (e.g., **-57,583.81 in the IF segment**) were identified, requiring investigation into their appropriateness.
-   - The presence of **negative loss values in Event_w_exclusion and Event_w_exclusion_dedup** should be assessed for validity, and additional data controls may be necessary.
-   - Developer’s **data quality and appropriateness testing** are not documented. A clear framework for data validation should be established.
+2. **Data Integrity Issues**  
+   - **GL data references** should be removed if not used.  
+   - **Negative severity values** (e.g., -57,583.81 in IF) require investigation.  
+   - Validate **negative loss values in Event_w_exclusion and Event_w_exclusion_dedup**; enhance data controls.  
+   - **Data quality testing framework** is missing and should be established.
 
-3. **Model Implementation Gaps**
-   - The **production code** for the revised methodology is **not yet finalized**, and an implementation sub-issue should be raised.
-   - Sections **7 (Model Implementation) and 8 (Model Use Controls)** have not been revised to reflect qualitative methodology changes and require updates upon finalization.
+3. **Implementation Delays**  
+   - **Production code is not finalized**; implementation sub-issue required.  
+   - **Sections 7 (Model Implementation) & 8 (Model Use Controls)** need revision post-implementation.
 
-4. **Regulatory and Policy Compliance**
-   - **Policy and procedure references** should be reassessed and updated to ensure alignment with the new qualitative model framework.
-   - The model exposure, including **portfolio size or risk types impacted**, should be explicitly stated in the documentation.
-   - The documentation lacks a **Business Continuity and Contingency Plan**, which should be provided.
+4. **Regulatory & Policy Compliance**  
+   - Update **policy and procedure references** to reflect qualitative methodology.  
+   - Clearly define **model exposure (portfolio size, risk types impacted)**.  
+   - Include a **Business Continuity & Contingency Plan**.
 
-5. **Performance Monitoring and OGM Plan Updates**
-   - With the qualitative transition, the **traditional OGM plan no longer applies** and should be removed. Instead, the **EF/CPBP multipliers and recent 9Q data should be reassessed annually**.
-   - The **stress period for IF, EDPM, DPA, and EPWS should be reviewed annually**, and **enhanced data control measures** are recommended.
+5. **Performance Monitoring & OGM Plan Removal**  
+   - Remove the **OGM plan**; instead, **EF/CPBP multipliers and recent 9Q data** will be reassessed annually.  
+   - Annual **stress period review** for IF, EDPM, DPA, and EPWS; improve **data controls**.
 
-6. **Stakeholder Review and Documentation Updates**
-   - The **list of key model stakeholders** should be reviewed and confirmed to reflect current ownership and responsibilities.
-   - The model documentation should be updated to conform to the **latest MDD template standards**.
+6. **Stakeholder Review & Template Alignment**  
+   - Confirm and update **model stakeholders**.  
+   - Align documentation with the **latest MDD template standards**.
 
-This structured risk summary consolidates key issues, eliminating redundancy while maintaining clarity and completeness. Let me know if you need further refinements.
+This version retains all key issues while being more concise and structured. Let me know if you need further refinements.
