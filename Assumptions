@@ -1,63 +1,28 @@
-**Draft Memo (from MRO’s Perspective)**
+Below is an updated **“Rationale for Discontinuing Back-Testing”** section that incorporates the points from the explanation:
 
 ---
-**To:** Model Development Team, GCO, TAS, and Relevant Stakeholders  
-**From:** [Name], on behalf of Model Risk Oversight (MRO)  
-**Subject:** Discontinuation of Back-Testing for Qualitative Operational Risk Event Types (IF, DPA, EDPM, EPWS)
-
-**Date:** [Date]
-
----
-
-### 1. **Purpose**
-This memo, issued by Model Risk Oversight (MRO), formalizes the conclusion that back-testing analysis for the four qualitative Operational Risk event types—Internal Fraud (IF), Damage to Physical Assets (DPA), Execution, Delivery, and Process Management (EDPM), and Employment Practices and Workplace Safety (EPWS)—under the MOD13638 Operational Loss Forecast Model is no longer applicable. It further clarifies that back-testing for these event types will not be required going forward.
-
-### 2. **Background**
-- **Model Overview**  
-  The MOD13638 Operational Loss Forecast Model estimates potential operational risk losses for Truist under various macroeconomic scenarios, primarily for CCAR and DFAST exercises. Previously, the model included quantitative aspects for certain event types (EF: External Fraud and CPBP: Clients, Products, and Business Practices), which required back-testing. However, EF and CPBP have transitioned to a qualitative approach, and the four remaining event types (IF, DPA, EDPM, EPWS) also employ a qualitative or multiplier-based methodology rather than statistical regressions on macroeconomic variables.
-
-- **Prior Back-Testing Requirement**  
-  In the past, because some event types incorporated statistical assumptions, back-testing of model estimates against historical actuals was performed. Over time, it became evident that certain Operational Risk event types, especially those driven by idiosyncratic, non-economic factors (e.g., fraud, legal, process failures), did not yield meaningful insights from back-testing metrics.
-
-- **Recent Developments**  
-  Communications between Model Development, MRO, and other stakeholders concluded that back-testing for these qualitative segments is not providing actionable information or enhancing model performance assessments. The relevant sections will be removed from the Model Development Document (MDD) and model monitoring frameworks, in alignment with updated MRO policy and procedures.
 
 ### 3. **Rationale for Discontinuing Back-Testing**
 
 1. **Qualitative Nature of the Four Event Types**  
-   - IF, DPA, EDPM, and EPWS rely on rolling nine-quarter averages with expert judgment-based multipliers. There are no predictive regressions to validate against actual outcomes.  
-   - The qualitative framework is not suited to statistical performance metrics typical of back-testing, as there is no regression-based or macroeconomic-driven forecast to test for accuracy.
+   - IF, DPA, EDPM, and EPWS rely on **qualitative or multiplier-based** methods using the most recent nine quarters (9Q) of loss data.  
+   - Any **forward-looking** elements (e.g., stress multipliers) come from **non-model, expert judgment sources** rather than a statistical forecast.  
+   - Consequently, **there is no predictive output** that can be meaningfully compared to actual outcomes.
 
-2. **Idiosyncratic and Weak Economic Linkages**  
-   - Operational Risk losses, particularly in these four event types, often arise from unique, internally driven circumstances or external triggers unrelated to macroeconomic indicators.  
-   - Back-testing offers minimal to no insight because historical data on these losses does not reliably predict future outcomes, and tolerance thresholds do not exist in the same manner as quantitative models.
+2. **Backward-Looking Limitation and Lack of Predictive Value**  
+   - The approach provides a **backward-looking perspective** for CCAR, reflecting recent operational loss trends rather than forecasting through econometric or regression-based methods.  
+   - Because these losses are often **idiosyncratic** and not driven by macroeconomic factors, **historical data is not necessarily indicative of future trends**, making back-testing inherently uninformative.
 
-3. **Lack of Formal Tolerance Thresholds**  
-   - Traditional back-testing is predicated on comparing forecasted losses to actual losses against a defined tolerance or confidence interval.  
-   - In a qualitative framework where multipliers are subject to periodic expert review (rather than recalibration against a numeric benchmark), back-testing cannot fulfill its usual role of validating forecast accuracy.
+3. **No Established Thresholds for Validation**  
+   - Traditional back-testing requires **clear thresholds** or tolerance limits to judge whether a model’s forecast deviates from actual outcomes in a significant way.  
+   - Given that the methodology does **not generate statistical predictions**, there are **no thresholds** to invalidate or confirm the approach, rendering a formal back-test process irrelevant.
 
-4. **Consistent Stakeholder Alignment**  
-   - Model Development, GCO, TAS, and MRO have collectively concluded that continuing a formal back-testing process for these four event types adds no value.  
-   - The recommendation to discontinue back-testing is therefore supported by all relevant parties, including the Model Owners.
+4. **Back-Testing Was Relevant Only for Quantitative Models**  
+   - Historically, back-testing served to validate regression-based models (e.g., for EF and CPBP).  
+   - In contrast, the purely qualitative segments (IF, DPA, EDPM, EPWS) do **not rely on predictive modeling**, so applying back-testing would be **misleading** and yield no actionable feedback.
 
-### 4. **Conclusion and Next Steps**  
-- **Conclusion**  
-  MRO confirms that back-testing requirements for the IF, DPA, EDPM, and EPWS segments are no longer relevant or necessary. Stakeholders can proceed with updating the MDD and other documentation to reflect this consensus.
-
-- **Next Steps**  
-  1. **Update the MDD**: Model Development is requested to remove or revise sections referencing back-testing for these four event types and clarify the rationale therein.  
-  2. **Document the Decision**: GCO and TAS should retain a record of this memo as supporting evidence for audit or regulatory inquiries.  
-  3. **Ongoing Monitoring**: While back-testing will be discontinued, Model Development and MRO will continue to monitor qualitative outcomes and review processes for potential gaps or emerging risks.  
-  4. **Communication**: MRO, in partnership with Model Development, will ensure relevant governance committees and stakeholders are made aware of this change to avoid confusion about modeling expectations.
-
-Should you have any questions or require further clarification, please contact MRO.
+5. **Consensus Between MRO and Model Developers**  
+   - **Both MRO and Model Development** concur that **including back-testing for these qualitative event types is not only unnecessary but also potentially confusing**.  
+   - In line with updated MRO policies, these segments will **no longer include back-testing requirements**, as doing so adds no value to model risk management or performance assessment.
 
 ---
-
-**Prepared By:**  
-[Name]  
-On behalf of Model Risk Oversight (MRO)  
-
-**Reviewed & Approved By:**  
-[Name, Title/Role], MRO  
-[Name, Title/Role], Model Development  
