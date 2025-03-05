@@ -1,89 +1,61 @@
-Certainly! Below is a **more concise** version of the **Proposed Risk Items** while ensuring all key observations are captured.
+**Draft Memo**
+
+---
+**To:** [Distribution: Model Risk Oversight (MRO), TAS, GCO, and relevant Stakeholders]  
+**From:** [Your Name], [Your Title/Role]  
+**Subject:** Discontinuation of Back-Testing for Qualitative Operational Risk Event Types (IF, DPA, EDPM, EPWS)
+
+**Date:** [Date]
 
 ---
 
-### **Proposed Risk Items for Model Documentation and Implementation**  
+### 1. **Purpose**
+This memo formalizes the rationale for removing and discontinuing back-testing analysis for the four qualitative Operational Risk event types—Internal Fraud (IF), Damage to Physical Assets (DPA), Execution, Delivery, and Process Management (EDPM), and Employment Practices and Workplace Safety (EPWS)—under the MOD13638 Operational Loss Forecast Model. It further clarifies that no back-testing will be required going forward, in alignment with both Model Development and Model Risk Oversight (MRO) perspectives.
 
-1. **Documentation Updates & Obsolete Information Removal**  
-   - Remove all obsolete content, including **GL data references, negative binomial regression, outdated EF/CPBP variable selection process, and the OGM plan**.  
-   - Clarify **multiplier derivation and stress period determination** for IF, EDPM, DPA, and EPWS.  
+### 2. **Background**
+- **Model Overview**  
+  The MOD13638 model estimates potential operational risk losses for Truist under various macroeconomic scenarios, primarily supporting CCAR and DFAST submissions. Historically, the model included six Basel-defined event types—IF, EF, CPBP, EPWS, EDPM, and DPA—where EF (External Fraud) and CPBP (Clients, Products, and Business Practices) recently shifted to a purely qualitative approach, and IF, EDPM, DPA, and EPWS have always used a frequency-times-severity approach grounded in internal operational loss data.  
 
-2. **Data Integrity & Quality Control**  
-   - Investigate **negative severity value (-57,583.81) in IF segment**.  
-   - Validate the **appropriateness of negative losses in Event_w_exclusion and Event_w_exclusion_dedup**.  
-   - Implement **enhanced data quality controls and confirm missing developer testing**.  
+- **Prior Back-Testing Requirement**  
+  Previous methodologies attempted to incorporate macroeconomic variables (e.g., negative binomial regression) and were subject to quantitative back-testing where feasible. Over time, however, these relationships proved weak or inconsistent, rendering quantitative performance metrics (including back-testing) of limited value for the EF and CPBP event types.  
 
-3. **Implementation & Model Use Controls**  
-   - Finalize **production code and implementation plan**.  
-   - Update **Model Use Controls (Sections 7 & 8) to reflect new methodology**.  
+- **Shift to Qualitative Approach**  
+  As documented in recent communications, EF and CPBP fully transitioned to a qualitative approach due to weak statistical correlations with external factors. The remaining four event types (IF, DPA, EDPM, EPWS) rely on rolling 9-quarter data and multiplier-based methods. While these elements are partly data-driven, the emphasis is on professional judgment for stress multipliers, rather than predictive economic models.
 
-4. **Regulatory & Policy Compliance**  
-   - Update **policy and procedural references** to align with the qualitative approach.  
-   - Define **model exposure (portfolio size, risk types impacted)**.  
-   - Include a **Business Continuity & Contingency Plan**.  
+### 3. **Rationale for Discontinuing Back-Testing**
+1. **Qualitative Nature of the Approach**  
+   - The four event types in question do not rely on macroeconomic predictive variables, but instead use recent internal loss data with expert judgment-based stress multipliers. These multipliers are determined by comparing rolling data to historical averages.  
+   - Because they are not based on statistical regression outputs, there are no meaningful “model estimates” to test against actuals in a predictive sense. As a result, back-testing does not offer actionable or reliable performance insights.
 
-5. **Performance Monitoring & Assumption Reviews**  
-   - Remove **OGM plan** as it no longer applies.  
-   - Establish **annual reassessment of EF/CPBP multipliers & recent 9Q data**.  
-   - Ensure **annual stress period review for IF, EDPM, DPA, and EPWS**.  
+2. **Lack of Historical Predictiveness**  
+   - Operational risk losses (e.g., fraud, process errors, workplace safety incidents) often involve idiosyncratic drivers that do not correlate well with economic cycles.  
+   - Both MRO and model developers noted that purely historical data for these events is not necessarily indicative of future losses, thus any back-testing metrics would be misleading or inconclusive.
 
-6. **Stakeholder Confirmation & Template Alignment**  
-   - Confirm and update **key model stakeholders**.  
-   - Align documentation with the **latest MDD template**.  
+3. **Absence of Formal Tolerance Thresholds**  
+   - In a purely qualitative framework, there are no definable thresholds or tolerance limits that would “invalidate” or formally trigger recalibration of multipliers.  
+   - Without quantitative benchmarks, back-testing results would lack a clear acceptance criterion and provide no actionable feedback loop for model refinement.
+
+4. **Alignment Among Stakeholders**  
+   - Internal communications confirm that MRO, Model Development, GCO, and TAS are aligned that back-testing does not yield value under the current qualitative approaches.  
+   - The model performance section containing back-testing will be removed from the Model Development Document (MDD), per the updated MRO policy and procedures.
+
+### 4. **Conclusion and Next Steps**
+- **Conclusion**  
+  Given the qualitative nature and idiosyncratic risk drivers for IF, DPA, EDPM, and EPWS event types, back-testing does not add analytical value and will be discontinued. All stakeholders, including MRO, Model Development, and GCO, agree that no back-testing requirement remains relevant for these event types going forward.
+
+- **Next Steps**  
+  - **Update MDD**: Remove the back-testing section for these qualitative event types, clarifying that performance assessments will rely on expert judgment, qualitative reviews, and ongoing monitoring rather than quantitative back-tests.  
+  - **Communicate to Governance Committees**: Provide a summary of this change to ensure all parties understand the revised approach and rationale.  
+  - **Maintain Ongoing Monitoring**: Although formal back-testing will not be performed, periodic reviews of operational loss data trends will continue to ensure reasonableness and timely identification of anomalies.
+
+Please let me know if there are any questions or further clarifications needed.
 
 ---
 
-This version is **more direct** while maintaining **completeness and clarity**. Let me know if further refinements are needed! 🚀Below is an **updated Section 3** that incorporates **all your new points** while preserving the **original content and meaning**. Each added bullet point or clarification is woven into the text for better continuity and readability.
+**Prepared By:**  
+[Your Name]  
+[Your Title/Role]  
 
----
-
-### 3. Review of Model Documentation
-
-As part of the Annual Review, MRO examined the most recently updated model documentation, which includes the new qualitative methodology for the EF and CPBP segments (documented in “MOD13638 Operational Risk Loss Forecast Model with qualitative methodology 02132024”). This updated approach, referenced in Section 10 of the model document, changes EF and CPBP from a quantitative to a qualitative model framework.
-
-Because the current methodology for EF and CPBP is now qualitative, many of the previously documented performance testing methods (e.g., backtesting or formal overlays) are no longer applicable and should be removed or updated. However, given the limited time available for revisions, the development team only provided a brief note about these changes, directing readers to Section 10 for more details. Therefore, MRO will raise a documentation sub-issue so that comprehensive updates can be made at a later stage.
-
-Below are the issues and additional points noted during this review:
-
-1. **Regulatory Requirements and Policy References**  
-   - For models subject to specific regulatory requirements (e.g., CCAR/DFAST), the documentation should explicitly state which requirements apply and how they have been addressed.  
-   - [Risk Item] Any existing references to policies or procedures (e.g., older references to negative binomial) should be reassessed, updated, or removed if they no longer apply to the model in its qualitative form.
-
-2. **Model Risk Tier Table and MCA Updates**  
-   - The model documentation does not include a model risk tier table. Given the methodology change, MRO also suggests that the development team update the Model Change Approval (MCA) to accurately reflect the new qualitative approach.
-
-3. **Model Methodology, Logic, and Input Data**  
-   - EF and CPBP methodology is described in the memo (Section 10). However, for the other four segments (IF, EDPM, DPA, and EPWS), the documentation remains unclear on certain points (e.g., frequency stress periods).  
-   - Input data is generally specified, but since **GL data is not used** (per the development team), references to GL datasets should be removed for clarity. Data flow and treatment descriptions (particularly in Section 2.5 of the MDD) still contain obsolete or conflicting information.  
-   - [Risk Item] Developer’s data quality and data appropriateness testing are **not provided**. MRO identified a negative severity value (-57,583.81) in the IF segment that needs investigation. The development team should confirm the appropriateness of including negative loss events in both Event_w_exclusion and Event_w_exclusion_dedup. Additional data controls may be warranted.  
-   - Any sections still referencing the **negative binomial regression** for EF/CPBP should be updated or removed.
-
-4. **Assumptions, Key Risk Drivers, Model Specifications, and Formulas**  
-   - The assumptions for EF and CPBP are included in the memo, and MRO’s assessment can be found in Section 6 of this IVR.  
-   - For the other four segments, assumptions about frequency and severity still need clarity in the main body of the model documentation (Sections 1.5, 3, and 4.3).  
-   - Mathematical formulas for the updated model approach are partially detailed, but any reference to out-of-date equations should be removed.  
-   - Outcome analysis: Because the model has shifted to a qualitative approach, **traditional backtesting, stability testing, or stress scenario comparisons** are not applicable. Consequently, references to such analyses should be eliminated or reframed (see Section 6 of this IVR for MRO’s discussion on non-predictive models).
-
-5. **Performance Monitoring Plan and OGM Updates**  
-   - With the qualitative approach, the **traditional OGM plan does not apply**. Instead, the development team should outline how they will annually reassess the EF/CPBP multiplier(s) and the recent 9Q data. Enhanced data control measures are also recommended, given the reliance on internal Archer data.  
-   - [Risk Item] Updates to the OGM plan should reflect its **complete removal**, as previously used performance metrics are no longer relevant.
-
-6. **Use of GL Data**  
-   - While the development team indicated that GL data is excluded due to data entry problems, multiple sections (e.g., Section 2, Figure 48 under Section 5.4) refer to GL data usage for EDPM. The team must clarify whether GL data was used in past developments or remains entirely excluded from future capital forecasting. If GL data is not used, the references and figures implying otherwise should be removed to avoid confusion.
-
-7. **List of Key Model Stakeholders**  
-   - [Risk Item] The documentation should include the names (or roles) of the model owner, model developer, model user, and any relevant third-party vendors. MRO recommends the development team confirm the current stakeholder list and update it accordingly.
-
-8. **Business Continuity and Contingency Plan**  
-   - The documentation should contain or reference a **business continuity/contingency plan**. This plan was not found in the current document set. MRO requests that the development team include or reference it in alignment with standard operational risk model documentation practices.
-
-9. **Model Exposure**  
-   - The scope or “exposure” of the model (i.e., the business areas, portfolios, or risk types impacted) should be clearly stated. This helps stakeholders understand the model’s reach within Truist’s operational risk framework.
-
-10. **Model Implementation**  
-   - The development team reports that the production code for EF/CPBP’s revised methodology is still pending finalization. An implementation sub-issue will be raised as part of this validation. Sections 7 (Model Implementation) and 8 (Model Use Controls) must be updated once the code and controls are finalized.
-
-11. **Template Alignment**  
-   - Lastly, MRO recommends updating the model documentation to meet the **newest MDD Template** standards. This includes reorganizing or removing obsolete references, clarifying data usage, and ensuring all relevant business objectives, assumptions, regulatory requirements, and stakeholder details appear in the correct format.
-
-After reviewing the updated Section 10 (EF and CPBP memo), MRO affirms that it contains the necessary technical details and analysis for the qualitative approach. However, the broader model document requires the aforementioned revisions to ensure consistency with the new methodology, removal of outdated references (including GL data, negative binomial regression, and OGM), and inclusion of appropriate data controls and stakeholder information.
+**Reviewed & Approved By:**  
+[Name, Title/Role], Model Risk Oversight (MRO)  
+[Name, Title/Role], Model Development Team  
