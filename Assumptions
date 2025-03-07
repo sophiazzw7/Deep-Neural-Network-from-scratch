@@ -1,34 +1,11 @@
-Below is a draft explanation covering each standard validation or analysis technique—back-testing, benchmarking, sensitivity analysis, scenario analysis, and stress testing—and why each does not apply to these six event types (EF, CPBP, IF, DPA, EPWS, and EDPM) under the current qualitative framework.
+**1. Assessment of the EF and CPBP Transition to a Qualitative Approach (February 2025)**  
+Previously, the EF (External Fraud) and CPBP (Clients, Products, and Business Practices) forecasts were built using a negative binomial regression model with macroeconomic variables.  However, as illustrated by the large “overlay deltas” in Figures 8.1 and 8.2, the macroeconomic drivers repeatedly proved too weak to explain observed operational losses.  This led to frequent—and often substantial—Tier 2 overlays, suggesting that the quantitative model alone was not sufficiently capturing the true loss profile.  
+
+In February 2025, EF and CPBP migrated to a qualitative methodology.  This updated approach incorporates experts’ forward-looking judgments (e.g., emerging risks or recent operational events) and historical overlays.  It is also designed to remain relevant even under tenuous macroeconomic relationships.  From the Impact Analysis in Figures 8.1 and 8.2, the proposed qualitative method generally yields higher forecast deltas (e.g., the “Overlay Frequency Multiple” can exceed 3x of recent history), reflecting a more conservative stance on EF and CPBP losses.  The qualitative approach eliminates the need for repeated Tier 2 adjustments, aligns better with recent loss experience, and is expected to deliver more stable and justifiable results for CCAR cycles.
 
 ---
 
-### **Why Standard Validation/Analysis Techniques Do Not Apply**
+**2. Data Quality and Appropriateness Testing**  
+During a recent review of the model development code, it was discovered that different segments (IF, EF, EPWS, CPBP, DPA, EDPM) were outputting their frequency and severity data through inconsistent end-dates, rather than the intended uniform horizon of 2005Q1–2021Q4.  Specifically, IF data was cut off in March 2022, EF in September 2022, EPWS and CPBP in June 2022, and so on.  Although downstream Excel calculations can consolidate or filter these outputs, the inconsistent data windows present a clear risk of misalignment or unintended bias when comparing across segments.
 
-1. **Back-Testing**  
-   - **Nature of the Methods**: All six event types now rely on a qualitative or simplified multiplier-based approach derived primarily from recent internal loss data rather than econometric or regression-based forecasts.  
-   - **No Predictive Output**: Because there is no model-driven projection of future losses, there is no set of predictions to compare against actual outcomes.  
-   - **No Defined Performance Thresholds**: In a purely qualitative framework, thresholds or statistical confidence intervals for validation do not exist. Hence, performing back-tests (comparing predictions vs. actuals) adds no meaningful insight.
-
-2. **Benchmarking**  
-   - **Lack of Comparable External Data**: Operational risk losses in these event types often stem from idiosyncratic internal events (fraud, process failures, internal governance issues, etc.) that do not have robust, standardized external benchmarks.  
-   - **Qualitative Assumptions**: The approach depends on expert judgment and a nine-quarter lookback of internal data rather than industry-level or peer data, making direct numerical benchmarking infeasible.  
-   - **Limited Applicability**: Traditional benchmarking assumes common, comparable data across firms or risk factors, which is not available or meaningful here.
-
-3. **Sensitivity Analysis**  
-   - **No Parametric Inputs**: Sensitivity analysis typically tests how changes in model parameters (e.g., coefficients in a regression) impact outcomes. In this qualitative framework, there are no statistically estimated parameters to “shock” or vary systematically.  
-   - **Fixed Multipliers**: While multipliers exist, they are derived and applied qualitatively (e.g., a stress multiplier of 3.5 for EF/CPBP). Adjusting them arbitrarily does not yield a measurable “sensitivity curve” in the same sense as a quantitative model.
-
-4. **Scenario Analysis**  
-   - **Scenario Analysis vs. Qualitative Overlays**: Traditional scenario analysis involves translating macroeconomic or thematic stress scenarios into model inputs to observe changes in outputs. For these event types, the chosen “stress factor” (multiplier) is a single qualitative overlay rather than a set of scenario-driven parameters.  
-   - **Idiosyncratic Losses**: Many operational risk events are episodic and not strictly tied to macroeconomic or thematic scenarios, limiting the usefulness of scenario analysis for these segments.  
-   - **No Economic-Driven Forecast**: Since the model doesn’t rely on economic indicators or scenario variables, standard scenario analyses (e.g., shifting GDP, unemployment) do not systematically change these losses.
-
-5. **Stress Testing**  
-   - **Already Embedded in the Multiplier**: The model effectively uses a simple, qualitative “stress” multiplier on top of the baseline nine-quarter average frequency and severity. This single factor represents the model’s “stress” approach, rather than a detailed stress-testing framework with multiple risk drivers.  
-   - **No Granular Variables to Stress**: Because there are no regression coefficients or macroeconomic linkages, a full-fledged stress-testing exercise (manipulating inputs like interest rates, GDP, etc.) does not directly apply to the outcome of these event types.  
-   - **Limitations Acknowledged**: The development team and MRO recognize that purely historical data and qualitative multipliers do not reliably predict future operational loss peaks and, thus, formal stress testing against macroeconomic shocks is not relevant.
-
----
-
-### **Conclusion**
-For EF, CPBP, IF, DPA, EPWS, and EDPM, the **qualitative, multiplier-based** approach, driven by internal operational risk data and expert judgment, **does not lend itself to standard quantitative validation methods**. There are no statistical forecasts to back-test, no external benchmarks for comparison, no parametric relationships to stress or shift under scenario analyses, and no macroeconomic linkages upon which to conduct traditional stress testing. As a result, continuing these techniques would be **misleading** or **unproductive** in assessing the effectiveness of this qualitative framework.
+As a result, MRO has raised a risk item requesting that MD implement additional data checks and controls before data is exported to Excel.  These checks will ensure each segment’s output aligns to the same time horizon and is properly validated for completeness and accuracy.  Standardizing the code’s output not only simplifies downstream handling but also reinforces best practices for data governance, improving the overall reliability and transparency of the model’s results.
