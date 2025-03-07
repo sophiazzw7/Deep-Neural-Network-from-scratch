@@ -1,32 +1,8 @@
-### **Proposed Risk Items for Model Documentation and Implementation**
+MRO concludes that while the developer’s data usage appears adequate for the revised EF and CPBP approach, additional scrutiny is needed to confirm the appropriateness of negative net losses. The assumptions underlying data selection—particularly the recent 9Q horizon—remain acceptable given the high volatility and idiosyncratic nature of operational risk losses. However, MRO has raised a risk item requesting more detailed analysis of these data points to ensure they accurately reflect the model’s intended scope and are free from any systematic errors.
 
-1. **Documentation Gaps & Outdated Content**  
-   - Missing **Model Risk Tier Table**; MCA form requires an update.  
-   - Outdated assumptions, limitations, and methodology references in **Sections 1.2, 1.5, 3, and 4.3** need revision.  
-   - Remove obsolete **variable selection process** for EF and CPBP.  
-   - Clarify methodology for IF, EDPM, DPA, and EPWS, particularly **multiplier derivation and stress period determination**.
 
-2. **Data Integrity Issues**  
-   - **GL data references** should be removed if not used.  
-   - **Negative severity values** (e.g., -57,583.81 in IF) require investigation.  
-   - Validate **negative loss values in Event_w_exclusion and Event_w_exclusion_dedup**; enhance data controls.  
-   - **Data quality testing framework** is missing and should be established.
 
-3. **Implementation Delays**  
-   - **Production code is not finalized**; implementation sub-issue required.  
-   - **Sections 7 (Model Implementation) & 8 (Model Use Controls)** need revision post-implementation.
 
-4. **Regulatory & Policy Compliance**  
-   - Update **policy and procedure references** to reflect qualitative methodology.  
-   - Clearly define **model exposure (portfolio size, risk types impacted)**.  
-   - Include a **Business Continuity & Contingency Plan**.
 
-5. **Performance Monitoring & OGM Plan Removal**  
-   - Remove the **OGM plan**; instead, **EF/CPBP multipliers and recent 9Q data** will be reassessed annually.  
-   - Annual **stress period review** for IF, EDPM, DPA, and EPWS; improve **data controls**.
 
-6. **Stakeholder Review & Template Alignment**  
-   - Confirm and update **model stakeholders**.  
-   - Align documentation with the **latest MDD template standards**.
 
-This version retains all key issues while being more concise and structured. Let me know if you need further refinements.
