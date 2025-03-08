@@ -1,16 +1,9 @@
-Data Import:
-Loads operational loss data from Archer reports and exclusion lists into SAS tables.
-Data Preprocessing:
-Computes net loss (Gross Loss Amount - Recovery Amount).
-Groups data by event type, internal events, and posting date.
-Extracts minimum posting dates and calculates date-based event counts.
-Date Aggregation:
-Converts event dates into quarterly, monthly, and general ledger (GL) date formats.
-Event Exclusions:
-Filters out specific event records based on event type, impact, and GL account criteria.
-Final Event Processing:
-Removes excluded events and creates deduplicated tables of event counts and losses.
-Aggregates event data by event type, year, and quarter.
-Selects max and min GL dates to define the valid data range.
-Dataset Preparation:
-Uses a macro (%prep_data) to create final datasets for each event type (e.g., IF, EF, CPBP, etc.), ensuring missing frequency values are set to zero.
+- **Import & Combine Data**: The code first imports the Archer dataset and an exclusion dataset from Excel, then merges them into a single “archer_prep” table (calculating `net_loss` as *Gross Loss Amount – Recovery Amount*).
+
+- **Group & Date-Stamp Events**: It groups records by *Internal Events*, *Basel Event Type Level 1*, and *Posting Date*, computing the earliest posting date in each group and generating monthly, quarterly, and yearly date fields.
+
+- **Apply Exclusion Criteria**: Certain events (e.g., involving specific credit boundaries or particular Basel Event Types) are removed, yielding a refined dataset (`event_w_exclusion`).
+
+- **Aggregate Frequency & Severity**: The remaining data is aggregated by quarter (`qtr_event`), summing loss amounts (severity) and counting events (frequency).
+
+- **Macro for Final Datasets**: A `%prep_data` macro is then used to create separate frequency/severity tables for each Basel Event Type (IF, EF, CPBP, etc.), ensuring any missing frequencies default to zero and final data is aligned to a unified set of quarterly time points.
