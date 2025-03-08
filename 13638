@@ -1,8 +1,16 @@
-MRO concludes that while the developer’s data usage appears adequate for the revised EF and CPBP approach, additional scrutiny is needed to confirm the appropriateness of negative net losses. The assumptions underlying data selection—particularly the recent 9Q horizon—remain acceptable given the high volatility and idiosyncratic nature of operational risk losses. However, MRO has raised a risk item requesting more detailed analysis of these data points to ensure they accurately reflect the model’s intended scope and are free from any systematic errors.
-
-
-
-
-
-
-
+Data Import:
+Loads operational loss data from Archer reports and exclusion lists into SAS tables.
+Data Preprocessing:
+Computes net loss (Gross Loss Amount - Recovery Amount).
+Groups data by event type, internal events, and posting date.
+Extracts minimum posting dates and calculates date-based event counts.
+Date Aggregation:
+Converts event dates into quarterly, monthly, and general ledger (GL) date formats.
+Event Exclusions:
+Filters out specific event records based on event type, impact, and GL account criteria.
+Final Event Processing:
+Removes excluded events and creates deduplicated tables of event counts and losses.
+Aggregates event data by event type, year, and quarter.
+Selects max and min GL dates to define the valid data range.
+Dataset Preparation:
+Uses a macro (%prep_data) to create final datasets for each event type (e.g., IF, EF, CPBP, etc.), ensuring missing frequency values are set to zero.
