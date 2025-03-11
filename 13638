@@ -1,16 +1,149 @@
-**Review Conclusion and Model Rating**  
-As a high-level summary, MRO finds that the model’s **qualitative methodology** is fundamentally sound for operational risk forecasting, aligning with industry practice and addressing prior weaknesses in macro-driven regression. The updated approach for EF and CPBP appears more consistent with the inherently idiosyncratic nature of operational losses. However, MRO’s review identified several sub-issues that must be addressed to ensure the model remains reliable and fully compliant with governance requirements:
+Below is a **sample OGM “summary report”** for **MOD13512**, following **the format, structure, and style** you used in your downstream model’s OGM memorandum. It references the key points from the 13512 OGM document (Sections 9.1, 9.2, and 9.3) and captures the same headings and language style.
 
-1. **Data Quality & Appropriateness (F_01)**  
-   – Additional data quality testing and negative severity investigations are needed to confirm the integrity of Archer datasets.
+---
 
-2. **Model Implementation (F_02)**  
-   – Section 7 requires updates reflecting the newly adopted approach; production code and implementation testing must be documented.
+## **Model Tier**  
+**Tier 1** (initially assessed as Tier 1 on October 26, 2022; re-tiering review scheduled for June 2024)
 
-3. **Model Documentation (F_03)**  
-   – The documentation should remove obsolete references (GL data, negative binomial regression) and include essential items such as model exposure, business continuity, and frequency multipliers.
+## **Validation Rating**  
+**Fit for Use with Caution**  
 
-4. **Model Change & Operational Control (F_04)**  
-   – Section 8 Model Execution Controls must align with the qualitative approach, and model operating procedures should reflect the removal of the OGM plan.
+---
 
-Based on these findings, MRO concludes that while the **model data and methodology** are appropriate for the bank’s CCAR/DFAST objectives, **resolving these sub-issues** is necessary to strengthen model transparency, execution controls, and data integrity. Pending remediation, the model retains a “**Fit for Use, with Caution**” rating, subject to close monitoring of the identified sub-issues.
+## **1. Model Description**  
+The **Zest ML Probability of Default Model (MOD13512)** is a vended machine-learning (ML) model used in the **LightStream** business. Developed by Zest AI in Q4 2022, the model generates the **ZestAI Obligation Risk Score (ZORS)** for each loan application. ZORS is used by LightStream underwriting to make lending decisions; specifically, the model predicts the probability that a loan will become **60+ days past due (DPD)** within **18 months** of origination.
+
+- **Implementation Date**: October 26, 2022  
+- **Model Developer**: Zest AI  
+- **LightStream 2023 Production Volume**: \$2.79 billion (estimated)  
+- **Upstream/Downstream Relationship**:  
+  - **Downstream**: MOD13627 (generates Adverse Action Reason Codes)  
+  - **Upstream**: LightStream Data Warehouse / Application Data  
+
+Zest AI has proprietary development processes, so only limited methodological details (e.g., modeling approach in XGBoost, key features) were provided in the original submission.  
+
+---
+
+## **2. Model Change / Purpose of This Memorandum**  
+This memorandum serves as the **ongoing monitoring (OGM) report** for MOD13512, detailing how performance metrics, thresholds, and escalation procedures are defined and reviewed. It also documents the model’s approach to early warning monitoring for the **first 18 months** of performance data.
+
+No formal *model structural changes* are proposed at this time. All identified changes relate to clarifications of the **OGM Plan** set forth in the Model Development Document (MDD).
+
+---
+
+## **3. Risk Assessment**
+
+### **3.1 OGM Plan Element Applicability Review**  
+Below is a summary of the monitoring elements included or excluded in the MOD13512 OGM Plan:
+
+| Ref No. | Monitoring Element                | Included in OGM Plan?           | Related Sections / Metrics  | MRO Assessment for Excluded Elements                |
+|---------|-----------------------------------|---------------------------------|-----------------------------|------------------------------------------------------|
+| 1       | Limitations & Assumptions Check   | **Yes**                          | 9.1.4, Table 9-18          | N/A                                                  |
+| 2       | Backtesting                       | **No**                           | N/A                         | The model is production origination/underwriting; no direct “backtest” of reason codes needed. Discrimination uses AUC & KS. |
+| 3       | Benchmarking Analysis             | **Yes** (when feasible)         | 9.1.1.6, 9.1.1.8            | Benchmark is challenging due to censored data, but PLRS (MOD11827) or LIDS (MOD11709) may be used with caution. |
+| 4       | Boundary Conditions               | **No**                           | N/A                         | Per Section 9.1.4, XGBoost handles outliers automatically; no boundary constraints are used. |
+| 5       | Coefficient Stability             | **No**                           | N/A                         | Model is XGBoost; no standard regression coefficients. |
+| 6       | Early Warning Indicators          | **Yes**                          | 9.1.2                       | Four early warning OGM reports at months 3, 6, 9, and 12 (and 15) before standard 18-month OGM begins. |
+| 7       | Model Input Monitoring            | **Yes**                          | 9.1.1.4, 9.1.1.5            | Feature distribution PSI, ZORS distribution PSI. |
+| 8       | Overlay / Override Tracking       | **No**                           | N/A                         | No overlays or overrides exist for ZORS.            |
+| 9       | Scenario / Stress Analysis        | **No**                           | N/A                         | Model does not incorporate scenario analysis.        |
+| 10      | Sensitivity Analysis              | **Yes** (stated in MDD)         | 9.1.1.9                     | ZORS ±5%, ±10%, ±15%, ±20% shift measured by PSI for hypothetical distribution changes. |
+
+---
+
+### **3.2 OGM Metrics and Thresholds**  
+The **OGM Plan** uses the following **metrics**:
+
+1. **AUC / Somers’ D** (Model Discrimination)  
+   - Thresholds vary by product segment (Auto, Debt Consolidation, Home Improvement, Others), plus “All Segments” combined.  
+   - Green/Yellow/Red color coding in tables 9-3 through 9-7.  
+2. **K-S Statistic** (Model Discrimination)  
+   - **p-value** < 0.05 (Green), 0.05–0.10 (Yellow), ≥ 0.10 (Red).  
+3. **PSI** (Population Stability Index)  
+   - **Feature Distribution** and **ZORS Score Distribution**.  
+   - < 0.10 (Green), 0.10–0.25 (Yellow), ≥ 0.25 (Red).  
+
+#### **Early Warning Adjustments**  
+- For **months 3, 6, 9, 12, 15** performance windows, fewer “bad” events cause potential reliability issues with AUC. The OGM plan adjusts the **PSI thresholds** based on the **square root rule** (Section 9.1.2.3).  
+
+#### **Sensitivity Analysis**  
+- ZORS is artificially shifted by ±5%, ±10%, ±15%, and ±20%, and **PSI** is recalculated to assess model output stability. (Ref. Section 9.1.1.9)  
+- These results are **informational only** and do not directly determine the Red/Yellow/Green rating.  
+
+---
+
+### **3.3 OGM Schedule**  
+- **First Early Warning OGM Report**: 08/31/2023 (3 months after go-live)  
+- **Subsequent EW OGM**: Quarterly (at 6, 9, 12, 15 months).  
+- **First Standard OGM**: 08/31/2024 (18 months of performance).  
+- **Ongoing OGM**: Semiannual (Q2 and Q4 each year).
+
+---
+
+### **3.4 OGM Reporting & Escalation**  
+- **Green** = Performing as intended; no action.  
+- **Yellow** = Performing with caution; root cause analysis (4 weeks).  
+- **Red** = Not performing as intended; triggers recalibration (3–6 months). Two consecutive Red ratings trigger potential redevelopment (≥6 months).  
+
+Governance requires notifications to the **Model Owner**, **MRM**, and other stakeholders upon any **Yellow or Red** rating.  
+
+---
+
+### **3.5 Data Controls and Governance**  
+Per Section 9.2, OGM data are sourced from LightStream data warehouses and daily scoring logs in AWS. **Monthly** extracts capture input variables, predicted probabilities, and performance outcomes (e.g., delinquency). **Data QA checks** include:
+
+1. **Production logs** are checked daily for errors.  
+2. **OGM results** are reviewed by model development for anomalies before finalization.  
+3. **Comparisons** to previous OGM cycles detect sudden shifts in record counts or distributions.  
+
+Model stakeholders:
+
+- **Owner/User**: LightStream Analytics (Vera Zhang)  
+- **Developer**: Sr. Quantitative Model Development (Cheng Lee)  
+- **Implementation Owner**: LightStream Technology / Vittorio DiMatteo  
+
+---
+
+## **4. OGM Plan Assessment**
+
+### **4.1 Adequacy of OGM Granularity**  
+The plan sufficiently addresses the key risk areas for **MOD13512**:  
+- **Feature and score stability** (via PSI)  
+- **Model discrimination** (via AUC, KS)  
+- **Alert framework** for early performance signals  
+
+### **4.2 Performance Tests & Frequency**  
+- **Early Warning OGM** on a **quarterly** basis is aligned with Tier 1 model risk guidelines.  
+- **Standard OGM** becomes **semiannual** once the 18-month window is reached (currently scheduled for August 2024).  
+- **Sensitivity analysis** is not mandated for color-rating decisions but remains a best practice for scenario “what-if” insights.
+
+### **4.3 Conclusion on OGM**  
+The **OGM Plan** is **comprehensive** and adheres to standard Model Risk Management (MRM) practices. The **metrics, thresholds, and escalation** steps align with industry norms for monitoring credit underwriting models.
+
+No additional remediation is required at this time. If a “Red” threshold breach occurs in the next OGM cycle, a **root cause analysis** (and potential recalibration) should follow the action plan in Section 9.1.6.2.
+
+---
+
+## **5. Validation Review Conclusion**
+
+Based on this review of the **MOD13512 OGM Plan**:
+
+1. The OGM approach is **Fit for Use with Caution**, consistent with Tier 1 model governance.  
+2. The plan addresses **discrimination (AUC, KS)**, **stability (PSI)**, **benchmarking** (when feasible), **data controls**, **escalation**, and **governance**.  
+3. **Sensitivity analysis** is documented and can provide additional insight but does **not** directly affect color ratings.  
+
+No open risk items or additional enhancements are recommended beyond routine OGM checks. The next OGM report is due by **08/31/2023** (3-month early warning cycle).
+
+> **Final Rating**: **Fit for Use with Caution**  
+> **No Further Remediation** Required
+
+---
+
+### **Appendix**  
+- **MOD13512 Model Development Document (MDD)**  
+- **Sensitivity Analysis Samples** (ZORS ±5–20%)  
+- **LightStream 2023 Loan Origination Summary**  
+
+---
+
+#### **End of Report**
