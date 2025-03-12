@@ -1,31 +1,43 @@
-Below is an **updated Model Description** section that merges the **original text** with the **new details** from your photo, maintaining the same format and style as the rest of the OGM report.
+Below is a **sample OGM Plan Element Applicability Review Table**, following a **template** approach. In it, we enumerate each standard monitoring element, specify whether it is included in the OGM plan, map it to the **metrics** (e.g., Metric 1, 2, 3, 4) where relevant, and provide a brief **assessment**—even for elements that are included.
+
+You’ll notice that **backtesting** is marked as “No” because this is a **loan origination** model (underwriting), so there is no traditional “predictive vs. realized” window in the sense used by, for example, forecasting or account management models.
 
 ---
 
-## **1. Model Description (Updated)**
-The **Zest ML Probability of Default Model (MOD13512)**—also referred to as the **ZestAI Obligation Risk Score (ZORS)**—is a vended machine-learning (ML) model used in the **LightStream (LS)** business. It was jointly authored by **Truist Financial Services**, including the **Retail Quantitative Credit Risk Analytics (ROCRA)** team and **LightStream Analytics**, in collaboration with **Zest AI**, the principal developer. 
+### **OGM Plan Element Applicability Review**
 
-**Document Version**: 1.0.20250124 (superseding all previous versions)
+| **Ref No.** | **Monitoring Element**          | **Included in OGM Plan?** | **Metric(s) or Section**         | **MRO Assessment**                                     |
+|-------------|---------------------------------|---------------------------|-----------------------------------|--------------------------------------------------------|
+| 1           | **Limitations & Assumptions**   | **Yes**                   | Addressed qualitatively. Supported by overall model discrimination & stability metrics (Metrics 1, 2, 3, 4). | Model developers list known limitations in Section 9.1.4 and track them using discrimination (AUC/KS) and PSI. Coverage is sufficient. |
+| 2           | **Backtesting**                 | **No**                    | **N/A**                           | Not applicable for an origination underwriting model. There is no “backtest” of reason codes or ex-post forecast as in portfolio models. |
+| 3           | **Benchmarking Analysis**        | **Yes** (feasible cases)  | Section 9.1.1.6 & 9.1.1.8         | A comparison to PLRS (MOD11827) or LIDS (MOD11709) may be conducted, though data censoring can complicate results. |
+| 4           | **Boundary Conditions**          | **No**                    | **N/A**                           | As stated in Section 9.1.4, XGBoost handles outliers automatically. No boundary constraints or conditions needed. |
+| 5           | **Early Warning Indicators**     | **Yes**                   | Standard metrics (1, 2, 3, 4) used at months 3, 6, 9, 12, 15 (with adjusted thresholds). | Plan aligns with Tier 1 approach. Early warning is phased out after 18 months when standard OGM begins. |
+| 6           | **Model Input Monitoring**       | **Yes**                   | **Metric 3** (Feature PSI) and **Metric 4** (ZORS PSI). | PSI values are calculated each OGM cycle to monitor drift in both features and scores. |
+| 7           | **Overlay / Override Tracking**  | **No**                    | **N/A**                           | The model does not allow user overrides or overlays, so no tracking is required. |
+| 8           | **Scenario / Stress Analysis**   | **No**                    | **N/A**                           | Model does not incorporate scenario inputs; no scenario-based metrics. |
+| 9           | **Sensitivity Analysis**         | **Yes** (informational)   | **Section 9.1.1.9** (ZORS ±5%, ±10%, ±15%, ±20% shift). | The plan includes hypothetical shifts and PSI calculations for distribution changes. Developer may seek to remove, but it currently exists as an optional test. |
 
-### **Purpose and Scope**
-- The ZORS model is a **credit risk model** primarily designed for **decisioning credit applications** and **rating** the LightStream consumer loan portfolio, which specializes in **unsecured installment loans**.  
-- Specifically, **ZORS** is an **account origination** model that predicts the probability an applicant will become **60+ days past due (DPD)** within **18 months** of origination.  
-- **Four Segments** (Auto, Debt Consolidation, Home Improvement, and Other) each utilize a custom ML model. 
+---
 
-### **Development and Methodology**
-- **Development Date**: Q4 2022  
-- **Data Coverage**: The model was built using **all applications** (booked and rejected). For rejected applications, a **proxy trade** approach was used to assign performance outcomes (reject inference).  
-- **ML Technique**: Zest AI employed a gradient-boosted framework (XGBoost) with proprietary feature engineering. Because of Zest AI’s proprietary methods, only limited methodological detail is disclosed.  
-- **Model Documentation**: This development evidence includes the business problem, data sources, modeling techniques, and both technical and economic analyses. It also supports LightStream’s compliance requirements and decision-making for consumer installment loans.
+### **About the Metrics**
 
-### **Implementation and Use**
-- **Implementation Date**: October 26, 2022  
-- **Model Output**: ZORS (ZestAI Obligation Risk Score) used by LightStream underwriting to approve or decline applications.  
-- **Business Objective**: Provide refined underwriting capabilities by assigning risk-based cutoff scores that align with LS’s objectives (e.g., maintaining default rates, loan volume, or margin targets).  
-- **Production Volume (2023 Estimate)**: \$2.79 billion
+- **Metric 1**: **AUC / Somers’ D** (Discrimination)  
+- **Metric 2**: **K-S Statistic** (Discrimination)  
+- **Metric 3**: **Feature PSI** (Stability)  
+- **Metric 4**: **ZORS Score PSI** (Stability)  
 
-### **Upstream/Downstream Relationships**
-- **Upstream**: LightStream Data Warehouse & Application Data  
-- **Downstream**: MOD13627 (Adverse Action Reason Codes), which uses ZORS outputs to derive top reason codes for declined applications  
+*(Note: Some organizations will number them differently, but this table reflects a notional numbering scheme aligning with “discrimination = Metrics 1 & 2, stability = Metrics 3 & 4.”)*
 
-Zest AI’s proprietary development process means only partial visibility into feature engineering and modeling details is provided. However, the co-authored documentation ensures that **regulatory and risk management expectations**—including robust testing and validation—are met.
+---
+
+#### **Backtesting Metric?**
+As indicated above (Row 2), **no backtesting metric** is included because **MOD13512** is an **origination** decision model rather than a **portfolio performance** forecasting model. Typically, “backtesting” involves comparing predicted values to actual observed outcomes over a historical “hold-out” period. In underwriting decisions—especially when rejected applications do not yield “real” performance outcomes (except via reject inference)—a standard backtest metric does not apply in the same way. The model’s performance is instead monitored through **AUC, K-S, and PSI** on funded loans (and inferred outcomes for rejects) rather than a backtest per se.
+
+---
+
+This table structure satisfies the **OGM plan element applicability** requirement by clearly stating:
+
+- **Whether an element is included**  
+- **Which metric or section** addresses it  
+- **An assessment** explaining *why* it is or is not in scope, including justification for exclusions.
