@@ -1,1 +1,78 @@
-Not applicable for an origination underwriting model. There is no classical calibration-based backtest comparing predicted vs. actual default rates for all applicants (including rejects). AUC/KS serve as discrimination metrics, not full backtesting. Instead, AUC and KS are used as ongoing performance (discrimination) metrics to measure how well the model is separating “bads” from “goods” in the production environment.
+Below is an **updated** version of Sections **3.2** through **3.5** and the **OGM Plan Assessment** (Sections 4.1 and 4.2). The changes incorporate:
+
+1. A more explicit explanation of **why benchmarking is difficult** (i.e., data censoring when the model itself is the main decision driver).  
+2. An update to the **Sensitivity Analysis** portion to reflect your boss’s suggestion (e.g., “developer’s discretion,” potentially triggered if PSI flags a major distribution shift).  
+3. More detail overall—removing bold font for consistency and clarity, and clarifying that the model developer proposes only an “informational” comparison for benchmarking without a threshold.
+
+---
+
+### 3.2 OGM Metrics and Thresholds
+
+The OGM Plan uses the following metrics:
+
+1. AUC / Somers’ D (Model Discrimination)  
+   - Thresholds are defined by loan purpose segment (Auto, Debt Consolidation, Home Improvement, Others), plus a combined “All Segments” measure.  
+   - Each segment follows green/yellow/red boundaries (see tables 9-3 through 9-7) derived from development data.  
+
+2. K-S Statistic (Model Discrimination)  
+   - p-value < 0.05 (green), 0.05 to 0.10 (yellow), ≥ 0.10 (red).  
+
+3. PSI (Population Stability Index)  
+   - Includes feature-level PSI and ZORS (score) PSI.  
+   - < 0.10 (green), 0.10 to 0.25 (yellow), ≥ 0.25 (red).  
+
+Early Warning Adjustments. For the months 3, 6, 9, 12, and 15 performance windows, fewer bad events may limit the reliability of AUC; thus, the plan adjusts PSI thresholds using the square root rule (section 9.1.2.3) to account for smaller sample sizes.
+
+Benchmarking Analysis. A formal benchmark metric or threshold is not included. Instead, the developer proposes occasional comparisons to other existing scores (e.g., PLRS in MOD11827 or LIDS in MOD11709). Because MOD13512 is the principal decisioning model, any application that the model would decline is typically not booked, resulting in partial data for the benchmark. This data censoring makes strict metric comparisons difficult or potentially misleading. Consequently, the plan does not define a specific threshold for benchmarking; any analysis is treated as an “informational” comparison for additional context.
+
+Sensitivity Analysis. The model includes a hypothetical assessment where ZORS is artificially shifted by ±5%, ±10%, ±15%, and ±20%, and PSI is recalculated to gauge potential instability under score distribution changes (section 9.1.1.9). These shifts are informational only and do not directly influence the red/yellow/green rating. Per management’s recent guidance, the plan may allow the developer to perform this sensitivity test at their discretion—particularly if PSI is already at or near a threshold.
+
+---
+
+### 3.3 OGM Schedule
+
+• First Early Warning OGM Report: 08/31/2023 (3 months post go-live)  
+• Subsequent early warning OGM: quarterly at months 6, 9, 12, and 15  
+• First standard OGM: 08/31/2024 (18 months of performance data)  
+• Ongoing OGM: semiannual (Q2 and Q4 each year) once the model reaches 18 months
+
+---
+
+### 3.4 OGM Reporting and Escalation
+
+• Green indicates performing as intended. No immediate action required.  
+• Yellow indicates performance concerns. A root cause analysis (four weeks) is triggered.  
+• Red indicates the model is not performing as intended. Recalibration (three to six months) is initiated. If the model is red in two consecutive OGMs, redevelopment (≥ six months) may be required.
+
+Any yellow or red rating is communicated promptly to the model owner, MRM, and relevant stakeholders for appropriate follow-up.
+
+---
+
+### 3.5 Data Controls and Governance
+
+As detailed in section 9.2, OGM data originate from LightStream’s data warehouse and daily scoring logs in AWS. Monthly data extracts capture the input variables, predicted probabilities, and observed outcomes (e.g., delinquency status). Quality-assurance procedures include:
+
+1. Daily checks of production logs to detect errors.  
+2. Model development review of OGM results for anomalies prior to final reporting.  
+3. Comparisons to prior OGM cycles to spot abrupt changes in record counts or distributions.
+
+Key stakeholders include:  
+• Owner/User: LightStream Analytics (Vera Zhang)  
+• Developer: Sr. Quantitative Model Development (Cheng Lee)  
+• Implementation Owner: LightStream Technology (Vittorio DiMatteo)
+
+---
+
+## 4. OGM Plan Assessment
+
+### 4.1 Adequacy of OGM Granularity
+
+The plan addresses major risk areas for MOD13512, including feature/score stability via PSI, discrimination via AUC/KS, and an early-warning structure to detect potential deterioration before full performance data mature. Coverage appears appropriate for a Tier 1 model during its first 18 months, with a transition to semiannual reporting thereafter.
+
+### 4.2 Performance Tests and Frequency
+
+The quarterly early warning OGM frequency aligns with Tier 1 model guidelines. Once the model passes 18 months of performance history (scheduled for August 2024), standard semiannual OGM frequency begins. Sensitivity analysis is recognized as a best-practice “what-if” supplement. While it will not affect color ratings, it may be valuable if PSI escalates, prompting a deeper exploration of the score’s potential fragility.
+
+---
+
+*(Remainder of Sections 4.3 and 5 unchanged, unless you wish to incorporate further edits.)*
