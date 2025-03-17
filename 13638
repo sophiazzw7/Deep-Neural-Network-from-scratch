@@ -1,1 +1,0 @@
-In production, OGM metrics (AUC, KS, and PSI) already track the model’s outputs and highlight any drift beyond established thresholds. When these metrics remain within normal ranges, the model is considered stable and robust—effectively fulfilling the same monitoring purpose as a separate sensitivity analysis would. 
