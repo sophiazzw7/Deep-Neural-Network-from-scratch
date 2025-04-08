@@ -1,52 +1,25 @@
-Absolutely! Here's the same validation report with **all bold formatting removed**, as requested:
+**Subject:** Request for Data Lineage and CDE Details for Underwriting Model
 
----
+Hi [Name/Team],
 
-**Category:**  
-Other Considerations  
+Thanks again for meeting with me yesterday regarding the Small Commercial data and the expanded TBE scope. After a closer look at our procedures and the bank’s data policy, I realized we still need a bit more information because this model supports **underwriting**—which is classified as a **critical business process** for data.
 
-**Description:**  
-Model requires compensating control.  
+In particular:
 
-**Remediation Plan:**  
-Finding F_19735 is a MIMS legacy finding, and there is no direct remediation plan associated with the existing model (MOD11879). The model developer communicated that a new model is under development and will replace MOD11879 when it goes live.  
+1. **Critical Data Elements (CDEs)**  
+   - Please identify any fields considered “CDEs” (e.g., TBE, collateral type, applicant ID, etc.).  
+   - Let us know how each CDE is defined, captured, and validated, per the bank’s policy.
 
-**Model Validation Plan Assessment:**  
-In the previous validation (REV24298, dated 04/04/2024), Model MOD11879 was determined to be “Not Performing as Intended,” requiring continued compensating control under Finding F_19735. Specifically, quarterly OGM monitoring was mandated from 2024Q1 through 2024Q4 to ensure any performance gaps were actively managed.
+2. **Data Lineage**  
+   - Even a simple overview of how data moves from the source systems (AFS, nCino, COMPASS, etc.) into the final modeling dataset is helpful.  
+   - This doesn’t have to be a full reconciliation report—just enough to show where each CDE originates and how it’s mapped or transformed.
 
-MOD11879 is an Early Warning System (EWS) model. Although it scores the entire portfolio, operational usage focuses primarily on the riskiest 10% of the population. This narrower “effective coverage” aligns with the model’s design, but the model did not meet expected performance thresholds in its prior assessment.
+3. **Data Quality Checks**  
+   - Since we’re using this data for underwriting, we need to confirm basic data quality—such as checking for missing or invalid values in critical fields.  
+   - A short summary would be fine (e.g., “X% null for TBE,” “Y% invalid for collateral code”).
 
-MRO reviewed the 2024Q1–2024Q4 OGM reports and noted the following observations:
+I appreciate your time and cooperation. If anything is unclear or if you have concerns about the level of detail needed, feel free to reach out. We’re aiming to meet our policy requirements without creating extra burden.
 
-1. Quarterly OGM Reporting  
-   - The model developers delivered OGM reports for Q1 2024 through Q4 2024, in line with the compensating control requirement.  
-   - Several instances of below-threshold performance metrics were reported, consistent with the prior determination that MOD11879 is not performing as intended.  
-
-2. Monitoring of Model Coverage  
-   - The entire portfolio receives an EWS score, but the model user primarily relies on the highest-risk 10% of exposures.  
-   - Despite the reduced “effective coverage,” some performance discrepancies persisted even within this high-risk subset, as indicated by the OGM reports.  
-
-3. Performance Metric (AR/Gini)  
-   - Gini coefficients (AR values) did not consistently meet the established monitoring thresholds across Q1–Q4 2024, reinforcing the “Not Performing as Intended” status.  
-   - Performance issues appeared most pronounced in certain sub-portfolios, prompting further investigation by the model developers.  
-
-4. PD Trends  
-   - Average and median Probability of Default (PD) values for specific segments (e.g., LTBE BBCML, SB) showed fluctuations higher than tolerance limits in select quarters.  
-   - Although not uniformly significant, these fluctuations contributed to the overall finding that MOD11879 requires compensating controls until replaced.  
-
-Communication with Model Developer & Recommendation  
-- The model developer informed MRO that a new model is under development and is targeted for production by December 21, 2025.  
-- MRO recommends continuing existing compensating controls, including quarterly OGM monitoring, until the new model is fully implemented.  
-- The model user should remain vigilant about threshold breaches and data anomalies, especially in the high-risk 10% segment.  
-
-Based on the Q1–Q4 2024 monitoring and the overall assessment that MOD11879 remains insufficient for its intended use, the finding is rejected (i.e., remains open) with a new due date equal to the new model’s anticipated production date: December 21, 2025.
-
----
-
-**Assessment Results:**  
-- ☐ Pass for Closure: Remediation evidence submitted does address the risk identified.  
-- ☒ Action Required: The evidence confirms that MOD11879 is still not performing as intended and must remain under compensating controls until the replacement model is implemented. The new target date for remediation aligns with December 21, 2025, the projected go-live date for the successor model.
-
----
-
-Let me know if you’d like to tailor this further or convert it into Word or PDF format.
+Thanks,  
+[Your Name]  
+[Your Title / Team]  
