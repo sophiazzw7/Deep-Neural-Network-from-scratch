@@ -1,24 +1,12 @@
-**Subject:** Request for Data Lineage and CDE Details for Underwriting Model
+**Proposed Email to Manager**
 
-Hi [Name/Team],
+Subject: Sub-Issue on Data Thinness – Recommended 3-Year Monitoring Window
 
-Thanks again for meeting with me yesterday regarding the Small Commercial data and the expanded TBE scope. After a closer look at our procedures and the bank’s data policy, I realized we still need a bit more information because this model supports **underwriting**—which is classified as a **critical business process** for data.
+Hi [Boss Name],
 
-In particular:
+Given our discussion on the limited bads (183) in the expanded TBE dataset, the developers and I agree semi-annual monitoring is appropriate until enough defaults accrue. Because the model needs a 24-month performance window plus about a year to accumulate additional data, we expect a full three-year period for sufficient samples.
 
-1. **Critical Data Elements (CDEs)**  
-   - Please identify any fields considered “CDEs” (e.g., TBE, collateral type, applicant ID, etc.).  
-   - Let us know how each CDE is defined, captured, and validated, per the bank’s policy.
-
-2. **Data Lineage**  
-   - Even a simple overview of how data moves from the source systems (AFS, nCino, COMPASS, etc.) into the final modeling dataset is helpful.  
-   - This doesn’t have to be a full reconciliation report—just enough to show where each CDE originates and how it’s mapped or transformed.
-
-3. **Data Quality Checks**  
-   - Since we’re using this data for underwriting, we need to confirm basic data quality—such as checking for missing or invalid values in critical fields.  
-   - A short summary would be fine (e.g., “X% null for TBE,” “Y% invalid for collateral code”).
-
-I appreciate your time and cooperation. If anything is unclear or if you have concerns about the level of detail needed, feel free to reach out. We’re aiming to meet our policy requirements without creating extra burden.
+Would you recommend creating a sub-issue in our validation review to capture this data-thinness risk and assigning it a three-year due date for re-evaluation? Or is there another approach you’d prefer?
 
 Thanks,  
 [Your Name]  
