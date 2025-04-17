@@ -1,25 +1,72 @@
-/*****************************************************************************
-* MANUAL Somers' D via AUC (trapezoidal) — robust, no PROC LOGISTIC needed
-*   - Works with fractional weight wt
-*   - Handles any distribution of scores and events
-* Usage:
-*   1.  Filter to your “booked” slice if desired
-*   2.  Rename (or set) into a working table called ROC_IN
-*****************************************************************************/
+If both ROC_IN and SOMERS_D are coming out empty, it means your filter or data step isn’t actually grabbing any rows. Let’s diagnose and fix it in three quick steps:
 
-/* --- Example: filter to booked records for Secured CIDS+V4 ------------- */
+---
+
+## 1. Verify your source has booked + events
+
+Run this on your scored dataset (replace with whichever segment you’re working on):
+
+```sas
+/* 1A. Count total rows and booked rows */
+proc sql;
+  select 
+    count(*)        as All_Rows,
+    sum(booked_flg='Y') as Booked_Rows,
+    sum(bad60_24m=1)   as Total_Bads,
+    sum(bad60_24m=0)   as Total_Goods
+  from sc_sec_scored_CIDS_V4;
+quit;
+
+/* 1B. Quick peek at the first 10 booked rows */
+proc print data=sc_sec_scored_CIDS_V4(obs=10);
+  where booked_flg='Y';
+  var application_nbr applicant_nbr booked_flg bad60_24m pts_ttl wt;
+  title "Preview of first 10 booked rows";
+run;
+```
+
+**What to look for:**
+- **Booked_Rows** > 0  
+- **Total_Bads** > 0 and **Total_Goods** > 0  
+
+If either is zero, you’ll get empty ROC_IN or no events to model.
+
+---
+
+## 2. Build ROC_IN defensively
+
+Once you’ve confirmed there *are* booked rows and both classes, create ROC_IN like this:
+
+```sas
 data ROC_IN;
   set sc_sec_scored_CIDS_V4;
-  where booked_flg='Y' and bad60_24m in (0,1) and not missing(pts_ttl);
+  /* keep only booked and valid scores/targets */
+  if booked_flg='Y' 
+     and (bad60_24m=0 or bad60_24m=1)
+     and not missing(pts_ttl)
+     and not missing(wt);
 run;
 
-/* --- Step 1: Compute total weighted goods and bads --------------------- */
+/* confirm ROC_IN has rows */
+proc sql; select count(*) as ROC_IN_Rows from ROC_IN; quit;
+```
+
+If `ROC_IN_Rows` is still 0, check your dataset name or spelling.
+
+---
+
+## 3. Manual Somers’ D via AUC (robust)
+
+Once ROC_IN is populated, run the manual AUC → Somers’ D code:
+
+```sas
+/* Step A: totals */
 proc sql noprint;
   select sum(wt*(bad60_24m=1)) into :TOTAL_BAD  from ROC_IN;
   select sum(wt*(bad60_24m=0)) into :TOTAL_GOOD from ROC_IN;
 quit;
 
-/* --- Step 2: Aggregate by unique score, sort descending --------------- */
+/* Step B: aggregate by score */
 proc sql;
   create table ROC_DATA as
   select pts_ttl,
@@ -30,40 +77,46 @@ proc sql;
   order by descending pts_ttl;
 quit;
 
-/* --- Step 3: Build cumulative TPR/FPR and trapezoidal area ---------- */
+/* Step C: build ROC and trapezoidal AUC */
 data ROC_CURVE;
   set ROC_DATA;
   retain cum_bad cum_good prev_FPR prev_TPR AUC 0;
-  /* accumulate */
   cum_bad  + bad_wt;
   cum_good + good_wt;
-  /* true positive rate (sensitivity) and false positive rate */
   TPR = cum_bad  / &TOTAL_BAD;
   FPR = cum_good / &TOTAL_GOOD;
-  /* trapezoid from prior point */
-  if _n_ > 1 then AUC + ( (FPR - prev_FPR) * (TPR + prev_TPR) / 2 );
-  /* save for next iteration */
-  prev_FPR = FPR;
-  prev_TPR = TPR;
+  if _n_ > 1 then AUC + ((FPR - prev_FPR)*(TPR + prev_TPR)/2);
+  prev_FPR = FPR; prev_TPR = TPR;
 run;
 
-/* --- Step 4: Extract final AUC and compute Somers' D ----------------- */
+/* Step D: extract final AUC and Somers' D */
 data SOMERS_D;
   set ROC_CURVE end=eof;
   if eof then do;
-    AUC_value    = AUC;
-    Somers_D     = 2*AUC - 1;
+    AUC_value = AUC;
+    Somers_D  = 2*AUC - 1;
     output;
   end;
   keep AUC_value Somers_D;
 run;
 
-/* --- Step 5: Print results ------------------------------------------- */
-proc print data=SOMERS_D noobs label width=minimum;
+/* Step E: print it */
+proc print data=SOMERS_D noobs label;
   var AUC_value Somers_D;
-  label 
-    AUC_value = "Area Under Curve (AUC)"
+  label
+    AUC_value = "AUC (Area Under Curve)"
     Somers_D  = "Somers' D = 2*AUC-1";
   format AUC_value Somers_D 6.3;
-  title "Manual AUC & Somers' D (booked population)";
+  title "Manual AUC & Somers' D for Booked Population";
 run;
+```
+
+---
+
+### If you still get blanks:
+
+1. **Double‑check** the **dataset name** (`sc_sec_scored_CIDS_V4`) matches exactly.  
+2. **Ensure** `booked_flg` really uses `'Y'` and not `"Y "` or some other value.  
+3. **Confirm** there are at least one good (`bad60_24m=0`) and one bad (`=1`) among the booked rows.
+
+Let me know what the counts from step 1 show and we’ll take it from there!
