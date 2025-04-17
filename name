@@ -1,42 +1,81 @@
-/**************************************************************************
-* Manual KS calculation using only booked accounts (booked_flg = 'Y')
-* Dataset: sc_sec_scored_CIDS_V4
-* Score: pts_ttl
-* Target: bad60_24m
-* Weight: wt
-**************************************************************************/
+Thanks for the update — if `KS` is showing **0** from the manual method, then that means the model isn’t separating goods and bads *at all* in the **booked data** — or something went wrong in the data flow.
 
-/* Step 1: Filter to booked accounts only */
-data booked_data;
-   set sc_sec_scored_CIDS_V4;
-   if booked_flg = 'Y' and not missing(bad60_24m) and not missing(pts_ttl);
+Let’s debug this quickly — here’s what to check.
+
+---
+
+## ✅ Step-by-Step Debug Checklist
+
+### 🔍 1. Confirm you have **both goods and bads** in `booked_data`
+
+Run:
+
+```sas
+proc freq data=booked_data;
+   tables bad60_24m / missing;
 run;
+```
 
-/* Step 2: Sort by descending score */
-proc sort data=booked_data out=booked_sorted;
-   by descending pts_ttl;
+✅ Expected:
+- You should see **at least one 1 and one 0**
+- If all values are 0 (or 1), **KS will be 0** — there's no separation to calculate
+
+---
+
+### 🔍 2. Confirm scores aren’t constant or missing
+
+Run:
+
+```sas
+proc means data=booked_data n nmiss min max;
+   var pts_ttl;
 run;
+```
 
-/* Step 3: Get total weighted good and bad counts */
-proc sql noprint;
-   select sum(wt*(bad60_24m=1)) into :total_bad from booked_sorted;
-   select sum(wt*(bad60_24m=0)) into :total_good from booked_sorted;
-quit;
+✅ You want:
+- `nmiss = 0`
+- `min < max` — i.e. score varies
 
-/* Step 4: Compute cumulative distributions and KS */
-data ks_curve;
-   set booked_sorted;
-   retain cum_bad cum_good 0;
+If all values of `pts_ttl` are the same, **KS will be 0** (no ranking possible)
 
-   if bad60_24m = 1 then cum_bad + wt;
-   else cum_good + wt;
+---
 
-   pct_cum_bad  = cum_bad  / &total_bad;
-   pct_cum_good = cum_good / &total_good;
+### 🔍 3. View part of the `ks_curve` to check calculations
 
-   ks_val = abs(pct_cum_bad - pct_cum_good);
+```sas
+proc print data=ks_curve(obs=10);
+   var pts_ttl bad60_24m wt cum_bad cum_good pct_cum_bad pct_cum_good ks_val;
 run;
+```
 
-/* Step 5: Print maximum KS value */
-proc sql;
-   select max(ks_val) format=6._
+✅ You should see:
+- `ks_val` gradually changing
+- `pct_cum_bad` and `pct_cum_good` progressing from 0 to 1
+
+If **everything is flat**, then something went wrong with cumulative logic.
+
+---
+
+### 🔧 If All Else Fails: Add Debug Print
+
+Add this before the `data ks_curve` step:
+
+```sas
+%put NOTE: Total bad weight = &total_bad;
+%put NOTE: Total good weight = &total_good;
+```
+
+If either value prints as 0, then `bad60_24m` is **all 1s or all 0s** after filtering.
+
+---
+
+## ✅ Final Notes
+
+> **If you have very few bads** (say <10 in the booked population), the KS curve may be too flat to matter.  
+> But KS = 0 is a red flag — it either means:
+> - No discrimination
+> - Or your target variable is misaligned
+
+---
+
+💡 Want me to give you a full example using dummy data so you can validate your logic side-by-side? Or send a sanitized output of your `proc freq` and `proc means`, and I’ll spot it.
