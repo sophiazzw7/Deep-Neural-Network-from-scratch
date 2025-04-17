@@ -1,87 +1,69 @@
-/**************************************************************************
-* DATA QUALITY CHECKS for All Segments
-* Checks: row count, duplicates, missing values, min/max
-**************************************************************************/
+/*****************************************************************************
+* MANUAL Somers' D via AUC (trapezoidal) — robust, no PROC LOGISTIC needed
+*   - Works with fractional weight wt
+*   - Handles any distribution of scores and events
+* Usage:
+*   1.  Filter to your “booked” slice if desired
+*   2.  Rename (or set) into a working table called ROC_IN
+*****************************************************************************/
 
-/* -------- Secured: CIDS + Vantage4 -------- */
-proc sql;
-  select count(*) as Total_Rows from sc_sec_scored_CIDS_V4;
-quit;
-
-proc sort data=sc_sec_scored_CIDS_V4 
-          out=_dedup1 
-          nodupkey 
-          dupout=_dups1;
-  by application_nbr applicant_nbr;
+/* --- Example: filter to booked records for Secured CIDS+V4 ------------- */
+data ROC_IN;
+  set sc_sec_scored_CIDS_V4;
+  where booked_flg='Y' and bad60_24m in (0,1) and not missing(pts_ttl);
 run;
 
-proc sql;
-  select count(*) as Duplicate_Keys from _dups1;
+/* --- Step 1: Compute total weighted goods and bads --------------------- */
+proc sql noprint;
+  select sum(wt*(bad60_24m=1)) into :TOTAL_BAD  from ROC_IN;
+  select sum(wt*(bad60_24m=0)) into :TOTAL_GOOD from ROC_IN;
 quit;
 
-proc means data=sc_sec_scored_CIDS_V4 n nmiss min max;
-  var pts_ttl CIDS_COMM_score Vantage4_score bad60_24m wt;
+/* --- Step 2: Aggregate by unique score, sort descending --------------- */
+proc sql;
+  create table ROC_DATA as
+  select pts_ttl,
+         sum(wt*(bad60_24m=1)) as bad_wt,
+         sum(wt*(bad60_24m=0)) as good_wt
+  from ROC_IN
+  group by pts_ttl
+  order by descending pts_ttl;
+quit;
+
+/* --- Step 3: Build cumulative TPR/FPR and trapezoidal area ---------- */
+data ROC_CURVE;
+  set ROC_DATA;
+  retain cum_bad cum_good prev_FPR prev_TPR AUC 0;
+  /* accumulate */
+  cum_bad  + bad_wt;
+  cum_good + good_wt;
+  /* true positive rate (sensitivity) and false positive rate */
+  TPR = cum_bad  / &TOTAL_BAD;
+  FPR = cum_good / &TOTAL_GOOD;
+  /* trapezoid from prior point */
+  if _n_ > 1 then AUC + ( (FPR - prev_FPR) * (TPR + prev_TPR) / 2 );
+  /* save for next iteration */
+  prev_FPR = FPR;
+  prev_TPR = TPR;
 run;
 
-
-/* -------- Secured: Vantage Only -------- */
-proc sql;
-  select count(*) as Total_Rows from sc_sec_scored_V4;
-quit;
-
-proc sort data=sc_sec_scored_V4 
-          out=_dedup2 
-          nodupkey 
-          dupout=_dups2;
-  by application_nbr applicant_nbr;
+/* --- Step 4: Extract final AUC and compute Somers' D ----------------- */
+data SOMERS_D;
+  set ROC_CURVE end=eof;
+  if eof then do;
+    AUC_value    = AUC;
+    Somers_D     = 2*AUC - 1;
+    output;
+  end;
+  keep AUC_value Somers_D;
 run;
 
-proc sql;
-  select count(*) as Duplicate_Keys from _dups2;
-quit;
-
-proc means data=sc_sec_scored_V4 n nmiss min max;
-  var pts_ttl Vantage4_score bad60_24m wt;
-run;
-
-
-/* -------- Unsecured: CIDS + Vantage4 -------- */
-proc sql;
-  select count(*) as Total_Rows from sc_unsec_scored_CIDS_V4;
-quit;
-
-proc sort data=sc_unsec_scored_CIDS_V4 
-          out=_dedup3 
-          nodupkey 
-          dupout=_dups3;
-  by application_nbr applicant_nbr;
-run;
-
-proc sql;
-  select count(*) as Duplicate_Keys from _dups3;
-quit;
-
-proc means data=sc_unsec_scored_CIDS_V4 n nmiss min max;
-  var pts_ttl CIDS_COMM_score Vantage4_score bad60_24m wt;
-run;
-
-
-/* -------- Unsecured: Vantage Only -------- */
-proc sql;
-  select count(*) as Total_Rows from sc_unsec_scored_V4;
-quit;
-
-proc sort data=sc_unsec_scored_V4 
-          out=_dedup4 
-          nodupkey 
-          dupout=_dups4;
-  by application_nbr applicant_nbr;
-run;
-
-proc sql;
-  select count(*) as Duplicate_Keys from _dups4;
-quit;
-
-proc means data=sc_unsec_scored_V4 n nmiss min max;
-  var pts_ttl Vantage4_score bad60_24m wt;
+/* --- Step 5: Print results ------------------------------------------- */
+proc print data=SOMERS_D noobs label width=minimum;
+  var AUC_value Somers_D;
+  label 
+    AUC_value = "Area Under Curve (AUC)"
+    Somers_D  = "Somers' D = 2*AUC-1";
+  format AUC_value Somers_D 6.3;
+  title "Manual AUC & Somers' D (booked population)";
 run;
