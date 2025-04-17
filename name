@@ -1,20 +1,35 @@
-/* STEP 1: Sort data by score descending (highest score = best) */
-proc sort data=sc_sec_scored_CIDS_V4 out=ks_sorted;
+/**************************************************************************
+* Manual KS calculation using only booked accounts (booked_flg = 'Y')
+* Dataset: sc_sec_scored_CIDS_V4
+* Score: pts_ttl
+* Target: bad60_24m
+* Weight: wt
+**************************************************************************/
+
+/* Step 1: Filter to booked accounts only */
+data booked_data;
+   set sc_sec_scored_CIDS_V4;
+   if booked_flg = 'Y' and not missing(bad60_24m) and not missing(pts_ttl);
+run;
+
+/* Step 2: Sort by descending score */
+proc sort data=booked_data out=booked_sorted;
    by descending pts_ttl;
 run;
 
-/* STEP 2: Summarize total bad and good weights */
+/* Step 3: Get total weighted good and bad counts */
 proc sql noprint;
-   select sum(wt*(bad60_24m=1)) into :total_bad from ks_sorted;
-   select sum(wt*(bad60_24m=0)) into :total_good from ks_sorted;
+   select sum(wt*(bad60_24m=1)) into :total_bad from booked_sorted;
+   select sum(wt*(bad60_24m=0)) into :total_good from booked_sorted;
 quit;
 
-/* STEP 3: Calculate cumulative good/bad */
+/* Step 4: Compute cumulative distributions and KS */
 data ks_curve;
-   set ks_sorted;
-   retain cum_good cum_bad 0;
-   if bad60_24m = 1 then cum_bad  + wt;
-   else                 cum_good + wt;
+   set booked_sorted;
+   retain cum_bad cum_good 0;
+
+   if bad60_24m = 1 then cum_bad + wt;
+   else cum_good + wt;
 
    pct_cum_bad  = cum_bad  / &total_bad;
    pct_cum_good = cum_good / &total_good;
@@ -22,4 +37,6 @@ data ks_curve;
    ks_val = abs(pct_cum_bad - pct_cum_good);
 run;
 
-/* STEP*
+/* Step 5: Print maximum KS value */
+proc sql;
+   select max(ks_val) format=6._
