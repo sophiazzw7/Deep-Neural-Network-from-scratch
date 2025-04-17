@@ -1,122 +1,104 @@
-If both ROC_IN and SOMERS_D are coming out empty, it means your filter or data step isn’t actually grabbing any rows. Let’s diagnose and fix it in three quick steps:
+/* Include point‐lookup formats */
+%include "/sasdata/rqcral/readonly/MOD12005/OUTPUT/points_secured_CIDSC_vantage.txt";
+%include "/sasdata/rqcral/readonly/MOD12005/OUTPUT/points_secured_vantage.txt";
+%include "/sasdata/rqcral/readonly/MOD12005/OUTPUT/points_unsec_CIDSC_vantage.txt";
+%include "/sasdata/rqcral/readonly/MOD12005/OUTPUT/points_unsec_vantage.txt";
 
----
-
-## 1. Verify your source has booked + events
-
-Run this on your scored dataset (replace with whichever segment you’re working on):
-
-```sas
-/* 1A. Count total rows and booked rows */
-proc sql;
-  select 
-    count(*)        as All_Rows,
-    sum(booked_flg='Y') as Booked_Rows,
-    sum(bad60_24m=1)   as Total_Bads,
-    sum(bad60_24m=0)   as Total_Goods
-  from sc_sec_scored_CIDS_V4;
-quit;
-
-/* 1B. Quick peek at the first 10 booked rows */
-proc print data=sc_sec_scored_CIDS_V4(obs=10);
-  where booked_flg='Y';
-  var application_nbr applicant_nbr booked_flg bad60_24m pts_ttl wt;
-  title "Preview of first 10 booked rows";
-run;
-```
-
-**What to look for:**
-- **Booked_Rows** > 0  
-- **Total_Bads** > 0 and **Total_Goods** > 0  
-
-If either is zero, you’ll get empty ROC_IN or no events to model.
-
----
-
-## 2. Build ROC_IN defensively
-
-Once you’ve confirmed there *are* booked rows and both classes, create ROC_IN like this:
-
-```sas
-data ROC_IN;
-  set sc_sec_scored_CIDS_V4;
-  /* keep only booked and valid scores/targets */
-  if booked_flg='Y' 
-     and (bad60_24m=0 or bad60_24m=1)
-     and not missing(pts_ttl)
-     and not missing(wt);
+/* 1. Score Secured: CIDS + Vantage4 */
+data sc_sec_scored_CIDS_V4;
+  set sc_sec_data;
+  where CIDS_COMM_flg="NOT MISSING" and Vantage_flg="NOT MISSING" and bad60_24m^=.;
+  pts_CIDSC    = input(put(CIDS_COMM_score,pts1a.),best12.);
+  pts_Vantage4 = input(put(Vantage4_score,pts2a.),best12.);
+  pts_ttl      = sum(of pts_:);
 run;
 
-/* confirm ROC_IN has rows */
-proc sql; select count(*) as ROC_IN_Rows from ROC_IN; quit;
-```
-
-If `ROC_IN_Rows` is still 0, check your dataset name or spelling.
-
----
-
-## 3. Manual Somers’ D via AUC (robust)
-
-Once ROC_IN is populated, run the manual AUC → Somers’ D code:
-
-```sas
-/* Step A: totals */
-proc sql noprint;
-  select sum(wt*(bad60_24m=1)) into :TOTAL_BAD  from ROC_IN;
-  select sum(wt*(bad60_24m=0)) into :TOTAL_GOOD from ROC_IN;
-quit;
-
-/* Step B: aggregate by score */
-proc sql;
-  create table ROC_DATA as
-  select pts_ttl,
-         sum(wt*(bad60_24m=1)) as bad_wt,
-         sum(wt*(bad60_24m=0)) as good_wt
-  from ROC_IN
-  group by pts_ttl
-  order by descending pts_ttl;
-quit;
-
-/* Step C: build ROC and trapezoidal AUC */
-data ROC_CURVE;
-  set ROC_DATA;
-  retain cum_bad cum_good prev_FPR prev_TPR AUC 0;
-  cum_bad  + bad_wt;
-  cum_good + good_wt;
-  TPR = cum_bad  / &TOTAL_BAD;
-  FPR = cum_good / &TOTAL_GOOD;
-  if _n_ > 1 then AUC + ((FPR - prev_FPR)*(TPR + prev_TPR)/2);
-  prev_FPR = FPR; prev_TPR = TPR;
+/* 2. Score Secured: Vantage4 only */
+data sc_sec_scored_V4;
+  set sc_sec_data;
+  where CIDS_COMM_flg="MISSING" and Vantage_flg="NOT MISSING" and bad60_24m^=.;
+  pts_Vantage4 = input(put(Vantage4_score,pts2a.),best12.);
+  pts_ttl      = pts_Vantage4;
 run;
 
-/* Step D: extract final AUC and Somers' D */
-data SOMERS_D;
-  set ROC_CURVE end=eof;
-  if eof then do;
-    AUC_value = AUC;
-    Somers_D  = 2*AUC - 1;
-    output;
-  end;
-  keep AUC_value Somers_D;
+/* 3. Score Unsecured: CIDS + Vantage4 */
+data sc_unsec_scored_CIDS_V4;
+  set sc_unsec_data;
+  where CIDS_COMM_flg="NOT MISSING" and Vantage_flg="NOT MISSING" and bad60_24m^=.;
+  pts_CIDSC    = input(put(CIDS_COMM_score,pts1a.),best12.);
+  pts_Vantage4 = input(put(Vantage4_score,pts2a.),best12.);
+  pts_ttl      = sum(of pts_:);
 run;
 
-/* Step E: print it */
-proc print data=SOMERS_D noobs label;
-  var AUC_value Somers_D;
-  label
-    AUC_value = "AUC (Area Under Curve)"
-    Somers_D  = "Somers' D = 2*AUC-1";
-  format AUC_value Somers_D 6.3;
-  title "Manual AUC & Somers' D for Booked Population";
+/* 4. Score Unsecured: Vantage4 only */
+data sc_unsec_scored_V4;
+  set sc_unsec_data;
+  where CIDS_COMM_flg="MISSING" and Vantage_flg="NOT MISSING" and bad60_24m^=.;
+  pts_Vantage4 = input(put(Vantage4_score,pts2a.),best12.);
+  pts_ttl      = pts_Vantage4;
 run;
-```
 
----
+/* 5. Somers' D – Secured: CIDS + V4 */
+proc logistic data=sc_sec_scored_CIDS_V4 noprint;
+  model bad60_24m(event='1') = pts_ttl;
+  weight wt;
+  ods output Association=assoc1;
+run;
+data somers1;
+  set assoc1;
+  where Label2="Somers' D";
+  Segment="Secured: CIDS+V4";
+  Somers_D=input(cValue2,best12.);
+  keep Segment Somers_D;
+run;
 
-### If you still get blanks:
+/* 6. Somers' D – Secured: V4 only */
+proc logistic data=sc_sec_scored_V4 noprint;
+  model bad60_24m(event='1') = pts_ttl;
+  weight wt;
+  ods output Association=assoc2;
+run;
+data somers2;
+  set assoc2;
+  where Label2="Somers' D";
+  Segment="Secured: V4 only";
+  Somers_D=input(cValue2,best12.);
+  keep Segment Somers_D;
+run;
 
-1. **Double‑check** the **dataset name** (`sc_sec_scored_CIDS_V4`) matches exactly.  
-2. **Ensure** `booked_flg` really uses `'Y'` and not `"Y "` or some other value.  
-3. **Confirm** there are at least one good (`bad60_24m=0`) and one bad (`=1`) among the booked rows.
+/* 7. Somers' D – Unsecured: CIDS + V4 */
+proc logistic data=sc_unsec_scored_CIDS_V4 noprint;
+  model bad60_24m(event='1') = pts_ttl;
+  weight wt;
+  ods output Association=assoc3;
+run;
+data somers3;
+  set assoc3;
+  where Label2="Somers' D";
+  Segment="Unsecured: CIDS+V4";
+  Somers_D=input(cValue2,best12.);
+  keep Segment Somers_D;
+run;
 
-Let me know what the counts from step 1 show and we’ll take it from there!
+/* 8. Somers' D – Unsecured: V4 only */
+proc logistic data=sc_unsec_scored_V4 noprint;
+  model bad60_24m(event='1') = pts_ttl;
+  weight wt;
+  ods output Association=assoc4;
+run;
+data somers4;
+  set assoc4;
+  where Label2="Somers' D";
+  Segment="Unsecured: V4 only";
+  Somers_D=input(cValue2,best12.);
+  keep Segment Somers_D;
+run;
+
+/* 9. Combine and print all Somers' D */
+data somers_all;
+  set somers1 somers2 somers3 somers4;
+run;
+proc print data=somers_all noobs label;
+  var Segment Somers_D;
+  format Somers_D 6.3;
+run;
