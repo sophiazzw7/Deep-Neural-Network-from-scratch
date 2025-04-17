@@ -1,13 +1,77 @@
-**Proposed Email to Manager**
+---
 
-Subject: Sub-Issue on Data Thinness – Recommended 3-Year Monitoring Window
+## **Limited Scope Validation (LSV) Review Memo**  
+### *Prepared by the Model Risk Office (MRO)*  
 
-Hi [Boss Name],
+**To:** Model Owner / Model Developer  
+**From:** Model Risk Office  
+**Date:** 16 April 2025  
 
-Given our discussion on the limited bads (183) in the expanded TBE dataset, the developers and I agree semi-annual monitoring is appropriate until enough defaults accrue. Because the model needs a 24-month performance window plus about a year to accumulate additional data, we expect a full three-year period for sufficient samples.
+**Model ID / Name:** MOD 12005 – Small Business and Small Commercial Application Scorecard  
+**Model Tier:** Tier 3  
+**Provisional Validation Rating:** **Fit for Use – Compensating Controls Required**
 
-Would you recommend creating a sub-issue in our validation review to capture this data-thinness risk and assigning it a three-year due date for re-evaluation? Or is there another approach you’d prefer?
+---
 
-Thanks,  
-[Your Name]  
-[Your Title / Team]  
+### 1  Model Description  
+
+MOD 12005 is a logistic‑regression scorecard that resides in the SPRINT loan‑origination system and receives bureau attributes through the Equifax InterConnect interface.  The model produces a risk score that serves as the primary quantitative input to underwriting decisions for the Small‑Business portfolio.  In March 2023 the model underwent a comprehensive validation and was rated *Fit for Use* for applicants whose Total Business Exposure (TBE) did not exceed \$250 000.  Since that time the model has been subject to annual Ongoing‑Monitoring (OGM).
+
+---
+
+### 2  Model Change  
+
+The current change request expands the model’s use to Small Commercial lending, thereby increasing the TBE ceiling from \$250 000 to **\$1 000 000**.  After several conversations, the developer has confirmed in writing that **no changes have been made to the model code, coefficients, segmentation logic or batch processes**; only additional production data will now flow through the existing engine.  Because the expanded segment introduces a different risk profile, the model owner will increase the monitoring cadence from annual to **bi‑annual**, providing performance reports after the close of the second and fourth quarters.  Each report will contain Kolmogorov–Smirnov (KS), Somers’ D and Population Stability Index (PSI) statistics.  When the volume of defaults is too small to calculate reliable KS or Somers’ D, PSI and score‑band default‑rate tables will still be submitted to detect any drift.
+
+The developer has identified **CIDS Commercial** and **Vantage 4** scores as the only Critical Data Elements (CDEs) used directly in the model.  Section 5.11.3.1 lists every field that Truist transmits to Equifax in order to obtain those two scores; the outbound file layout has been supplied, and the inbound Equifax fields are passed to the model without transformation.  Although collateral fields are captured for hBBT loans, the COMPASS source system does not record collateral data for hSTI loans.  Subject‑matter experts confirm that hSTI loans are virtually always unsecured, and the developer’s own testing shows that treating them as unsecured produces the most appropriate ranking of risk.
+
+---
+
+### 3  Risk Assessment  
+
+**Data sufficiency.**  The developer’s test set for the \$250 000–\$1 000 000 band contains roughly 17 000 applications but only **183 bads** (ever‑60‑days‑past‑due within a 24‑month window).  These bads are further divided between secured and unsecured paths and three score‑availability sub‑models, leaving fewer than one hundred bads in any major segment and fewer than thirty‑five bads in several sub‑models.  The developer has stated that at least **1 000 records and 10 bads are required in a sub‑model** before Somers’ D can be considered statistically reliable; several sub‑models do not yet meet this threshold.
+
+**Collateral gap.**  The absence of collateral data for hSTI loans forces all hSTI exposures into the unsecured path.  While SMEs believe this assumption is realistic, the concentration increases the importance of monitoring unsecured‑path performance separately for each heritage bank.
+
+**CDE lineage.**  Truist has provided the outbound data dictionary used to request bureau scores, but Equifax has not supplied a formal data dictionary for its response file.  The developer relies on the field labels returned by Equifax and passes them directly to the model.  A concise lineage illustration, including data‑quality metrics, is therefore required for governance purposes.
+
+---
+
+### 4  Overall Model Performance  
+
+Despite the thin sample, the ROC curves, KS statistics and Somers’ D values supplied by the developer are all above the minimum thresholds set out in Table 9.2 of the model documentation.  Consequently, the model remains **directionally sound** for the expanded population.  However, given the wide confidence intervals associated with such small default counts, the MRO assigns only a provisional *Fit for Use* rating and requires compensating controls.
+
+---
+
+### 5  Compensating Control and Sub‑Issue  
+
+Because the expanded data set contains only 183 bads, the MRO is opening a **sub‑issue entitled “Data Thinness – Small Commercial Expansion.”**  The compensating‑control period is set at **three years**, covering the 24‑month performance horizon required by the model and the additional year that the developer expects will be needed for defaults to season.  During this period the following conditions apply:
+
+1. **Monitoring cadence.**  The model owner must produce OGM reports twice a year (after Q2 and Q4).  
+2. **Performance metrics.**  Each report must include KS, Somers’ D and PSI.  If any sub‑model contains fewer than 1 000 records or 10 bads, the KS and Somers’ D statistics for that sub‑model may be omitted, but PSI and score‑band default‑rate tables must still be provided to track population drift.  
+3. **Thresholds.**  The existing performance thresholds in Table 9.2 remain in force throughout the compensating‑control period.  
+4. **Re‑evaluation.**  The sub‑issue will be reassessed no later than **31 March 2028**.  If default volumes remain insufficient at that time, the MRO will determine whether an out‑of‑cycle redevelopment or recalibration is necessary.
+
+---
+
+### 6  Required Deliverables  
+
+The Model Risk Office requires the following items to close this LSV:
+
+1. **Code‑change affirmation.**  The signed statement confirming that no code or logic changes have been made has already been received and filed.  
+2. **Monitoring template.**  The model owner must submit the revised bi‑annual OGM workbook, including the explicit definition of “sufficient data” (≥ 1 000 records and ≥ 10 bads per sub‑model).  This template is due before the Q2 2025 OGM submission.  
+3. **CDE lineage summary.**  The developer and data stewards must provide a concise diagram or table showing how CIDS Commercial and Vantage 4 scores move from the bureau response file into the model repository, together with percentages of null, invalid or out‑of‑range observations.  This document is due by **31 May 2025**.  
+4. **Collateral‑data status.**  The model owner must deliver, by **30 September 2025**, a brief status report on the feasibility of capturing collateral fields for hSTI loans.  Thereafter each OGM report must show unsecured‑path performance broken out by heritage bank.
+
+---
+
+### 7  MRO Conclusion  
+
+The Model Risk Office concludes that MOD 12005 may be used for applicants with TBE up to \$1 000 000, provided the compensating controls and deliverables described above are fully implemented.  The bi‑annual monitoring schedule, the explicit sufficiency rule of 1 000 records and 10 bads, and the continued application of Table 9.2 thresholds collectively mitigate the immediate risk created by thin default data.  Failure to meet the deliverable deadlines, or any persistent breach of the established thresholds, will result in a downgrade to **Needs Improvement** and may prompt escalation under the bank’s Model‑Governance Policy.
+
+---
+
+*Prepared by:* [Analyst Name], Model Risk Office  
+*Reviewed and Approved by:* [Manager Name], Model Risk Office  
+
+---
