@@ -1,55 +1,128 @@
-/**************************************************************************
-* KS calculation on booked population only
-* Dataset: sc_sec_scored_CIDS_V4
-* Filter : booked_flg = 'Y'
-* Score   : pts_ttl
-* Target  : bad60_24m  (0 = good, 1 = bad)
-* Weight  : wt
-**************************************************************************/
+****************************************************************************;
+*  FULL RUNNABLE PROGRAM – DATA‑QUALITY + Somers’ D                         *
+****************************************************************************;
+options compress=yes errors=2 mprint symbolgen;
 
-/* 1. Filter to booked records */
-data booked_data;
-  set sc_sec_scored_CIDS_V4;
-  where booked_flg = 'Y'
-    and not missing(bad60_24m)
-    and not missing(pts_ttl);
+/*=== 0. LIBNAME & POINTS INCLUDES =======================================*/
+libname sb '/sasdata/rqcral/readonly/SmBus_Equifax_2023';
+
+/*  Points tables create formats pts1a. (CIDS) and pts2a. (Vantage4) */
+%include '/sasdata/rqcral/readonly/MOD12005/OUTPUT/points_secured_CIDSC_vantage.txt';
+%include '/sasdata/rqcral/readonly/MOD12005/OUTPUT/points_secured_vantage.txt';
+%include '/sasdata/rqcral/readonly/MOD12005/OUTPUT/points_unsec_CIDSC_vantage.txt';
+%include '/sasdata/rqcral/readonly/MOD12005/OUTPUT/points_unsec_vantage.txt';
+
+/*=== 1. BUILD THE FOUR SCORED DATASETS ==================================*/
+
+/* 1A. Secured, CIDS+Vantage4 */
+data sc_sec_scored_CIDS_V4;
+  set sc_sec_data;
+  where CIDS_COMM_flg='NOT MISSING' 
+    and Vantage_flg='NOT MISSING' 
+    and not missing(bad60_24m);
+  pts_CIDSC    = input(put(CIDS_COMM_score,pts1a.),best12.);
+  pts_Vantage4 = input(put(Vantage4_score,pts2a.),best12.);
+  pts_ttl      = sum(of pts_:);
 run;
 
-/* 2. Sort by descending score */
-proc sort data=booked_data out=booked_sorted;
-  by descending pts_ttl;
+/* 1B. Secured, Vantage4 only */
+data sc_sec_scored_V4;
+  set sc_sec_data;
+  where CIDS_COMM_flg='MISSING'
+    and Vantage_flg='NOT MISSING'
+    and not missing(bad60_24m);
+  pts_Vantage4 = input(put(Vantage4_score,pts2a.),best12.);
+  pts_ttl      = pts_Vantage4;
 run;
 
-/* 3. Compute total weighted goods and bads */
-proc sql noprint;
-  select sum(wt*(bad60_24m=1))
-    into :total_bad
-  from booked_sorted;
-
-  select sum(wt*(bad60_24m=0))
-    into :total_good
-  from booked_sorted;
-quit;
-
-/* 4. Build cumulative distributions and KS */
-data ks_curve;
-  set booked_sorted;
-  retain cum_bad cum_good 0;
-  
-  /* accumulate weighted counts */
-  if bad60_24m = 1 then cum_bad  + wt;
-  else                cum_good + wt;
-
-  /* compute cumulative proportions */
-  pct_cum_bad  = cum_bad  / &total_bad;
-  pct_cum_good = cum_good / &total_good;
-  
-  /* difference = KS at this threshold */
-  ks_val = abs(pct_cum_bad - pct_cum_good);
+/* 1C. Unsecured, CIDS+Vantage4 */
+data sc_unsec_scored_CIDS_V4;
+  set sc_unsec_data;
+  where CIDS_COMM_flg='NOT MISSING'
+    and Vantage_flg='NOT MISSING'
+    and not missing(bad60_24m);
+  pts_CIDSC    = input(put(CIDS_COMM_score,pts1a.),best12.);
+  pts_Vantage4 = input(put(Vantage4_score,pts2a.),best12.);
+  pts_ttl      = sum(of pts_:);
 run;
 
-/* 5. Output the maximum KS value */
-proc sql;
-  select max(ks_val) format=6.3 as KS_from_booked
-  from ks_curve;
-quit;
+/* 1D. Unsecured, Vantage4 only */
+data sc_unsec_scored_V4;
+  set sc_unsec_data;
+  where CIDS_COMM_flg='MISSING'
+    and Vantage_flg='NOT MISSING'
+    and not missing(bad60_24m);
+  pts_Vantage4 = input(put(Vantage4_score,pts2a.),best12.);
+  pts_ttl      = pts_Vantage4;
+run;
+
+/*=== 2. DATA‑QUALITY CHECK MACRO =======================================*/
+%macro qc(ds);
+  %put ==== QC for &ds ====;
+  /* 2.1 Row count */
+  proc sql noprint;
+    select count(*) format=8. into :_nrows from &ds;
+  quit;
+  %put NOTE: &ds has !_nrows rows.;
+
+  /* 2.2 Duplicate key check */
+  proc sort data=&ds(keep=application_nbr applicant_nbr)
+            out=_dup nodupkey dupout=_dup_out;
+    by application_nbr applicant_nbr;
+  run;
+  proc sql noprint;
+    select count(*) into :_ndup from _dup_out;
+  quit;
+  %put NOTE: &ds has !_ndup duplicate primary‑key rows.;
+
+  /* 2.3 Missing & Range on core vars */
+  proc means data=&ds n nmiss min max;
+    var bad60_24m CIDS_COMM_score Vantage4_score pts_ttl wt;
+  run;
+
+  /* clean up */
+  proc datasets lib=work nolist;
+    delete _dup _dup_out;
+  quit;
+%mend qc;
+
+/* Run QC on each scored dataset */
+%qc(sc_sec_scored_CIDS_V4)
+%qc(sc_sec_scored_V4)
+%qc(sc_unsec_scored_CIDS_V4)
+%qc(sc_unsec_scored_V4)
+
+/*=== 3. SOMERS’ D MACRO ================================================*/
+%macro somers(ds);
+  %put ==== Somers' D for &ds ====;
+  proc logistic data=&ds noprint;
+    model bad60_24m(event='1') = pts_ttl;
+    weight wt;
+    ods output Association=__assoc;
+  run;
+
+  data __som;
+    set __assoc;
+    where Label2="Somers' D";
+    Somers_D = input(cValue2,best12.);
+    keep Somers_D;
+  run;
+
+  proc print data=__som noobs label;
+    var Somers_D;
+    title "Somers' D for &ds";
+  run;
+
+  proc datasets lib=work nolist;
+    delete __assoc __som;
+  quit;
+%mend somers;
+
+/* Run Somers' D on each scored dataset */
+%somers(sc_sec_scored_CIDS_V4)
+%somers(sc_sec_scored_V4)
+%somers(sc_unsec_scored_CIDS_V4)
+%somers(sc_unsec_scored_V4)
+
+title;  
+****************************************************************************;
