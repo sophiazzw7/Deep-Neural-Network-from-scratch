@@ -1,44 +1,55 @@
 /**************************************************************************
-* Manual KS calculation using only booked accounts (booked_flg = 'Y')
+* KS calculation on booked population only
 * Dataset: sc_sec_scored_CIDS_V4
-* Score: pts_ttl
-* Target: bad60_24m
-* Weight: wt
+* Filter : booked_flg = 'Y'
+* Score   : pts_ttl
+* Target  : bad60_24m  (0 = good, 1 = bad)
+* Weight  : wt
 **************************************************************************/
 
-/* Step 1: Filter to booked accounts only */
+/* 1. Filter to booked records */
 data booked_data;
-   set sc_sec_scored_CIDS_V4;
-   if booked_flg = 'Y' and not missing(bad60_24m) and not missing(pts_ttl);
+  set sc_sec_scored_CIDS_V4;
+  where booked_flg = 'Y'
+    and not missing(bad60_24m)
+    and not missing(pts_ttl);
 run;
 
-/* Step 2: Sort by descending score */
+/* 2. Sort by descending score */
 proc sort data=booked_data out=booked_sorted;
-   by descending pts_ttl;
+  by descending pts_ttl;
 run;
 
-/* Step 3: Get total weighted good and bad counts */
+/* 3. Compute total weighted goods and bads */
 proc sql noprint;
-   select sum(wt*(bad60_24m=1)) into :total_bad from booked_sorted;
-   select sum(wt*(bad60_24m=0)) into :total_good from booked_sorted;
+  select sum(wt*(bad60_24m=1))
+    into :total_bad
+  from booked_sorted;
+
+  select sum(wt*(bad60_24m=0))
+    into :total_good
+  from booked_sorted;
 quit;
 
-/* Step 4: Compute cumulative distributions and KS */
+/* 4. Build cumulative distributions and KS */
 data ks_curve;
-   set booked_sorted;
-   retain cum_bad cum_good 0;
+  set booked_sorted;
+  retain cum_bad cum_good 0;
+  
+  /* accumulate weighted counts */
+  if bad60_24m = 1 then cum_bad  + wt;
+  else                cum_good + wt;
 
-   if bad60_24m = 1 then cum_bad + wt;
-   else cum_good + wt;
-
-   pct_cum_bad  = cum_bad  / &total_bad;
-   pct_cum_good = cum_good / &total_good;
-
-   ks_val = abs(pct_cum_bad - pct_cum_good);
+  /* compute cumulative proportions */
+  pct_cum_bad  = cum_bad  / &total_bad;
+  pct_cum_good = cum_good / &total_good;
+  
+  /* difference = KS at this threshold */
+  ks_val = abs(pct_cum_bad - pct_cum_good);
 run;
 
-/* Step 5: Print maximum KS value */
+/* 5. Output the maximum KS value */
 proc sql;
-   select max(ks_val) format=6.3 as KS_from_booked_data
-   from ks_curve;
+  select max(ks_val) format=6.3 as KS_from_booked
+  from ks_curve;
 quit;
