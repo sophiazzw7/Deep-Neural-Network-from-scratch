@@ -1,31 +1,87 @@
 /**************************************************************************
-* Collect and Print KS + Somers' D from all CAPROC OUT= datasets
+* DATA QUALITY CHECKS for All Segments
+* Checks: row count, duplicates, missing values, min/max
 **************************************************************************/
 
-/* STEP 1: Combine all OUT= datasets from CAPROC */
-data ks_somers_all;
-  set 
-    caproc_sec_CIDS_V4         (in=a)
-    caproc_sec_V4              (in=b)
-    caproc_unsec_CIDS_V4       (in=c)
-    caproc_unsec_V4            (in=d);
-    
-  length Segment $40;
+/* -------- Secured: CIDS + Vantage4 -------- */
+proc sql;
+  select count(*) as Total_Rows from sc_sec_scored_CIDS_V4;
+quit;
 
-  if a then Segment = "Secured: CIDS + Vantage4";
-  if b then Segment = "Secured: Vantage Only";
-  if c then Segment = "Unsecured: CIDS + Vantage4";
-  if d then Segment = "Unsecured: Vantage Only";
-
-  keep Segment KS Somers_D;
+proc sort data=sc_sec_scored_CIDS_V4 
+          out=_dedup1 
+          nodupkey 
+          dupout=_dups1;
+  by application_nbr applicant_nbr;
 run;
 
-/* STEP 2: Print summary */
-proc print data=ks_somers_all label noobs;
-  title "KS and Somers' D Summary from CAPROC";
-  label 
-    Segment = "Segment"
-    KS = "KS Statistic"
-    Somers_D = "Somers' D";
-  format KS Somers_D 6.3;
+proc sql;
+  select count(*) as Duplicate_Keys from _dups1;
+quit;
+
+proc means data=sc_sec_scored_CIDS_V4 n nmiss min max;
+  var pts_ttl CIDS_COMM_score Vantage4_score bad60_24m wt;
+run;
+
+
+/* -------- Secured: Vantage Only -------- */
+proc sql;
+  select count(*) as Total_Rows from sc_sec_scored_V4;
+quit;
+
+proc sort data=sc_sec_scored_V4 
+          out=_dedup2 
+          nodupkey 
+          dupout=_dups2;
+  by application_nbr applicant_nbr;
+run;
+
+proc sql;
+  select count(*) as Duplicate_Keys from _dups2;
+quit;
+
+proc means data=sc_sec_scored_V4 n nmiss min max;
+  var pts_ttl Vantage4_score bad60_24m wt;
+run;
+
+
+/* -------- Unsecured: CIDS + Vantage4 -------- */
+proc sql;
+  select count(*) as Total_Rows from sc_unsec_scored_CIDS_V4;
+quit;
+
+proc sort data=sc_unsec_scored_CIDS_V4 
+          out=_dedup3 
+          nodupkey 
+          dupout=_dups3;
+  by application_nbr applicant_nbr;
+run;
+
+proc sql;
+  select count(*) as Duplicate_Keys from _dups3;
+quit;
+
+proc means data=sc_unsec_scored_CIDS_V4 n nmiss min max;
+  var pts_ttl CIDS_COMM_score Vantage4_score bad60_24m wt;
+run;
+
+
+/* -------- Unsecured: Vantage Only -------- */
+proc sql;
+  select count(*) as Total_Rows from sc_unsec_scored_V4;
+quit;
+
+proc sort data=sc_unsec_scored_V4 
+          out=_dedup4 
+          nodupkey 
+          dupout=_dups4;
+  by application_nbr applicant_nbr;
+run;
+
+proc sql;
+  select count(*) as Duplicate_Keys from _dups4;
+quit;
+
+proc means data=sc_unsec_scored_V4 n nmiss min max;
+  var pts_ttl Vantage4_score bad60_24m wt;
 run;
