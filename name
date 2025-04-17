@@ -1,3 +1,4 @@
+```sas
 /****************************************************************************
  * Full runnable code: data‐quality checks + Somers’ D for four segments
  * Assumes formats pts1a. and pts2a. are already defined in your session.
@@ -78,4 +79,145 @@ proc sql;
 quit;
 
 proc sort data=sc_sec_scored_V4
-          out=_dup2 nodupkey dupout=_
+          out=_dup2 nodupkey dupout=_dups2;
+  by application_nbr applicant_nbr;
+run;
+
+proc sql;
+  select count(*) as num_dups
+  from _dups2;
+quit;
+
+proc means data=sc_sec_scored_V4 n nmiss min max;
+  var bad60_24m Vantage4_score pts_ttl wt;
+run;
+
+/*--- Somers' D ---*/
+proc logistic data=sc_sec_scored_V4 noprint;
+  model bad60_24m(event='1') = pts_ttl;
+  weight wt;
+  ods output Association=assoc2;
+run;
+
+data somers2;
+  set assoc2;
+  if Label2 = "Somers' D" then do;
+    somers_d = input(cValue2, best12.);
+    output;
+  end;
+  keep somers_d;
+run;
+
+proc print data=somers2 noobs label;
+  var somers_d;
+  title "Somers' D for Secured V4 only";
+run;
+
+
+/*======================*/
+/* 3. Unsec, CIDS+V4    */
+/*======================*/
+data sc_unsec_scored_CIDS_V4;
+  set sc_unsec_data;
+  where CIDS_COMM_flg = 'NOT MISSING'
+    and Vantage_flg    = 'NOT MISSING'
+    and bad60_24m ne .;
+  pts_CIDSC = input(put(CIDS_COMM_score, pts1a.), best12.);
+  pts_V4    = input(put(Vantage4_score,     pts2a.), best12.);
+  pts_ttl   = sum(pts_CIDSC, pts_V4);
+run;
+
+/*--- data quality ---*/
+proc sql;
+  select count(*) as num_rows
+  from sc_unsec_scored_CIDS_V4;
+quit;
+
+proc sort data=sc_unsec_scored_CIDS_V4
+          out=_dup3 nodupkey dupout=_dups3;
+  by application_nbr applicant_nbr;
+run;
+
+proc sql;
+  select count(*) as num_dups
+  from _dups3;
+quit;
+
+proc means data=sc_unsec_scored_CIDS_V4 n nmiss min max;
+  var bad60_24m CIDS_COMM_score Vantage4_score pts_ttl wt;
+run;
+
+/*--- Somers' D ---*/
+proc logistic data=sc_unsec_scored_CIDS_V4 noprint;
+  model bad60_24m(event='1') = pts_ttl;
+  weight wt;
+  ods output Association=assoc3;
+run;
+
+data somers3;
+  set assoc3;
+  if Label2 = "Somers' D" then do;
+    somers_d = input(cValue2, best12.);
+    output;
+  end;
+  keep somers_d;
+run;
+
+proc print data=somers3 noobs label;
+  var somers_d;
+  title "Somers' D for Unsecured CIDS+V4";
+run;
+
+
+/*======================*/
+/* 4. Unsec, V4 only    */
+/*======================*/
+data sc_unsec_scored_V4;
+  set sc_unsec_data;
+  where CIDS_COMM_flg = 'MISSING'
+    and Vantage_flg    = 'NOT MISSING'
+    and bad60_24m ne .;
+  pts_V4  = input(put(Vantage4_score, pts2a.), best12.);
+  pts_ttl = pts_V4;
+run;
+
+/*--- data quality ---*/
+proc sql;
+  select count(*) as num_rows
+  from sc_unsec_scored_V4;
+quit;
+
+proc sort data=sc_unsec_scored_V4
+          out=_dup4 nodupkey dupout=_dups4;
+  by application_nbr applicant_nbr;
+run;
+
+proc sql;
+  select count(*) as num_dups
+  from _dups4;
+quit;
+
+proc means data=sc_unsec_scored_V4 n nmiss min max;
+  var bad60_24m Vantage4_score pts_ttl wt;
+run;
+
+/*--- Somers' D ---*/
+proc logistic data=sc_unsec_scored_V4 noprint;
+  model bad60_24m(event='1') = pts_ttl;
+  weight wt;
+  ods output Association=assoc4;
+run;
+
+data somers4;
+  set assoc4;
+  if Label2 = "Somers' D" then do;
+    somers_d = input(cValue2, best12.);
+    output;
+  end;
+  keep somers_d;
+run;
+
+proc print data=somers4 noobs label;
+  var somers_d;
+  title "Somers' D for Unsecured V4 only";
+run;
