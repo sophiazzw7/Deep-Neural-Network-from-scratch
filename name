@@ -1,77 +1,338 @@
----
+```sas
+/*****************************************************************************
+*  MOD12005  –  Expanded‑Use Validation Script (FULL, RUNNABLE)
+*  • Re‑creates transformation pipeline supplied by developer
+*  • Adds basic data‑quality checks
+*  • Produces independent KS & Somers D statistics
+*  -------------------------------------------------------------------------
+*  Author  : <insert‑your‑name>
+*  Run date: %sysfunc(today(),yymmdd10.)
+*****************************************************************************/
 
-## **Limited Scope Validation (LSV) Review Memo**  
-### *Prepared by the Model Risk Office (MRO)*  
+options compress=yes errors=2 mprint symbolgen;
+ods listing close;   /* comment out if you want the default SAS listing */
+ods results off;
 
-**To:** Model Owner / Model Developer  
-**From:** Model Risk Office  
-**Date:** 16 April 2025  
+/* ------------------------------------------------------------------ *
+*  0.  LIBNAMES & OUTPUT PATH                                          *
+* ------------------------------------------------------------------ */
+libname sb      '/sasdata/rqcral/readonly/SmBus_Equifax_2023';
+%let outpath    = /sasdata/mrmg2/users/G07267/MOD12005;
 
-**Model ID / Name:** MOD 12005 – Small Business and Small Commercial Application Scorecard  
-**Model Tier:** Tier 3  
-**Provisional Validation Rating:** **Fit for Use – Compensating Controls Required**
+/* ================================================================== *
+*  1.  REPLICATE DEVELOPER PIPELINE                                   *
+* ================================================================== */
 
----
+/*--------------------------------------------------------------------*
+* 1‑A  Create base SMALL_COMM dataset (developer code, corrected)     *
+*--------------------------------------------------------------------*/
+data small_comm;
+   set sb.truist_equifax_smcomm_sb;
 
-### 1  Model Description  
+   /* keep only two small‑commercial portfolios */
+   if bus_indicator in ('HBBT SMALL COMM','HSTI SMALL COMM');
 
-MOD 12005 is a logistic‑regression scorecard that resides in the SPRINT loan‑origination system and receives bureau attributes through the Equifax InterConnect interface.  The model produces a risk score that serves as the primary quantitative input to underwriting decisions for the Small‑Business portfolio.  In March 2023 the model underwent a comprehensive validation and was rated *Fit for Use* for applicants whose Total Business Exposure (TBE) did not exceed \$250 000.  Since that time the model has been subject to annual Ongoing‑Monitoring (OGM).
+   /* map calendar YYMM to archive quarter flag --------------------- */
+   select (substr(vintage,5,2));
+      when ('01','02','03') archive_dt = cats(substr(vintage,1,4),'Q1');
+      when ('04','05','06') archive_dt = cats(substr(vintage,1,4),'Q2');
+      when ('07','08','09') archive_dt = cats(substr(vintage,1,4),'Q3');
+      otherwise            archive_dt = cats(substr(vintage,1,4),'Q4');
+   end;
 
----
+   /* clean scores --------------------------------------------------- */
+   if ScoreValue = 0                 then delete;        /* drop zeros  */
+   if Vantage_4_psps5402 < 300       then Vantage_4_psps5402 = . ;
 
-### 2  Model Change  
+   rename ScoreValue        = CIDS_COMM_score
+          Vantage_4_psps5402 = Vantage4_score ;
 
-The current change request expands the model’s use to Small Commercial lending, thereby increasing the TBE ceiling from \$250 000 to **\$1 000 000**.  After several conversations, the developer has confirmed in writing that **no changes have been made to the model code, coefficients, segmentation logic or batch processes**; only additional production data will now flow through the existing engine.  Because the expanded segment introduces a different risk profile, the model owner will increase the monitoring cadence from annual to **bi‑annual**, providing performance reports after the close of the second and fourth quarters.  Each report will contain Kolmogorov–Smirnov (KS), Somers’ D and Population Stability Index (PSI) statistics.  When the volume of defaults is too small to calculate reliable KS or Somers’ D, PSI and score‑band default‑rate tables will still be submitted to detect any drift.
+   /* limit data‑window to <= 2021‑03 (developer requirement) -------- */
+   if vintage > 202103 then delete;
+run;
 
-The developer has identified **CIDS Commercial** and **Vantage 4** scores as the only Critical Data Elements (CDEs) used directly in the model.  Section 5.11.3.1 lists every field that Truist transmits to Equifax in order to obtain those two scores; the outbound file layout has been supplied, and the inbound Equifax fields are passed to the model without transformation.  Although collateral fields are captured for hBBT loans, the COMPASS source system does not record collateral data for hSTI loans.  Subject‑matter experts confirm that hSTI loans are virtually always unsecured, and the developer’s own testing shows that treating them as unsecured produces the most appropriate ranking of risk.
+/*--------------------------------------------------------------------*
+* 1‑B  Count applicants per application                               *
+*--------------------------------------------------------------------*/
+proc sql;
+   create table cnt_applicant as
+   select application_nbr
+        , count(distinct applicant_nbr) as cnt_applicant
+   from small_comm
+   group by application_nbr;
+quit;
 
----
+/*--------------------------------------------------------------------*
+* 1‑C  Convert Y/N default flags → numeric 0/1                        *
+*       (automatically discovers all dpd_60_plus_xx vars)             *
+*--------------------------------------------------------------------*/
+proc format;
+   value $Perf 'Y' = 1  'N' = 0  ' ' = . ;
+run;
 
-### 3  Risk Assessment  
+/* list all internal‑performance variables that contain “dpd_60_plus” */
+proc contents data=small_comm out=contents_small_comm noprint; run;
+proc sort data=contents_small_comm; by varnum; run;
 
-**Data sufficiency.**  The developer’s test set for the \$250 000–\$1 000 000 band contains roughly 17 000 applications but only **183 bads** (ever‑60‑days‑past‑due within a 24‑month window).  These bads are further divided between secured and unsecured paths and three score‑availability sub‑models, leaving fewer than one hundred bads in any major segment and fewer than thirty‑five bads in several sub‑models.  The developer has stated that at least **1 000 records and 10 bads are required in a sub‑model** before Somers’ D can be considered statistically reliable; several sub‑models do not yet meet this threshold.
+proc sql noprint;
+   select NAME into :internal_perf_list separated by ' '
+   from contents_small_comm
+   where upcase(NAME) contains 'DPD_60_PLUS';
 
-**Collateral gap.**  The absence of collateral data for hSTI loans forces all hSTI exposures into the unsecured path.  While SMEs believe this assumption is realistic, the concentration increases the importance of monitoring unsecured‑path performance separately for each heritage bank.
+   select cats('n_',NAME) into :n_internal_perf_list separated by ' '
+   from contents_small_comm
+   where upcase(NAME) contains 'DPD_60_PLUS';
+quit;
 
-**CDE lineage.**  Truist has provided the outbound data dictionary used to request bureau scores, but Equifax has not supplied a formal data dictionary for its response file.  The developer relies on the field labels returned by Equifax and passes them directly to the model.  A concise lineage illustration, including data‑quality metrics, is therefore required for governance purposes.
+/*--- macro to recode -------------------------------------------------*/
+%macro apply_trans(out=, in=, varlist=);
+   data &out;
+      set &in;
 
----
+      %local n i var;
+      %let n = %sysfunc(countw(&varlist));
+      %do i = 1 %to &n;
+         %let var = %scan(&varlist,&i);
+         n_&var = input(put(&var,$Perf.),best12.);
+      %end;
+   run;
+%mend apply_trans;
 
-### 4  Overall Model Performance  
+%apply_trans(out=small_comm_n, in=small_comm, varlist=&internal_perf_list);
 
-Despite the thin sample, the ROC curves, KS statistics and Somers’ D values supplied by the developer are all above the minimum thresholds set out in Table 9.2 of the model documentation.  Consequently, the model remains **directionally sound** for the expanded population.  However, given the wide confidence intervals associated with such small default counts, the MRO assigns only a provisional *Fit for Use* rating and requires compensating controls.
+/*--------------------------------------------------------------------*
+* 1‑D  Roll forward internal performance flags inside booked loans    *
+*--------------------------------------------------------------------*/
+data small_comm_n1(drop=i);
+   set small_comm_n;
 
----
+   /* forward‑fill 60‑dpd indicators once the first 60+ occurs ------- */
+   if booked_flg = 'Y' then do;
+      array a &n_internal_perf_list ;
+      do i = 2 to dim(a);              /* dim = 8 in developer logic   */
+         if a{i-1}=1 then a{i}=1;
+      end;
+   end;
+run;
 
-### 5  Compensating Control and Sub‑Issue  
+/*--------------------------------------------------------------------*
+* 1‑E  Bring in proxy performance (non‑booked apps)                   *
+*--------------------------------------------------------------------*/
+proc sql;
+   create table small_comm_proxy as
+   select *
+   from sb.truist_final_proxy_smcomm
+   where application_nbr in (select distinct application_nbr from small_comm)
+     and applicant_nbr   in (select distinct applicant_nbr   from small_comm);
+quit;
 
-Because the expanded data set contains only 183 bads, the MRO is opening a **sub‑issue entitled “Data Thinness – Small Commercial Expansion.”**  The compensating‑control period is set at **three years**, covering the 24‑month performance horizon required by the model and the additional year that the developer expects will be needed for defaults to season.  During this period the following conditions apply:
+data small_comm_proxy1;
+   set small_comm_proxy;
+   where booked_flg = 'N';
 
-1. **Monitoring cadence.**  The model owner must produce OGM reports twice a year (after Q2 and Q4).  
-2. **Performance metrics.**  Each report must include KS, Somers’ D and PSI.  If any sub‑model contains fewer than 1 000 records or 10 bads, the KS and Somers’ D statistics for that sub‑model may be omitted, but PSI and score‑band default‑rate tables must still be provided to track population drift.  
-3. **Thresholds.**  The existing performance thresholds in Table 9.2 remain in force throughout the compensating‑control period.  
-4. **Re‑evaluation.**  The sub‑issue will be reassessed no later than **31 March 2028**.  If default volumes remain insufficient at that time, the MRO will determine whether an out‑of‑cycle redevelopment or recalibration is necessary.
+   dpd61p_window = intck('month',application_dt,d_date_61p);
 
----
+   keep application_nbr applicant_nbr bus_indicator application_dt vintage
+        booked_flg dpd_61p_flag d_date_61p dpd61p_window;
+run;
 
-### 6  Required Deliverables  
+/* proxy flag → binary bad60_24m for non‑booked ---------------------- */
+data small_comm_proxy1;
+   set small_comm_proxy1;
+   if dpd_61p_flag = 0 then proxy_bad60_24m = 0;
+   else if dpd_61p_flag = 1 then
+        proxy_bad60_24m = (dpd61p_window <= 24);
+run;
 
-The Model Risk Office requires the following items to close this LSV:
+/*--------------------------------------------------------------------*
+* 1‑F  Merge internal + proxy + applicant weights                     *
+*--------------------------------------------------------------------*/
+proc sql;
+   create table small_comm1 as
+   select  a.*
+         , 1/b.cnt_applicant          as wt
+         , c.proxy_bad60_24m
+   from   small_comm_n1  as a
+   left join cnt_applicant  b
+          on a.application_nbr = b.application_nbr
+   left join small_comm_proxy1 c
+          on a.application_nbr = c.application_nbr
+         and a.applicant_nbr   = c.applicant_nbr;
+quit;
 
-1. **Code‑change affirmation.**  The signed statement confirming that no code or logic changes have been made has already been received and filed.  
-2. **Monitoring template.**  The model owner must submit the revised bi‑annual OGM workbook, including the explicit definition of “sufficient data” (≥ 1 000 records and ≥ 10 bads per sub‑model).  This template is due before the Q2 2025 OGM submission.  
-3. **CDE lineage summary.**  The developer and data stewards must provide a concise diagram or table showing how CIDS Commercial and Vantage 4 scores move from the bureau response file into the model repository, together with percentages of null, invalid or out‑of‑range observations.  This document is due by **31 May 2025**.  
-4. **Collateral‑data status.**  The model owner must deliver, by **30 September 2025**, a brief status report on the feasibility of capturing collateral fields for hSTI loans.  Thereafter each OGM report must show unsecured‑path performance broken out by heritage bank.
+/*--------------------------------------------------------------------*
+* 1‑G  Final analytical dataset with derived flags                    *
+*--------------------------------------------------------------------*/
+data small_comm_data;
+   set small_comm1;
 
----
+   /* unified bad flag (booked = internal, else proxy) ---------------- */
+   if booked_flg = 'Y' then bad60_24m = n_dpd_60_plus_24_mo;
+   else                      bad60_24m = proxy_bad60_24m;
 
-### 7  MRO Conclusion  
+   /* secured/unsecured split for HBBT only --------------------------- */
+   if bus_indicator='HBBT SMALL COMM' then do;
+      if missing(collateral_type) or find(upcase(collateral_type),'UNSECURED')
+         then sec_unsec_flg = 'Unsecured';
+      else sec_unsec_flg = 'Secured';
+   end;
 
-The Model Risk Office concludes that MOD 12005 may be used for applicants with TBE up to \$1 000 000, provided the compensating controls and deliverables described above are fully implemented.  The bi‑annual monitoring schedule, the explicit sufficiency rule of 1 000 records and 10 bads, and the continued application of Table 9.2 thresholds collectively mitigate the immediate risk created by thin default data.  Failure to meet the deliverable deadlines, or any persistent breach of the established thresholds, will result in a downgrade to **Needs Improvement** and may prompt escalation under the bank’s Model‑Governance Policy.
+   /* missing flags for score availability --------------------------- */
+   CIDS_COMM_flg = ifc(CIDS_COMM_score = ., 'MISSING', 'NOT MISSING');
+   Vantage_flg   = ifc(Vantage4_score  = ., 'MISSING', 'NOT MISSING');
+run;
 
----
+/*--------------------------------------------------------------------*
+* 1‑H  Build SECURED‑segment dev dataset                               *
+*--------------------------------------------------------------------*/
+data sc_sec_data;
+   set small_comm_data;
+   where bus_indicator='HBBT SMALL COMM'
+         and sec_unsec_flg='Secured'
+         and CIDS_COMM_flg='NOT MISSING'
+         and Vantage_flg  ='NOT MISSING'
+         and ^missing(bad60_24m);
+run;
 
-*Prepared by:* [Analyst Name], Model Risk Office  
-*Reviewed and Approved by:* [Manager Name], Model Risk Office  
+/* include scoring points table (creates formats pts1a. pts2a.) ------ */
+%include "/sasdata/rqcral/readonly/MOD12005/OUTPUT/points_secured_CIDSC_vantage.txt";
 
----
+/* apply scorecards → pts_* → pts_ttl -------------------------------- */
+data sc_sec_scored_CIDS_V4;
+   set sc_sec_data;
+   pts_CIDSC     = input(put(CIDS_COMM_score ,pts1a.),best12.);
+   pts_Vantage4  = input(put(Vantage4_score  ,pts2a.),best12.);
+   pts_ttl       = sum(of pts_:);
+run;
+
+
+/* ================================================================== *
+*  2.  BASIC DATA‑QUALITY CHECKS                                      *
+* ================================================================== */
+%macro qc_basic(ds=, key1=, key2=, target=, weights=, scorevars=);
+
+   /* 2‑A  row & duplicate counts ----------------------------------- */
+   proc sql noprint;
+      create table _qc_rows as
+      select "&ds" length=32 as Dataset,
+             count(*)        as NRows
+      from &ds;
+   quit;
+
+   proc sort data=&ds(keep=&key1 &key2)
+             out=_dup nodupkey dupout=_dup_out;
+      by &key1 &key2;
+   run;
+   proc sql noprint;
+      create table _qc_dup as
+      select "&ds" length=32 as Dataset,
+             count(*)        as DupRows
+      from _dup_out;
+   quit;
+
+   /* 2‑B  missing scan --------------------------------------------- */
+   proc means data=&ds nmiss n min max;
+      var &target &scorevars &weights;
+      ods output Summary=_qc_miss;
+   run;
+
+   /* 2‑C  weight sum (if supplied) ---------------------------------- */
+   %if %length(&weights) %then %do;
+      proc means data=&ds sum;
+         var &weights;
+         ods output Summary=_qc_wt;
+      run;
+   %end;
+   %else %do;
+      data _qc_wt; length Dataset $32 Sum_wt 8; Dataset="&ds"; Sum_wt=.; run;
+   %end;
+
+   /* 2‑D  consolidate ---------------------------------------------- */
+   data qc_&ds;
+      merge _qc_rows _qc_dup _qc_wt;
+      by Dataset;
+      drop _TYPE_ _FREQ_;
+   run;
+
+%mend qc_basic;
+
+%qc_basic(ds=sc_sec_scored_CIDS_V4,
+          key1=application_nbr,
+          key2=applicant_nbr,
+          target=bad60_24m,
+          weights=wt,
+          scorevars=pts_ttl CIDS_COMM_score Vantage4_score);
+
+/* (print or export QC report) */
+title "QC – sc_sec_scored_CIDS_V4"; 
+proc print data=qc_sc_sec_scored_CIDS_V4 noobs; run;
+
+
+/* ================================================================== *
+*  3.  INDEPENDENT KS  &  SOMERS D                                    *
+* ================================================================== */
+%macro ks_somers(in=, score=, target=, weight=, segment=);
+
+   /* KS via PROC NPAR1WAY ------------------------------------------ */
+   proc npar1way data=&in edf;
+      class &target;
+      var   &score;
+      %if %length(&weight) %then %do; weight &weight; %end;
+      ods output KS2Stats=_ks(rename=(KS2Stat=KS));
+   run;
+
+   /* Somers D via PROC LOGISTIC Association table ------------------ */
+   proc logistic data=&in noprint;
+      model &target(event='1') = &score;
+      %if %length(&weight) %then %do; weight &weight; %end;
+      ods output Association=_assoc;
+   run;
+
+   data perf_&segment;
+      length Segment $40;
+      Segment="&segment";
+      if _n_=1 then set _ks;
+      if _n_=1 then set _assoc(where=(Label2="Somers' D")
+                               keep=cValue2
+                               rename=(cValue2=Somers_D));
+      KS = KS;                               /* keep numeric label   */
+      Somers_D = input(Somers_D,best12.);
+      keep Segment KS Somers_D;
+   run;
+
+   /* cleanup */
+   proc datasets lib=work nolist;
+      delete _ks _assoc;
+   quit;
+%mend ks_somers;
+
+%ks_somers(in=sc_sec_scored_CIDS_V4,
+           score=pts_ttl,
+           target=bad60_24m,
+           weight=wt,
+           segment=SmallComm_Secured);
+
+
+/* ================================================================== *
+*  4.  SUMMARY OUTPUT                                                 *
+* ================================================================== */
+data perf_summary;
+   set perf_:;      /* picks up all perf_* datasets created above */
+   format KS Somers_D 6.3;
+run;
+
+title "KS & Somers D – Performance Summary";
+proc print data=perf_summary noobs label;
+   label KS = 'KS Statistic'
+         Somers_D = "Somers' D";
+run;
+
+/* Optional export for inclusion in validation memo ----------------- */
+proc export data=perf_summary
+            outfile="&outpath./KS_SomersD_summary.csv"
+            dbms=csv replace;
+run;
+
+ods listing; ods results on;
+title;
+```
