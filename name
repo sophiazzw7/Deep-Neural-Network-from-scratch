@@ -1,252 +1,37 @@
-/*****************************************************************************
-*  MOD12005  -  Expanded‑Use Validation Script (ASCII‑only)
-*    1. Recreates developer pipeline
-*    2. Adds data‑quality checks
-*    3. Produces independent KS and Somers D
-*****************************************************************************/
+/**************************************************************************
+* DATA QUALITY CHECK: sc_sec_scored_CIDS_V4
+**************************************************************************/
 
-options compress=yes errors=2 mprint symbolgen;
-ods listing close;  ods results off;
-
-/* -------------------------------------------------------------------------
-*  LIBNAMES AND PATHS
-* ------------------------------------------------------------------------- */
-libname sb '/sasdata/rqcral/readonly/SmBus_Equifax_2023';
-%let outpath = /sasdata/mrmg2/users/G07267/MOD12005;
-
-/* ========================================================================
-*  1.  REPLICATE DEVELOPER PIPELINE
-* ======================================================================== */
-
-/* 1A. Base small_comm                                                      */
-data small_comm;
-   set sb.truist_equifax_smcomm_sb;
-   if bus_indicator in ('HBBT SMALL COMM','HSTI SMALL COMM');
-
-   /* archive_dt flag */
-   select (substr(vintage,5,2));
-      when ('01','02','03') archive_dt = cats(substr(vintage,1,4),'Q1');
-      when ('04','05','06') archive_dt = cats(substr(vintage,1,4),'Q2');
-      when ('07','08','09') archive_dt = cats(substr(vintage,1,4),'Q3');
-      otherwise             archive_dt = cats(substr(vintage,1,4),'Q4');
-   end;
-
-   if ScoreValue = 0 then delete;
-   if Vantage_4_psps5402 < 300 then Vantage_4_psps5402 = .;
-
-   rename ScoreValue        = CIDS_COMM_score
-          Vantage_4_psps5402 = Vantage4_score;
-
-   if vintage > 202103 then delete;
-run;
-
-/* 1B. Count applicants per application                                    */
+/* 1. Row count */
 proc sql;
-   create table cnt_applicant as
-   select application_nbr,
-          count(distinct applicant_nbr) as cnt_applicant
-   from   small_comm
-   group  by application_nbr;
+   select count(*) as Total_Rows
+   from sc_sec_scored_CIDS_V4;
 quit;
 
-/* 1C. Recode dpd_60_plus_* variables to numeric                            */
-proc format;
-   value $perf 'Y'=1 'N'=0 ' '=.;
+/* 2. Check for duplicate primary keys */
+proc sort data=sc_sec_scored_CIDS_V4 
+          out=deduped_data 
+          nodupkey 
+          dupout=duplicates;
+   by application_nbr applicant_nbr;
 run;
 
-proc contents data=small_comm out=contents noprint; run;
-proc sort data=contents; by varnum; run;
-
-proc sql noprint;
-   select name into :perf_list separated by ' '
-   from   contents
-   where  upcase(name) contains 'DPD_60_PLUS';
-
-   select cats('n_',name) into :n_perf_list separated by ' '
-   from   contents
-   where  upcase(name) contains 'DPD_60_PLUS';
-quit;
-
-%macro recode(out=,in=,varlist=);
-   data &out;
-      set &in;
-      %local i n v;
-      %let n=%sysfunc(countw(&varlist));
-      %do i=1 %to &n;
-         %let v=%scan(&varlist,&i);
-         n_&v = input(put(&v,$perf.),best12.);
-      %end;
-   run;
-%mend recode;
-
-%recode(out=small_comm_n,in=small_comm,varlist=&perf_list);
-
-/* 1D. Forward‑fill booked accounts                                         */
-data small_comm_n1(drop=i);
-   set small_comm_n;
-   if booked_flg='Y' then do;
-      array a &n_perf_list;
-      do i=2 to dim(a);
-         if a{i-1}=1 then a{i}=1;
-      end;
-   end;
-run;
-
-/* 1E. Proxy data for non‑booked apps                                       */
 proc sql;
-   create table small_comm_proxy as
-   select *
-   from   sb.truist_final_proxy_smcomm
-   where  application_nbr in (select distinct application_nbr from small_comm)
-     and  applicant_nbr   in (select distinct applicant_nbr   from small_comm);
+   select count(*) as Duplicate_Keys
+   from duplicates;
 quit;
 
-data small_comm_proxy1;
-   set small_comm_proxy;
-   where booked_flg='N';
-   dpd61p_window = intck('month',application_dt,d_date_61p);
-   keep application_nbr applicant_nbr bus_indicator application_dt vintage
-        booked_flg dpd_61p_flag d_date_61p dpd61p_window;
+/* 3. Missing value and range checks */
+proc means data=sc_sec_scored_CIDS_V4 n nmiss min max;
+   var pts_ttl CIDS_COMM_score Vantage4_score bad60_24m wt;
 run;
 
-data small_comm_proxy1;
-   set small_comm_proxy1;
-   if dpd_61p_flag=0 then proxy_bad60_24m=0;
-   else proxy_bad60_24m = (dpd61p_window <= 24);
+/* 4. Sum of weights (should be close to total # applicants) */
+proc means data=sc_sec_scored_CIDS_V4 sum;
+   var wt;
 run;
 
-/* 1F. Merge weights and proxy                                              */
-proc sql;
-   create table small_comm1 as
-   select a.*,
-          1/b.cnt_applicant as wt,
-          c.proxy_bad60_24m
-   from   small_comm_n1 a
-          left join cnt_applicant b
-            on a.application_nbr=b.application_nbr
-          left join small_comm_proxy1 c
-            on a.application_nbr=c.application_nbr
-           and a.applicant_nbr  =c.applicant_nbr;
-quit;
-
-/* 1G. Final flags                                                          */
-data small_comm_data;
-   set small_comm1;
-   if booked_flg='Y' then bad60_24m = n_dpd_60_plus_24_mo;
-   else bad60_24m = proxy_bad60_24m;
-
-   if bus_indicator='HBBT SMALL COMM' then do;
-      if missing(collateral_type) or find(upcase(collateral_type),'UNSECURED')
-      then sec_unsec_flg='Unsecured';
-      else sec_unsec_flg='Secured';
-   end;
-
-   CIDS_COMM_flg = ifc(CIDS_COMM_score = ., 'MISSING','NOT MISSING');
-   Vantage_flg   = ifc(Vantage4_score  = ., 'MISSING','NOT MISSING');
+/* Optional: frequency check for bad rate */
+proc freq data=sc_sec_scored_CIDS_V4;
+   tables bad60_24m / missing;
 run;
-
-/* 1H. Secured segment with both scores                                     */
-data sc_sec_data;
-   set small_comm_data;
-   where bus_indicator='HBBT SMALL COMM'
-         and sec_unsec_flg='Secured'
-         and CIDS_COMM_flg='NOT MISSING'
-         and Vantage_flg  ='NOT MISSING'
-         and ^missing(bad60_24m);
-run;
-
-/* include points lookup (creates formats pts1a. pts2a.)                    */
-%include "/sasdata/rqcral/readonly/MOD12005/OUTPUT/points_secured_CIDSC_vantage.txt";
-
-data sc_sec_scored_CIDS_V4;
-   set sc_sec_data;
-   pts_CIDSC    = input(put(CIDS_COMM_score,pts1a.),best12.);
-   pts_Vantage4 = input(put(Vantage4_score ,pts2a.),best12.);
-   pts_ttl      = sum(of pts_:);
-run;
-
-/* ========================================================================
-*  2.  DATA‑QUALITY CHECKS
-* ======================================================================== */
-%macro qc(ds=,key1=,key2=,target=,wt=,scores=);
-   proc sql noprint;
-      create table qc_&ds as
-      select "&ds" as dataset length=32,
-             count(*) as nrows
-      from   &ds;
-   quit;
-
-   proc sort data=&ds(keep=&key1 &key2) out=_dup nodupkey dupout=_dup_out;
-      by &key1 &key2;
-   run;
-   proc sql noprint;
-      insert into qc_&ds
-      set dataset="&ds", nrows=(select count(*) from _dup_out where 1) /* dup rows */;
-   quit;
-
-   proc means data=&ds n nmiss min max;
-      var &target &scores &wt;
-   run;
-%mend qc;
-
-%qc(ds=sc_sec_scored_CIDS_V4,
-    key1=application_nbr,
-    key2=applicant_nbr,
-    target=bad60_24m,
-    wt=wt,
-    scores=pts_ttl CIDS_COMM_score Vantage4_score);
-
-/* ========================================================================
-*  3.  KS AND SOMERS D
-* ======================================================================== */
-%macro ks_somers(in=,score=,target=,weight=,seg=);
-   proc npar1way data=&in edf noprint;
-      class &target;
-      var &score;
-      %if %length(&weight) %then %do; weight &weight; %end;
-      ods output KS2Stats=_ks(rename=(KS2Stat=KS));
-   run;
-
-   proc logistic data=&in noprint;
-      model &target(event='1') = &score;
-      %if %length(&weight) %then %do; weight &weight; %end;
-      ods output Association=_as;
-   run;
-
-   data perf_&seg;
-      length segment $40;
-      segment="&seg";
-      if _n_=1 then set _ks;
-      if _n_=1 then set _as(where=(label2="Somers' D")
-                           keep=cvalue2 rename=(cvalue2=Somers_D));
-      KS        = KS;
-      Somers_D  = input(Somers_D,best12.);
-      keep segment KS Somers_D;
-   run;
-
-   proc datasets lib=work nolist; delete _ks _as; quit;
-%mend ks_somers;
-
-%ks_somers(in=sc_sec_scored_CIDS_V4,
-           score=pts_ttl,
-           target=bad60_24m,
-           weight=wt,
-           seg=SmallComm_Secured);
-
-/* ========================================================================
-*  4.  OUTPUT SUMMARY
-* ======================================================================== */
-data perf_summary; set perf_:; format KS Somers_D 6.3; run;
-
-title "KS and Somers D Summary";
-proc print data=perf_summary noobs label;
-   label KS='KS Statistic' Somers_D="Somers D";
-run;
-
-/* optional export                                                        */
-proc export data=perf_summary
-            outfile="&outpath./KS_SomersD_summary.csv"
-            dbms=csv replace;
-run;
-
-ods listing; ods results on; title;
