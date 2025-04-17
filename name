@@ -1,96 +1,31 @@
-/*===== STEP 1: SECURED - CIDS + VANTAGE =================================*/
-data booked_sec_CIDS_V4;
-  set sc_sec_scored_CIDS_V4;
-  where booked_flg = 'Y' and bad60_24m in (0,1) and not missing(pts_ttl);
+/**************************************************************************
+* Collect and Print KS + Somers' D from all CAPROC OUT= datasets
+**************************************************************************/
+
+/* STEP 1: Combine all OUT= datasets from CAPROC */
+data ks_somers_all;
+  set 
+    caproc_sec_CIDS_V4         (in=a)
+    caproc_sec_V4              (in=b)
+    caproc_unsec_CIDS_V4       (in=c)
+    caproc_unsec_V4            (in=d);
+    
+  length Segment $40;
+
+  if a then Segment = "Secured: CIDS + Vantage4";
+  if b then Segment = "Secured: Vantage Only";
+  if c then Segment = "Unsecured: CIDS + Vantage4";
+  if d then Segment = "Unsecured: Vantage Only";
+
+  keep Segment KS Somers_D;
 run;
 
-proc logistic data=booked_sec_CIDS_V4 noprint;
-  model bad60_24m(event='1') = pts_ttl;
-  weight wt;
-  ods output Association=assoc_sec_CIDS_V4;
-run;
-
-data somers_sec_CIDS_V4;
-  set assoc_sec_CIDS_V4;
-  where Label2 = "Somers' D";
-  Somers_D = input(cValue2, best12.);
-  Segment = "Secured: CIDS+V4";
-  keep Segment Somers_D;
-run;
-
-
-/*===== STEP 2: SECURED - VANTAGE ONLY ===================================*/
-data booked_sec_V4;
-  set sc_sec_scored_V4;
-  where booked_flg = 'Y' and bad60_24m in (0,1) and not missing(pts_ttl);
-run;
-
-proc logistic data=booked_sec_V4 noprint;
-  model bad60_24m(event='1') = pts_ttl;
-  weight wt;
-  ods output Association=assoc_sec_V4;
-run;
-
-data somers_sec_V4;
-  set assoc_sec_V4;
-  where Label2 = "Somers' D";
-  Somers_D = input(cValue2, best12.);
-  Segment = "Secured: Vantage Only";
-  keep Segment Somers_D;
-run;
-
-
-/*===== STEP 3: UNSECURED - CIDS + VANTAGE ===============================*/
-data booked_unsec_CIDS_V4;
-  set sc_unsec_scored_CIDS_V4;
-  where booked_flg = 'Y' and bad60_24m in (0,1) and not missing(pts_ttl);
-run;
-
-proc logistic data=booked_unsec_CIDS_V4 noprint;
-  model bad60_24m(event='1') = pts_ttl;
-  weight wt;
-  ods output Association=assoc_unsec_CIDS_V4;
-run;
-
-data somers_unsec_CIDS_V4;
-  set assoc_unsec_CIDS_V4;
-  where Label2 = "Somers' D";
-  Somers_D = input(cValue2, best12.);
-  Segment = "Unsecured: CIDS+V4";
-  keep Segment Somers_D;
-run;
-
-
-/*===== STEP 4: UNSECURED - VANTAGE ONLY =================================*/
-data booked_unsec_V4;
-  set sc_unsec_scored_V4;
-  where booked_flg = 'Y' and bad60_24m in (0,1) and not missing(pts_ttl);
-run;
-
-proc logistic data=booked_unsec_V4 noprint;
-  model bad60_24m(event='1') = pts_ttl;
-  weight wt;
-  ods output Association=assoc_unsec_V4;
-run;
-
-data somers_unsec_V4;
-  set assoc_unsec_V4;
-  where Label2 = "Somers' D";
-  Somers_D = input(cValue2, best12.);
-  Segment = "Unsecured: Vantage Only";
-  keep Segment Somers_D;
-run;
-
-
-/*===== STEP 5: COMBINE ALL RESULTS ======================================*/
-data somers_booked_all;
-  set somers_sec_CIDS_V4
-      somers_sec_V4
-      somers_unsec_CIDS_V4
-      somers_unsec_V4;
-run;
-
-proc print data=somers_booked_all noobs label;
-  title "Somers' D (Booked Population Only)";
-  label Segment = "Segment" Somers_D = "Somers' D";
+/* STEP 2: Print summary */
+proc print data=ks_somers_all label noobs;
+  title "KS and Somers' D Summary from CAPROC";
+  label 
+    Segment = "Segment"
+    KS = "KS Statistic"
+    Somers_D = "Somers' D";
+  format KS Somers_D 6.3;
 run;
