@@ -1,37 +1,19 @@
 /**************************************************************************
-* DATA QUALITY CHECK: sc_sec_scored_CIDS_V4
+* KS Calculation using PROC NPAR1WAY
+* Dataset: sc_sec_scored_CIDS_V4
+* Score Variable: pts_ttl
+* Target Variable: bad60_24m (1 = bad, 0 = good)
 **************************************************************************/
 
-/* 1. Row count */
-proc sql;
-   select count(*) as Total_Rows
-   from sc_sec_scored_CIDS_V4;
-quit;
-
-/* 2. Check for duplicate primary keys */
-proc sort data=sc_sec_scored_CIDS_V4 
-          out=deduped_data 
-          nodupkey 
-          dupout=duplicates;
-   by application_nbr applicant_nbr;
+proc npar1way data=sc_sec_scored_CIDS_V4 edf;
+   class bad60_24m;
+   var pts_ttl;
+   weight wt;  /* Optional: comment out if you want unweighted KS */
+   ods output KS2Stats=ks_results(rename=(KS2Stat=KS));
 run;
 
-proc sql;
-   select count(*) as Duplicate_Keys
-   from duplicates;
-quit;
-
-/* 3. Missing value and range checks */
-proc means data=sc_sec_scored_CIDS_V4 n nmiss min max;
-   var pts_ttl CIDS_COMM_score Vantage4_score bad60_24m wt;
-run;
-
-/* 4. Sum of weights (should be close to total # applicants) */
-proc means data=sc_sec_scored_CIDS_V4 sum;
-   var wt;
-run;
-
-/* Optional: frequency check for bad rate */
-proc freq data=sc_sec_scored_CIDS_V4;
-   tables bad60_24m / missing;
+/* View KS result */
+proc print data=ks_results noobs;
+   var KS;
+   title "Kolmogorov–Smirnov (KS) Statistic";
 run;
