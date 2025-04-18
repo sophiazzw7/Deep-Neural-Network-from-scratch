@@ -1,100 +1,23 @@
----
+### 1  Model Description — updated
 
-## Limited Scope Validation (LSV) Review Memo  
-*Prepared by the Model Risk Office (MRO)*  
+The purpose of MOD 12005 is to assess credit applications and assign origination‑risk grades for Truist’s Small‑Business portfolio. It was originally built as part of a merger‑driven effort to unify the underwriting policies of the two heritage banks (hBBT and hSTI), improve decision consistency, and enable a higher degree of auto‑decisioning. At implementation the scorecard replaced the legacy AC1755 Client Obligation Risk (COR) score in hBBT and became the single underwriting tool for the line of business.
 
-**To:** Model Owner / Model Developer  
-**From:** Model Risk Office  
-**Date:** 16 April 2025  
+The model is executed **monthly** in the SPRINT loan‑origination system, where it receives bureau data through Equifax InterConnect. When first validated in 2023 it covered small‑business applicants with **Total Business Exposure (TBE) ≤ \$250 000** across the entire Truist footprint. That population generated an annual underwriting volume in the **\$1 billion–\$2 billion** range. Under the present change the same scorecard will also be used to rate small‑commercial applicants with **TBE up to \$1 million**; however, the combined annual volume of small‑business and small‑commercial originations still falls within the \$1 billion–\$2 billion band, so the model remains **Tier 3** for risk‑governance purposes.
 
-**Model ID / Name:** MOD 12005 – Small Business and Small Commercial Application Scorecard  
-**Model Tier:** 3  
-**Provisional Validation Rating:** Fit for Use – Compensating Controls Required  
+Methodologically, the scorecard is a *generalised additive model (GAM) with a logistic link* that was estimated on hBBT application data booked from May 2016 through April 2017. A time‑varying covariate (time on book / time since application) allows the equation to predict the probability that an applicant will reach **60 days past due or worse** at any month through a 36‑month horizon. Because collateral drives underwriting practice, the portfolio is split into **secured** and **unsecured** segments; within each segment three custom sub‑models are run, depending on which bureau scores are available:
 
----
+* **CIDS Commercial only**  
+* **Vantage 4 only**  
+* **CIDS Commercial + Vantage 4**
 
-### 1  Model Description  
+If neither score is available the application is routed to manual underwriting and is outside the model’s scope.
 
-MOD 12005 is a logistic‑regression scorecard embedded in the SPRINT loan‑origination system and populated with bureau attributes through the Equifax InterConnect interface.  The scorecard produces an origination‑risk score used as the primary quantitative input to underwriting decisions for the Small‑Business portfolio.  A comprehensive validation performed in March 2023 rated the model Fit for Use for applicants whose Total Business Exposure (TBE) did not exceed \$250 000, and subsequent performance reviews have been conducted annually under the Ongoing‑Monitoring (OGM) framework.  
+The principal inputs are:
 
----
+* **Equifax CIDS Commercial Insights Delinquency Score (commercial version)**  
+* **Equifax Vantage Score 4.0**  
+* Borrower and guarantor identifiers, loan characteristics, and product attributes captured at the time of application  
+* Segment flag indicating secured or unsecured status (collateral information present for hBBT; hSTI loans are treated as unsecured)  
+* Time‑on‑book factor and model‑generated total‑points variable
 
-### 2  Model Change  
-
-The change request extends the scorecard to Small Commercial lending, increasing the TBE ceiling from \$250 000 to \$1 000 000.  **During validation, the developer confirmed in writing that no code, coefficients, segmentation logic, or system interfaces have been altered; only new production data will flow through the existing engine.**  To reflect the broader risk population, the model owner will increase OGM frequency to **bi‑annual** reporting (after Q2 and Q4).  Each report will contain Kolmogorov–Smirnov (KS), Somers’ D, and Population Stability Index (PSI).  When default counts are too low to compute KS or Somers’ D, PSI and score‑band default‑rate tables will still be provided.  
-
-The Model Development Document (MDD) lists **CIDS Commercial and Vantage 4** scores as the model’s Critical Data Elements (CDEs).  Section 5.11.3.1 also enumerates every field that Truist sends to Equifax to obtain these bureau scores.  **During validation, the developer provided the outbound file layout (data dictionary) for this request file.  Although Equifax does not supply a formal data dictionary for the response file, the inbound field names are self‑descriptive and passed to the model without transformation.**  
-
-Collateral data are available for hBBT loans, but the COMPASS source system does not record collateral information for hSTI loans.  Subject‑matter experts confirm that hSTI loans are almost always unsecured, and the developer’s testing showed that treating them as unsecured yields the most appropriate risk ranking.  
-
----
-
-### 3  Risk Assessment  
-
-#### 3.1 Data sufficiency  
-The developer’s test set for the \$250 000–\$1 000 000 band contains approximately 17 000 applications but only 183 bads (ever‑60‑days‑past‑due within a 24‑month window).  These bads are split across secured and unsecured paths and three score‑availability sub‑models; several sub‑models have fewer than 35 bads.  The developer defines “sufficient data” as at least **1 000 records and 10 bads** per sub‑model, a threshold that is not met for several splits.  
-
-#### 3.2 Independent data‑quality review  
-The MRO independently evaluated data quality for all four scored data sets used in performance testing—secured CIDS + Vantage 4, secured Vantage 4 only, unsecured CIDS + Vantage 4, and unsecured Vantage 4 only.  All row counts were plausible (4 282; 1 971; 1 840; and 374, respectively).  Sorting by `application_nbr` and `applicant_nbr` produced no duplicates.  Key variables (`CIDS_COMM_score`, `Vantage4_score`, `pts_ttl`, `bad60_24m`, and `wt`) contained no missing values.  All numerical fields fell within their prescribed ranges, and the weight variable adhered to the expected “1 / # applicants” logic.  Because every check passed, the MRO concludes that the data used for performance evaluation are of high integrity.  
-
-#### 3.3 Impact analysis of model performance  
-To assess the model’s effectiveness on the expanded population, the MRO independently calculated Somers’ D for six booked sub‑segments:
-
-| Segment | Somers’ D (MRO) |
-|---------|-----------------|
-| Secured – CIDS + Vantage 4 | 0.515 |
-| Secured – CIDS only | 0.030 |
-| Secured – Vantage 4 only | 0.540 |
-| Unsecured – CIDS + Vantage 4 | 0.794 |
-| Unsecured – CIDS only | 0.551 |
-| Unsecured – Vantage 4 only | 0.815 |
-
-The MDD asserts that Small‑Business and Small‑Commercial applicants are risk‑identical; therefore, their model performance should match the baseline values in Table 9.2.  Five of the six sub‑segments produce Somers’ D values comparable to the baseline, but the **Secured CIDS‑only booked** segment records a Somers’ D of **0.03**, indicating no better discrimination than random guessing.  
-
-**During validation, the MRO discovered that the Somers’ D values reported in Section 5.11.3 for both the Secured CIDS and Unsecured CIDS paths differed from our calculations.  Further investigation showed that the developer’s code omitted the condition `booked = "Y"` when computing Somers’ D.  After communication, the developer corrected the code and updated the MDD to include the accurate performance figures.**  
-
-#### 3.4 Collateral gap  
-All hSTI loans are classified as unsecured because collateral data are absent.  Although SMEs agree with this assumption, unsecured‑path performance must be monitored separately for hSTI and hBBT.  
-
-#### 3.5 CDE lineage  
-Truist’s outbound request file layout is available.  A concise lineage document for CIDS Commercial and Vantage 4—including extraction points, transformations, and data‑quality metrics—is still required for governance.  
-
----
-
-### 4  Overall Model Performance  
-
-With the exception of the Secured CIDS‑only booked segment, the scorecard meets the performance thresholds in Table 9.2.  Given the limitations arising from data thinness and the collateral gap, the MRO rates the model **Fit for Use with Compensating Controls.**  
-
----
-
-### 5  Compensating Control and Sub‑Issue  
-
-Because the expanded data contain only 183 bads, the MRO is opening a sub‑issue entitled **“Data Thinness – Small Commercial Expansion.”**  The compensating‑control period is set at three years, covering the model’s 24‑month performance window plus one additional year for seasoning, as requested by the developer.  During this period:  
-
-1. The model owner must submit bi‑annual OGM reports after Q2 and Q4.  
-2. Each report must include KS, Somers’ D and PSI.  When a sub‑model has fewer than 1 000 records or 10 bads, KS and Somers’ D may be omitted, but PSI and score‑band default‑rate tables must still be provided to monitor drift.  
-3. Table 9.2 thresholds remain in force.  
-4. The sub‑issue will be reassessed on **31 March 2028**.  If default volumes are still insufficient, the MRO will determine whether redevelopment or recalibration is required.  
-
----
-
-### 6  Required Deliverables  
-
-| Deliverable | Owner | Due Date |
-|-------------|-------|----------|
-| Bi‑annual OGM workbook template, explicitly listing the six Somers’ D values above and applying the sufficiency rule | Model Owner | Before Q2 2025 OGM submission |
-| Concise lineage summary for CIDS Commercial and Vantage 4, including percentages of null and invalid observations | Developer / Data Steward | 31 May 2025 |
-| Status report on collateral capture for hSTI loans; unsecured‑path performance split by heritage bank | Model Owner | First report 30 September 2025 and each OGM cycle thereafter |
-
----
-
-### 7  MRO Conclusion  
-
-The Model Risk Office authorises the use of MOD 12005 for applicants with TBE up to \$1 000 000, subject to the compensating controls and deliverables specified above.  The bi‑annual monitoring schedule, the sufficiency rule of 1 000 records and 10 bads, the continued application of Table 9.2 thresholds, and the correction of the booked‑flag error collectively mitigate the immediate risks posed by data thinness and collateral limitations.  Failure to meet deliverable deadlines, persistent under‑performance of the Secured CIDS‑only segment, or any breach of Table 9.2 thresholds will result in a downgrade to Needs Improvement and may prompt escalation under the Model‑Governance Policy.  
-
----
-
-*Prepared by:* [Analyst Name], Model Risk Office  
-*Reviewed and Approved by:* [Manager Name], Model Risk Office  
-
----
+Together these inputs provide the statistical power to separate good (non‑default) from bad (default) applicants, enable monthly auto‑decisioning at scale, and support management in setting cut‑off scores that balance approval rate, loss rate, and risk appetite for both the legacy ≤ \$250 000 segment and the newly added \$250 000–\$1 000 000 segment.
