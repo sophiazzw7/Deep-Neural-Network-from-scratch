@@ -21,3 +21,7 @@ The principal inputs are:
 * Time‑on‑book factor and model‑generated total‑points variable
 
 Together these inputs provide the statistical power to separate good (non‑default) from bad (default) applicants, enable monthly auto‑decisioning at scale, and support management in setting cut‑off scores that balance approval rate, loss rate, and risk appetite for both the legacy ≤ \$250 000 segment and the newly added \$250 000–\$1 000 000 segment.
+
+
+MOD12005 is rated **Fit for Use with Caution**. Although the developer supplied a file‑layout “data dictionary,” the package lacks evidence of end‑to‑end implementation testing and the required data‑quality reconciliations, leaving potential mapping or interface errors unverified. Model performance is acceptable for five of the six booked sub‑models, but the *Secured – CIDS‑only* segment shows virtually no discriminatory power (Somers’ D ≈ 0) and overall testing is hampered by thin data, with several cells containing fewer than 35 bads. To mitigate these risks, a three‑year compensating‑control period has been imposed that requires bi‑annual OGM reports with KS, Somers’ D, and PSI (or PSI alone when counts are insufficient) and escalation if Table 9.2 thresholds are breached. Two sub‑issues are therefore raised: (1) missing implementation and data‑quality testing artefacts, and (2) heightened performance‑monitoring for thin‑data segments.
+
