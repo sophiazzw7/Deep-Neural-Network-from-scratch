@@ -1,27 +1,19 @@
-### 1  Model Description — updated
+Here’s a polished and professional email draft you can send to your boss:
 
-The purpose of MOD 12005 is to assess credit applications and assign origination‑risk grades for Truist’s Small‑Business portfolio. It was originally built as part of a merger‑driven effort to unify the underwriting policies of the two heritage banks (hBBT and hSTI), improve decision consistency, and enable a higher degree of auto‑decisioning. At implementation the scorecard replaced the legacy AC1755 Client Obligation Risk (COR) score in hBBT and became the single underwriting tool for the line of business.
+---
 
-The model is executed **monthly** in the SPRINT loan‑origination system, where it receives bureau data through Equifax InterConnect. When first validated in 2023 it covered small‑business applicants with **Total Business Exposure (TBE) ≤ \$250 000** across the entire Truist footprint. That population generated an annual underwriting volume in the **\$1 billion–\$2 billion** range. Under the present change the same scorecard will also be used to rate small‑commercial applicants with **TBE up to \$1 million**; however, the combined annual volume of small‑business and small‑commercial originations still falls within the \$1 billion–\$2 billion band, so the model remains **Tier 3** for risk‑governance purposes.
+**Subject:** Follow-Up on Validation VLT0010827 and Teammate Inquiry
 
-Methodologically, the scorecard is a *generalised additive model (GAM) with a logistic link* that was estimated on hBBT application data booked from May 2016 through April 2017. A time‑varying covariate (time on book / time since application) allows the equation to predict the probability that an applicant will reach **60 days past due or worse** at any month through a 36‑month horizon. Because collateral drives underwriting practice, the portfolio is split into **secured** and **unsecured** segments; within each segment three custom sub‑models are run, depending on which bureau scores are available:
+Hi [Boss’s Name],  
+I wanted to follow up on Validation VLT0010827, which I completed and sent for your review on April 2. I recently received an email from [Teammate’s Name] asking about the status, as there appears to be an Archer issue related to this validation.
 
-* **CIDS Commercial only**  
-* **Vantage 4 only**  
-* **CIDS Commercial + Vantage 4**
+In the report, I recommended closing Finding F_19735 and marking the review complete. However, since I haven’t heard back and understand you may still be reviewing it, I didn’t want to respond with a definitive answer before getting your input.
 
-If neither score is available the application is routed to manual underwriting and is outside the model’s scope.
+Would you mind letting me know your thoughts when you have a chance? I’ll hold off on replying until then.
 
-The principal inputs are:
+Best,  
+Phoebe
 
-* **Equifax CIDS Commercial Insights Delinquency Score (commercial version)**  
-* **Equifax Vantage Score 4.0**  
-* Borrower and guarantor identifiers, loan characteristics, and product attributes captured at the time of application  
-* Segment flag indicating secured or unsecured status (collateral information present for hBBT; hSTI loans are treated as unsecured)  
-* Time‑on‑book factor and model‑generated total‑points variable
+---
 
-Together these inputs provide the statistical power to separate good (non‑default) from bad (default) applicants, enable monthly auto‑decisioning at scale, and support management in setting cut‑off scores that balance approval rate, loss rate, and risk appetite for both the legacy ≤ \$250 000 segment and the newly added \$250 000–\$1 000 000 segment.
-
-
-MOD12005 is rated **Fit for Use with Caution**. Although the developer supplied a file‑layout “data dictionary,” the package lacks evidence of end‑to‑end implementation testing and the required data‑quality reconciliations, leaving potential mapping or interface errors unverified. Model performance is acceptable for five of the six booked sub‑models, but the *Secured – CIDS‑only* segment shows virtually no discriminatory power (Somers’ D ≈ 0) and overall testing is hampered by thin data, with several cells containing fewer than 35 bads. To mitigate these risks, a three‑year compensating‑control period has been imposed that requires bi‑annual OGM reports with KS, Somers’ D, and PSI (or PSI alone when counts are insufficient) and escalation if Table 9.2 thresholds are breached. Two sub‑issues are therefore raised: (1) missing implementation and data‑quality testing artefacts, and (2) heightened performance‑monitoring for thin‑data segments.
-
+Would you like to soften the tone further or keep it as is?
