@@ -1,1 +1,12 @@
-I inspire and build better lives and communities by evaluating and monitoring models to ensure they are used appropriately, helping stakeholders manage model risk and support responsible decision-making.
+MRO considers the use of funded-only data essential for threshold derivation, as the model is applied exclusively to funded loans in production. The developer generated 1,000 bootstrap samples by drawing with replacement from the combined out-of-sample datasets (test_1, test_2, valid_1, valid_2), restricted to funded observations. This process produced an empirical AUC distribution, from which thresholds were set at the mean minus three and four standard deviations—corresponding approximately to the 0.13th and 0.0032nd percentiles, or the worst one-in-1,000 and one-in-30,000 outcomes, respectively. In reviewing the results across quarterly and full-sample segments (Table 17-2), MRO observed slight differences in means and standard deviations by segment and elected to adopt the most conservative thresholds—that is, the minimum mean – 3 SD and mean – 4 SD values across all segments. This approach promotes long-term stability and ensures the thresholds remain appropriately sensitive to material degradation in model performance.
+
+
+
+
+
+
+
+
+Certainly. Here's a refined version focusing on MRO’s assessment of the reasonableness of the KS and PSI thresholds:
+
+MRO finds the KS and PSI thresholds reasonable and appropriate for monitoring distributional stability between development and application populations. For KS, thresholds are based on p-values, with green defined as p < 0.05, yellow as 0.05–0.10, and red as p ≥ 0.10. This approach follows standard statistical practice, where higher p-values indicate weaker evidence of a difference between distributions. A red flag at p ≥ 0.10 appropriately reflects limited statistical support for stability and signals the need for further review. For PSI, thresholds are set at < 0.10 (green), 0.10–0.25 (yellow), and ≥ 0.25 (red). These cutoffs are consistent with industry norms, where a PSI above 0.25 is commonly interpreted as evidence of significant population shift. MRO reviewed the quarterly and full-sample PSI and KS values across segments and found the observed ranges to be well aligned with the proposed breakpoints. The thresholds provide a balanced framework that captures meaningful distributional changes without overreacting to expected sampling variation. MRO supports their continued use in production monitoring.
