@@ -1,109 +1,43 @@
 # Deep-Neural-Network-from-scratch
 
-This is a project where I built a Deep Neural Network to perform Photo classification. 
-I build the model from scratch, where I calculated the Forward and Backward Propagation, calculated the loss function and updated parameters.
-
-ically significant difference between the current model and the hyperopt model, further substantiated the selection of the current model. This investigation offers valuable insights into model comparison techniques and the limitations of specific statistical tests, contributing to a well-informed decision-making process.
-
-
-
-==========
-
-
 4. Review of Data Quality and Data Appropriateness
 
 4.1 Data Quality
 
-No additional data is used beyond what is used for component models.
+No additional data is used beyond what is used for the component models of MOD 11783.
 
-During production, data quality assessment is handled by:
+Data quality testing is conducted as part of the Ongoing Monitoring (OGM) process to ensure the accuracy and reliability of model inputs and outputs. Data lineage for the Predictive Analytics Dataset (PAD) is overseen by the designated data steward leads, Ann Larson-White and Quocbao Vo. The OGM data control is designed to prevent data processing errors during the generation of reports.
 
-* Data Assessment Team (DAT) within the Enterprise Data Risk Oversight group
-* RMO Data and Analytics Office (DAO)
+The data used for MOD 11783 is sourced from Credit Lens (for PDA), PRISM Batch (for PDB), and Loan Accounting Systems within PAD. Data obtained from Credit Lens and PRISM Batch is stored in the Data Lake, which is governed by the EIS Data Lake Operations and subject to data controls, including EIS-EDGE-ADLOPE-CDRP-100. PAD data is governed by the Risk and Finance Analytics Enablement & Execution team under the EDAO-FRDO-PAD-100 Data for Modeling Procedure.
 
-They ensure accuracy of:
-
-* Input data (PAD)
-* Model production data (extracts)
-
-Key testing components:
-
-* Enterprise Data Risk Oversight (EDRO) – Data Accuracy Transaction Testing by DAT
-* Data Imputation Report – by model owners
-* DAO Data Quality & Controls Testing – documented in MDD Section 11.7
-
-MOD 11783-Specific Controls:
-
-* Data lineage is managed by data steward leads Ann Larson-White and Quocbao Vo.
-* Data sources include Credit Lens (PDA), PRISM Batch (PDB), and PAD.
-* These sources are governed by Data Lake Operations and EIS controls, including EIS-EDGE-ADLOPE-CDRP-100.
-* PAD is governed by EDAO and subject to EDAO-FRDO-PAD-100 controls.
-* OGM code is fully automated in SAS. Minimal values are manually updated each cycle.
-* The SAS initialization script defines all update variables at the beginning:
+DAO-provided datasets are considered authoritative. Loan accounting system data is accessed using the SAS library reference:
 
 ```sas
-%let pd0 = 202007;
-%let pd0m = Jul2020;
-%let pd0dt = 20200723;
-...
-%let pd6 = 202112;
-%let pd6m = Dec2021;
-%let pd6dt = 20211223;
+libname PAD '/sasdata/crptrs1/pad/Truist/Wholesale/outputs/';
 ```
 
-* Loan accounting data is sourced from DAO and accessed via libname PAD '/sasdata/crptrs1/pad/Truist/Wholesale/outputs/';
-* PRISM Batch data is accessed via DLZ\_VIEW without requiring SAS code.
+PRISM Batch data is available via SAS Grid Libraries using DLZ\_VIEW mappings, and does not require custom SAS code for access.
 
-Example:
+The entire OGM generation process is fully automated in SAS. Only a minimal set of period variables need to be updated manually at the start of each reporting cycle, which reduces the risk of data errors and ensures consistency. These update variables are consolidated in the initialization section of the SAS code.
 
-```sas
-data result.&model._pdb_&ver;
-  set DLZ_VIEW.PRMS_T_RATING_ARCHV;
-  where int(bat_id/100) = &ver
-    and (prod_cd in (&prod_list))
-    and RT_ACTN_CD in ('UPLOADED');
-  if TOP_LEVEL_OBLIGATION='Y' then TOP_LEVEL_OBLIGATION_flag=1;
-  else TOP_LEVEL_OBLIGATION_flag=0;
-  obg_no = input(CLNT_OBLIGOR_NUM, z16.);
-run;
+Automated SAS procedures and queries are installed as internal data processing checkpoints. Additionally, usage and trending metrics such as Model Portfolio Coverage and Average PD are reviewed each quarter. These serve as data reasonableness checks. Any discrepancies are reviewed by the OGM lead and development team. Where necessary, follow-up actions are taken with model users and stakeholders.
+
+The PRISM Batch Model Input Control Report (e.g., July 2023) compares staging table data against archived data based on median value shifts. This control ensures that the most recent data loads are valid before execution of the Risk Rating Process. All control reports are saved in the following directory:
+
+```
+/sasdata/mdevop1/Batch Control Reports Directory
 ```
 
-Data reasonableness is supported by:
-
-* Usage and trending metrics (e.g., PD trend, obligor counts).
-* Reports highlight discrepancies that trigger review by the OGM lead and developer.
-
-PRISM Batch Model Input Control Report (JUL 2023):
-
-* Compares median value changes between staging and archive tables.
-* Validates readiness for batch rating process.
-* Reports are stored in /sasdata/mdevop1/Batch Control Reports Directory
-
-Model Input Monitoring – Missing Rate:
-
-* MOD 11783 only includes one internal attribute: Obligor Past Due days.
-
-  * Values of 0 or missing both indicate no past due.
-  * Thus, the missing rate is always 0.
-* Other attributes are external and provided by Equifax, beyond MD’s access.
+Missing data rates are also tracked. MOD 11783 includes only one internal attribute—"Obligor Past Due Days." Values of zero or missing both indicate the absence of past due, and the missing rate is therefore always zero. The remaining attributes are external and provided by Equifax. These are outside of model developer control, and no threshold is applied.
 
 4.2 Data Appropriateness
 
-No additional data is used outside of component models.
+There is no additional data used outside the scope of MOD 11783 and its component models. The model has not been redeveloped since the last validation. During the production period, data controls described in Section 4.1 ensure that data is appropriate for its intended use.
 
-There has been no model redevelopment since the last validation. Data controls in Section 4.1 ensure no data issues exist during production.
+Limitation – Data Lineage and Upstream Controls
 
-Limitation: Data Lineage and Upstream Controls
+MOD 11783 is part of a broader effort to align with the Building Our Future Data Management and Governance (DMG) workstream. The relevant business processes include Development (BPID-11630525), Managing Exceptions (BPID-16101469), and Ongoing Monitoring (BPID-11630541). The milestone DM-04, which covers the implementation of metadata, data lineage, data quality, and data controls, is scheduled for completion by January 5, 2027.
 
-Developers are coordinating with the RMO Business Data Executive to align with the BOF-DMG workstream. Key RMO-MD processes:
+Until this milestone is achieved, visibility into model CDE data lineage and upstream control environments remains limited. As a compensating measure, appropriate data checks are performed, and inconsistencies detected downstream are followed up and resolved. The development team also coordinates with Data Stewards and the Business Data Executive as part of the DMG initiative.
 
-* BPID-11630525 – Development
-* BPID-16101469 – Managing Exceptions
-* BPID-11630541 – Ongoing Monitoring
-
-Milestone DM-04 (metadata, lineage, quality, controls) is expected to complete by 1/5/2027. Interim compensating controls include:
-
-* Performing data checks during development
-* Resolving inconsistencies identified downstream
-* Collaborating with Data Stewards and Business Executives
 
