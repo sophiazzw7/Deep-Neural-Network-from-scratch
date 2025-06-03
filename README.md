@@ -1,5 +1,2 @@
-4.1.3 Data Quality Assessment
+This validation covers performance through 2024Q4. OGM results for 2025Q1 became available shortly before the validation cutoff (June 6, 2025) and were not included in this review.
 
-Based on the controls and processes described above, the quality of production data used in MOD 11783 is considered sufficient for its intended use. Data is sourced from internal systems such as Credit Lens, PRISM Batch, and PAD, each governed by documented operational procedures and subject to defined quality standards. These sources are managed by established governance teams including the EIS Data Lake Operations and the Risk and Finance Analytics Enablement & Execution team within EDAO.
-
-Data control mechanisms—such as SAS-based automation, the use of authoritative DAO datasets, and quarterly trending metrics—support the overall reliability of the data. Furthermore, the absence of manual intervention in the data pipeline, along with specific controls for tracking missing values and validating batch inputs, further ensures data integrity. While some external data attributes provided by Equifax are outside of model developer control, internal attributes such as Obligor Past Due Days exhibit a zero missing rate, and no data limitations have been identified that would compromise the model’s performance.
