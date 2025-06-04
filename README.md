@@ -1,35 +1,52 @@
-Here is a professional report section focused **only on the production period**, incorporating both the **OGM results** and the **Wilcoxon Rank-Sum Test** results based on the images you provided:
+Certainly — here's the revised version focusing primarily on **Gini metrics** from the OGM reports, with the **Wilcoxon Rank-Sum Test** included as supplemental evidence. The language strictly reflects only the content you've provided:
 
 ---
 
 ### **9.2 Back Testing — Production Period**
 
-During the production period, model performance was monitored through quarterly Ongoing Monitoring (OGM) reports, with a focus on both calibration accuracy and discriminatory power. Given the limited number of defaults observed in each quarter, the assessment emphasizes directional validation rather than formal threshold conclusions.
+During the production period, model performance was assessed through Ongoing Monitoring (OGM) reports, with a focus on evaluating the discriminatory power of the model using Gini coefficients. As a supplemental approach, the Wilcoxon Rank-Sum Test was also applied due to limitations in observed defaults.
 
-#### **OGM-Based Monitoring**
+#### **OGM Gini Coefficient Review**
 
-The OGM reports for 202306, 202309, and 202312 presented limited default counts for PDA (4, 6, and 8 respectively) and moderately higher counts for PDB (12, 21, and 26 respectively). These are below the standard 30-default threshold required for formal Gini evaluation, and thus Gini values reported (PDA: 0.62, 0.50, 0.47) are considered early readings. While indicative of some discriminatory power, no conclusive judgment is drawn per model risk policy.
+Gini coefficients were calculated for PDA and PDB across three recent quarters: 202306, 202309, and 202312. The number of observed defaults was limited in each period, particularly for PDA:
 
-Despite these limitations, there is no observed systematic over- or under-estimation of predicted PDs in production, and the models maintain relative consistency in risk differentiation across the portfolio. PDA continues to be calibrated conservatively due to the absence of reject inference, consistent with development design.
+* **PDA Default Counts**:
 
-#### **Wilcoxon Rank-Sum Test**
+  * 202306: 4
+  * 202309: 6
+  * 202312: 8
 
-To supplement limited Gini analysis, the Wilcoxon Rank-Sum Test was applied to production data, assessing whether default rates increase monotonically across risk score buckets (i.e., whether higher-risk classes experience higher default incidence).
+* **PDB Default Counts**:
 
-* For PDA and PDB, the Wilcoxon test was run on three variants: `Cal_RR`, `Kappa_RR`, and `Final_RR`.
-* Across all variants, both models demonstrated **increasing default rates across the final four buckets**, satisfying the Wilcoxon test condition for discriminatory validity.
-* Default counts in the higher-risk buckets were generally sufficient to support the directional conclusions of the test, particularly for PDB (`DefaultCount`: 52, 67, 52 in Classes 3–5 in `Final_RR`).
-* As per the methodology, the model passes the Wilcoxon test when default rates across Classes 2 to 5 are in non-decreasing order. This condition was met, indicating **preserved rank-ordering ability** in production.
+  * 202306: 12
+  * 202309: 21
+  * 202312: 26
+
+Given that fewer than 30 defaults were observed in each period, the results are considered **early readings** and do not support formal threshold-based conclusions per model policy. However, Gini coefficients were as follows for PDA:
+
+* **Gini (PDA)**:
+
+  * 202306: 0.62
+  * 202309: 0.50
+  * 202312: 0.47
+
+These values suggest directional evidence of discriminatory ability, though limited by low default volume.
+
+#### **Wilcoxon Rank-Sum Test (Supplemental)**
+
+To supplement the Gini analysis, the Wilcoxon Rank-Sum Test was applied to multiple model score variants (`Cal_RR`, `Kappa_RR`, and `Final_RR`) for both PDA and PDB. In all cases, the default rates in the final four buckets followed the expected increasing order, indicating the model **passed the Wilcoxon Rank-Sum Test**. For example, in the PDB `Final_RR`, default counts in Classes 2–5 were 16, 52, 67, and 52, respectively.
 
 #### **OGM Sample Size Review**
 
-There were no anomalies in the OGM production sample size. Minor increases in sample count were noted between quarters, but changes remained within expected bounds and did not affect the reliability of performance metrics.
+The OGM data sample size increased slightly compared to the prior quarter. The documentation notes:
+
+> “There is no anomaly in the OGM data sample size.”
 
 ---
 
-**Conclusion**:
-Based on available OGM data and Wilcoxon Rank-Sum Test results, the model demonstrates **adequate directional performance** during the production period. While formal Gini thresholds cannot be applied due to default scarcity, supporting evidence from Wilcoxon testing and stable predicted PDs affirms the model's continued validity for the 2024 review cycle.
+**Conclusion:**
+Based on Gini values reported in OGM and supplemental results from the Wilcoxon Rank-Sum Test, the model demonstrates evidence of discriminatory power during the production period. Due to limited default counts, the findings are considered directional rather than conclusive but support continued model use in production.
 
 ---
 
-Let me know if you'd like a shorter summary version or additional comments on specific buckets or score distributions.
+Let me know if you'd like to integrate commentary on calibration metrics or exclude Wilcoxon details further.
