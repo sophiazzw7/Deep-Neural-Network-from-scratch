@@ -1,4 +1,4 @@
-There were no changes to the threshold itself. The previous table illustration had simply omitted PRISM grades 15–17. The developer has now updated the illustration to include the missing ratings. This was not a change in methodology, but a minor correction to align the table with what was already reflected in the Absolute Error Analysis Excel, where the full range of grades was available.
+The model user reviewed each of the 2024Q3 external override cases and categorized them into four main buckets: batch timing mismatches, pass-through ratings, one negative coverage case, and model switches due to exposure size. Of these, only the negative coverage case could arguably be considered an override, though even that was described as a stretch. Based on this analysis, the user confirmed that the elevated override rate was due to system-driven or timing-related factors—not credit judgment or model performance issues. Since the root cause is clearly identified and unrelated to model effectiveness, no risk item is raised.
 
 
 
