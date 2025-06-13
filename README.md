@@ -1,13 +1,18 @@
-Here is a concise version of the assessment using full sentences:
+Hi [Visa Team's Name],
 
----
+I hope you're doing well. I just wanted to kindly follow up on the LCA form I sent two weeks ago for my H-1B renewal. Please let me know if there’s anything else you need from me or if I can help in any way to support the process.
 
-### Methodology Assessment for MOD 11783
+Thank you so much for your time and assistance.
 
-MOD 11783 estimates the 12-month probability of default (PD) using logistic regression. This methodology remains appropriate for the wholesale portfolio, despite low default counts.
+Best regards,
+Phoebe
 
-Logistic regression is widely accepted by regulators and is considered the industry standard for PD modeling. It produces continuous PD values bounded between 0 and 1 and provides interpretable coefficient effects. The model uses both internal and external credit attributes and is implemented using the SAS LOGISTIC procedure with maximum likelihood estimation.
+Hi [Name],
 
-Alternative methods were reviewed, including linear regression, discriminant analysis, panel models, and hazard models. These approaches have significant limitations such as unbounded outputs, strong distributional assumptions, or added complexity, making them less suitable in this setting.
+Thanks for the instructions. I had actually followed the same steps earlier and was able to access the workbench, but I couldn’t locate the specific data, which is why I reached out.
 
-Given its transparency, statistical robustness, and regulatory acceptance, logistic regression continues to be an appropriate methodology for MOD 11783.
+Appreciate your help—please let me know if there’s another place I should check.
+
+Best,
+Phoebe
+
