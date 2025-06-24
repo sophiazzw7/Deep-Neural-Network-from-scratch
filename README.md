@@ -1,10 +1,12 @@
-Hi [ZAML Team / Team Name],
+I’m running into an environment issue and was hoping you could help. I’ve tried using keras==2.6.0 to match the legacy code that imports Adam from keras.optimizers, but that results in an import error for Adam. However, if I upgrade to a newer version of Keras (e.g., 2.11.0) to resolve that, I then get another error:
 
-I’ve been encountering a compatibility issue when trying to run code that imports Adam from keras.optimizers. The current environment appears to include a newer version of TensorFlow (which expects dtensor) but also uses a standalone version of keras that is incompatible with that TensorFlow version.
+pgsql
+Copy
+Edit
+ImportError: cannot import name 'dtensor' from 'tensorflow.compat.v2.experimental'
+It seems like the Keras and TensorFlow versions in the current environment are mismatched — one is too old, and the other is too new — and I can’t modify the library code to adjust the import paths.
 
-If I downgrade Keras to 2.6.0 to match the legacy import path, I run into a dtensor import error from TensorFlow. If I try to use tensorflow.keras instead, the code fails because I can't modify the library to update the import paths.
+I’ve attached screenshots of both errors. Could you please advise if there’s a supported environment setup that would resolve this?
 
-Would it be possible to adjust the environment or provide guidance on how best to proceed? I’d really appreciate your help.
-
-Best regards,
+Thanks so much,
 Tianyi
