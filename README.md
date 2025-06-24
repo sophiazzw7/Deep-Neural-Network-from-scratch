@@ -1,20 +1,10 @@
-Thanks! Here's an updated version that clarifies the data are from the vendor, while still keeping the tone polite and complete:
+Hi [ZAML Team / Team Name],
 
----
+I’ve been encountering a compatibility issue when trying to run code that imports Adam from keras.optimizers. The current environment appears to include a newer version of TensorFlow (which expects dtensor) but also uses a standalone version of keras that is incompatible with that TensorFlow version.
 
-**Subject:** Follow-Up on Vendor Data and Validation Questions
+If I downgrade Keras to 2.6.0 to match the legacy import path, I run into a dtensor import error from TensorFlow. If I try to use tensorflow.keras instead, the code fails because I can't modify the library to update the import paths.
 
-Hi \[Name],
-
-I’m following up on the OGM datasets from the vendor and the pending questions I sent over last week and the week before. I understand things can get busy, but I haven’t heard back yet and wanted to check in, especially as we’re working with a relatively short timeline for the annual validation.
-
-We’re targeting to conclude the validation around the first week of July, so it would be very helpful to receive the data and any responses when available.
-
-Please let me know if you need me to resend anything or clarify any part of the request. I appreciate your help!
+Would it be possible to adjust the environment or provide guidance on how best to proceed? I’d really appreciate your help.
 
 Best regards,
-\[Your Name]
-
----
-
-Let me know if you'd like to add specific dataset names or question topics.
+Tianyi
