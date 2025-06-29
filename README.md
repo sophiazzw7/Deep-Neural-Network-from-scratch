@@ -83,3 +83,6 @@ for score_type in score_ind:
 
     print(f"\n>>> {score_type} <<<")
     print(f" Overall AUC:           {overall_auc:.3f}")
+    print(f" Within-segment AUC:   {within_auc:.3f}")
+    print(f" Cross-segment AUC:    {cross_auc:.3f}")
+    print(f" Cross-segment weight: {cross_pairs/total:.1%}")
