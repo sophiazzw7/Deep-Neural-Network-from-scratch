@@ -1,27 +1,71 @@
+import itertools
 import numpy as np
 import pandas as pd
-from itertools import combinations
 from sklearn.metrics import roc_auc_score
 
-def weighted_within_auc(df, target='target', score='score', segment='segment'):
-    """Weighted average of segment AUCs with weights = #pos·#neg pairs / total pairs."""
-    total_pos = (df[target] == 1).sum()
-    total_neg = (df[target] == 0).sum()
-    total_pairs = total_pos * total_neg
-    w_auc = 0.0
-    for g, d in df.groupby(segment):
-        n_pos = (d[target] == 1).sum()
-        n_neg = (d[target] == 0).sum()
-        if n_pos == 0 or n_neg == 0:
-            continue                       # no pairs ⇒ no contribution
-        w = (n_pos * n_neg) / total_pairs
-        w_auc += w * roc_auc_score(d[target], d[score])
-    return w_auc
+for score_type in score_ind:
+    # —— reproduce your overall‐AUC filtering ——
+    dfagg = df[df[score_type] == df['BEST_' + score_type]]
 
-overall_auc  = roc_auc_score(df['target'], df['score'])
-within_auc   = weighted_within_auc(df)
-cross_lift   = overall_auc - within_auc   # extra boost from cross-segment ranking
+    # —— build a combined DataFrame of (segment, score, target) ——
+    frames = []
+    for s in segments:
+        cat = segment_map[s]
+        sub = dfagg[dfagg['LOANPURPOSECATEGORY'] == cat]
 
-print(f"Overall  AUC : {overall_auc: .4f}")
-print(f"Within   AUC : {within_auc : .4f}")
-print(f"Cross-segment lift: {cross_lift : .4f}")
+        # grab & rename just like in your loop
+        scores = sub[[score_type]].rename(columns={score_type: 'score'})
+        target = sub[['target']].rename(columns={'target': 'target'})
+        keep = scores['score'].notnull() & target['target'].notnull()
+
+        # apply your PLRS sign‐flip if needed
+        sc = scores.loc[keep, 'score']
+        if score_type == 'PLRS':
+            sc = (sc.astype(int) * -1).astype(float)
+        else:
+            sc = sc.astype(float)
+
+        tg = target.loc[keep, 'target'].astype(int)
+
+        frames.append(pd.DataFrame({
+            'segment': s,
+            'score':   sc.values,
+            'target':  tg.values
+        }))
+
+    big = pd.concat(frames, ignore_index=True)
+
+    # —— within‐segment concordance —— 
+    within_concordant = within_pairs = 0
+    for g in segments:
+        sub = big[big.segment == g]
+        Np = (sub.target == 1).sum()
+        Nn = (sub.target == 0).sum()
+        if Np * Nn == 0:
+            continue
+        auc_g = roc_auc_score(sub.target, sub.score)
+        pairs = Np * Nn
+        within_concordant += auc_g * pairs
+        within_pairs     += pairs
+
+    # —— cross‐segment concordance ——
+    cross_concordant = cross_pairs = 0
+    for g, h in itertools.permutations(segments, 2):
+        pos = big[(big.segment == g) & (big.target == 1)].score.values
+        neg = big[(big.segment == h) & (big.target == 0)].score.values
+        Np, Nn = len(pos), len(neg)
+        if Np * Nn == 0:
+            continue
+        y_true  = np.concatenate([np.ones(Np), np.zeros(Nn)])
+        y_score = np.concatenate([pos, neg])
+        auc_gh = roc_auc_score(y_true, y_score)
+        pairs  = Np * Nn
+        cross_concordant += auc_gh * pairs
+        cross_pairs      += pairs
+
+    # —— results —— 
+    overall_auc = roc_auc_score(big.target, big.score)
+    print(f"\n▶ {score_type} ▶ overall AUC: {overall_auc:.3f}")
+    print(f"    within-segment AUC: {within_concordant/within_pairs:.3f}")
+    print(f"    cross-segment AUC:  {cross_concordant/cross_pairs:.3f}")
+    print(f"    cross-segment weight: {cross_pairs/(within_pairs+cross_pairs):.1%}")
