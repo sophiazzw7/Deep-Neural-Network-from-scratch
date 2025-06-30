@@ -1,24 +1,15 @@
-import pandas as pd
+Hi Cheng,
+I reviewed the decomposition of the pooled AUC and compared it with segment-level results. Below are the key reasons I recommend discontinuing the pooled AUC as a monitored metric:
 
-score_type = 'SCORE'
-dfagg = df[df[score_type] == df['BEST_' + score_type]]
+1. Pooled AUC is dominated by cross-segment comparisons (≈ 71 %).
+* • When I break the overall AUC metric into components, ~71 % of the positive vs negative pairs come from different segments.
+* • As a result, the pooled AUC largely reflects how the four segment score scales line up with each other, not how well any model discriminates within its own population.
 
-rows = []
-for seg in segments:
-    cat = segment_map[seg]
-    sub = dfagg[dfagg['LOANPURPOSECATEGORY'] == cat]
-    pos_mean = sub.loc[sub['target'] == 1, score_type].mean()
-    neg_mean = sub.loc[sub['target'] == 0, score_type].mean()
-    rows.append({'segment': seg, 'pos_mean': pos_mean, 'neg_mean': neg_mean})
+2. Cross-segment comparisons are risky and can mislead.
+* Example from the 2024Q2 data: the average score for a non-default in the credit-card-consolidation segment (0.047) is higher than the average score for a default in the auto segment (0.039).
+* This scale mismatch means a borrower who actually defaulted in auto can score lower than a borrower who repaid in credit-card, yet the pooled AUC treats that as “good” rank ordering.
+* Any shift in segment mix or a minor calibration tweak in one segment model could push the pooled AUC sharply up or down, even though no individual segment model has changed. The metric therefore measures “apples vs. oranges” rather than true model performance.
 
-res = pd.DataFrame(rows)
-print(res)
+Please let me know your thoughts.
 
-high = res.loc[res['pos_mean'].idxmax()]
-low  = res.loc[res['pos_mean'].idxmin()]
-
-print("\nExample:")
-print(f"Segment {high['segment']} — positives mean {high['pos_mean']:.3f}, negatives mean {high['neg_mean']:.3f}")
-print(f"Segment {low['segment']}  — positives mean {low['pos_mean']:.3f}, negatives mean {low['neg_mean']:.3f}")
-
-print("\nComparing these means across segments is like comparing apples to oranges and does not reflect true within-segment performance.")
+Sophia
