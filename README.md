@@ -1,38 +1,44 @@
-import numpy as np
+import pandas as pd
+from zaml.analyze.data_analysis.distribution_drift import PSI
 
-def manual_psi_eqfreq(baseline, current, bins=10, floor=1e-6):
-    """
-    PSI using equal-frequency bins defined on 'baseline' only.
-    
-    baseline: 1d array of dev scores
-    current:  1d array of prod scores (same metric)
-    bins:     number of quantile bins (commonly 10 for deciles)
-    floor:    small value to avoid log(0)
-    """
-    # 1) get the bin edges from the baseline quantiles
-    quantiles = np.linspace(0, 100, bins + 1)
-    edges = np.percentile(baseline, quantiles)
-    
-    # make sure edges are strictly increasing
-    edges[0]  -= 1e-8    # include anything == min
-    edges[-1] += 1e-8    # include anything == max
-    
-    # 2) histogram counts
-    b_cnts, _ = np.histogram(baseline, bins=edges)
-    c_cnts, _ = np.histogram(current,  bins=edges)
-    
-    # 3) convert to proportions + floor
-    b_pct = b_cnts / (b_cnts.sum() + floor) + floor
-    c_pct = c_cnts / (c_cnts.sum() + floor) + floor
-    
-    # 4) PSI sum
-    return np.sum((c_pct - b_pct) * np.log(c_pct / b_pct))
+# ─── 1) Load development back‐test scores ────────────────────────────────
+# this returns a dict of Series, indexed by ZEST_KEY
+nonprod_scores, _, _ = get_nonprod_data(
+    ["credit_card_consolidation"],
+    dataset="test_2",
+    subset="all",
+)
+dev_raw = nonprod_scores["credit_card_consolidation"]
 
+# wrap it into an N×1 DataFrame exactly like they do
+dev_df = dev_raw.to_frame(name="SCORE")
 
-# ── now recompute your auto-approved PSI using eq-freq bins ────────────────
+# ─── 2) Subset to your back‐test “auto‐approved” keys ─────────────────────
+# est_auto_approved_zest_keys comes from their cell [17]
+dev_auto = dev_df.loc[ est_auto_approved_zest_keys.intersection(dev_df.index) ]
 
-dev_auto_arr  = dev_df_auto["SCORE"].values
-prod_auto_arr = prod_df_auto["SCORE"].values
+# ─── 3) Load production “all” and “approved” data ───────────────────────
+prod_all  = get_prod_data_updated("2024-07-01","2024-12-31", subset="all")
+prod_app  = get_prod_data_updated("2024-07-01","2024-12-31", subset="approved")
 
-psi_auto_deciles = manual_psi_eqfreq(dev_auto_arr, prod_auto_arr, bins=10)
-print(f"Auto-approved PSI (decile bins): {psi_auto_deciles:.3f}")
+# ─── 4) Extract the prod auto‐approved slice ─────────────────────────────
+# auto_approved_rowids from their regex parsing in cell [18–19]
+mask   = prod_app["ROWID"].str.strip().isin(auto_approved_rowids)
+mask  &= prod_app["LOANPURPOSE"] == "Debt Consolidation"
+prod_auto = (
+    prod_app[mask]
+    .groupby("APPID")["SCORE"]
+    .min()                  # pick the lowest of any duplicate scores
+    .to_frame(name="SCORE")
+)
+
+# ─── 5) Compute PSI exactly like they do ────────────────────────────────
+psi = PSI()                  # default is equal‐pop bins (deciles)
+
+# fit on dev_auto (their “fit(nonprod_score_df)” step)
+psi.fit(dev_auto)
+
+# transform on prod_auto (their “transform(score_data)” step)
+psi_auto = psi.transform(prod_auto)
+
+print("Their auto‐approved PSI: ", psi_auto.iloc[0])
