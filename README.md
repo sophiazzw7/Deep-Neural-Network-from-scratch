@@ -1,86 +1,95 @@
 import pandas as pd
-import numpy as np
+import numpy  as np
 import matplotlib.pyplot as plt
 
-# -------------- imports (adjust to your codebase) ------------------
+# ─── Adjust these imports to match your project ───────────────────────────────
 from your_project.data_loader import get_nonprod_data, get_nonprod_fi, get_prod_data_updated
+# ────────────────────────────────────────────────────────────────────────────────
 
-# -------------- manual PSI function --------------------------------
-def manual_psi(expected, actual, bins=10):
-    """Compute PSI of actual vs expected arrays using equal-width bins."""
+# 1) Define your segment mapping ────────────────────────────────────────────────
+segment_key   = "credit_card_consolidation"    # internal code
+segment_label = "Debt Consolidation"           # what appears in LOANPURPOSE
+
+# 2) Load development data ──────────────────────────────────────────────────────
+nonprod_scores, nonprod_features, nonprod_target = get_nonprod_data(
+    [segment_key], dataset="test_2", subset="all"
+)
+fi_dict = get_nonprod_fi([segment_key])
+
+# 3) Build a dev_scores DataFrame with a single column "SCORE" ──────────────────
+dev_raw = nonprod_scores[segment_key]
+if isinstance(dev_raw, pd.Series):
+    dev_scores = dev_raw.to_frame(name="SCORE")
+elif hasattr(dev_raw, "__len__") and not isinstance(dev_raw, (int, float)):
+    dev_scores = pd.DataFrame(dev_raw, columns=["SCORE"])
+else:
+    dev_scores = pd.DataFrame([dev_raw], columns=["SCORE"], index=[0])
+
+print("dev_scores shape:", dev_scores.shape)
+
+# 4) Manual PSI function (score‐based) ──────────────────────────────────────────
+def manual_psi(expected, actual, bins=20):
     eps = 1e-6
-    # build common bins
-    breakpoints = np.linspace(min(expected.min(), actual.min()),
-                              max(expected.max(), actual.max()), bins + 1)
-    # get distributions
-    exp_counts, _ = np.histogram(expected, bins=breakpoints)
-    act_counts, _ = np.histogram(actual,   bins=breakpoints)
-    # convert to percentages
-    exp_pct = exp_counts / (exp_counts.sum() + eps) + eps
-    act_pct = act_counts / (act_counts.sum()   + eps) + eps
-    # PSI formula
-    psi_vals = (act_pct - exp_pct) * np.log(act_pct / exp_pct)
-    return psi_vals.sum()
+    # common bin edges
+    edges = np.linspace(min(expected.min(), actual.min()),
+                        max(expected.max(), actual.max()), bins+1)
+    exp_cnt, _ = np.histogram(expected, bins=edges)
+    act_cnt, _ = np.histogram(actual,   bins=edges)
+    exp_pct = exp_cnt / (exp_cnt.sum() + eps) + eps
+    act_pct = act_cnt / (act_cnt.sum()   + eps) + eps
+    return ((act_pct - exp_pct) * np.log(act_pct/exp_pct)).sum()
 
-# -------------- load data ---------------------------------------------------
-# development (nonprod) for Debt Consolidation
-segments = ["credit_card_consolidation"]
-dev_scores, dev_feats, _ = get_nonprod_data(segments, dataset="test_2", subset="all")
-fi_dict = get_nonprod_fi(segments)
-
-# production: full funnel and auto-approved
+# 5) Load production data ──────────────────────────────────────────────────────
 prod_all  = get_prod_data_updated("2024-07-01","2024-12-31", subset="all")
 prod_auto = get_prod_data_updated("2024-07-01","2024-12-31", subset="auto_approved")
 
-# -------------- 1) Campaign decision rates -------------------------------
-segment_name = "Debt Consolidation"
-mask = prod_all["LOANPURPOSE"] == segment_name
+# 6) Compute PSI on the SCORE column ───────────────────────────────────────────
+# extract arrays
+dev_arr  = dev_scores["SCORE"].values
+mask_all = prod_all["LOANPURPOSE"] == segment_label
+mask_auto= prod_auto["LOANPURPOSE"] == segment_label
 
+prod_all_arr  = prod_all.loc[mask_all,  "SCORE"].values
+prod_auto_arr = prod_auto.loc[mask_auto, "SCORE"].values
+
+psi_full = manual_psi(dev_arr, prod_all_arr,  bins=20)
+psi_auto = manual_psi(dev_arr, prod_auto_arr, bins=20)
+
+print(f"\nManual Score-PSI for {segment_label}:")
+print(f"  • Full funnel:    {psi_full:.3f}")
+print(f"  • Auto-approved:  {psi_auto:.3f}")
+
+# 7) Campaign decision rates ───────────────────────────────────────────────────
 camp = prod_all.loc[
-    mask & 
+    mask_all &
     (pd.to_datetime(prod_all["SCORE_DATE"]) >= "2024-11-01") &
-    (pd.to_datetime(prod_all["SCORE_DATE"]) <= "2024-12-31"),
-    :
+    (pd.to_datetime(prod_all["SCORE_DATE"]) <= "2024-12-31")
 ]
 
-print("=== Campaign (Nov–Dec) Decisions ===")
-print(camp["DECISIONZORS"].value_counts(dropna=False), "\n")
-print("=== Campaign Decision Rates ===")
-print(camp["DECISIONZORS"].value_counts(normalize=True, dropna=False), "\n")
+print(f"\nCampaign decisions for {segment_label} (Nov–Dec 2024):")
+print(camp["DECISIONZORS"].value_counts(dropna=False))
+print("\nCampaign decision rates:")
+print(camp["DECISIONZORS"].value_counts(normalize=True, dropna=False))
 
-# -------------- 2) Manual PSI on scores -----------------------------------
-# extract score arrays
-dev_score_arr  = dev_scores[segment_name].values
-prod_score_all = prod_all.loc[mask, "SCORE"].values
-prod_score_auto= prod_auto.loc[prod_auto["LOANPURPOSE"]==segment_name, "SCORE"].values
+# 8) Top Shapley feature drift ─────────────────────────────────────────────────
+fi_df    = fi_dict[segment_key]
+top_feat = fi_df.sort_values("importance", ascending=False).iloc[0]["feature"]
+print(f"\nTop feature by Shapley importance: {top_feat}")
 
-psi_full = manual_psi(dev_score_arr, prod_score_all, bins=20)
-psi_auto = manual_psi(dev_score_arr, prod_score_auto, bins=20)
-print(f"Manual PSI on SCORES → Full funnel: {psi_full:.3f}, Auto-approved: {psi_auto:.3f}\n")
-
-# -------------- 3) Top-feature drift ---------------------------------------
-fi_df     = fi_dict[segment_name]
-top_feat  = fi_df.sort_values("importance", ascending=False).iloc[0]["feature"]
-print("Top Shapley feature:", top_feat)
-
-# pull feature values
-dev_feat_arr  = dev_feats[segment_name][top_feat].fillna(-1).values
+dev_feat_arr  = nonprod_features[segment_key][top_feat].fillna(-1).values
 prod_feat_arr = (
-    prod_auto[prod_auto["LOANPURPOSE"]==segment_name]["DATA"]
-    .apply(pd.Series)[top_feat]
-    .fillna(-1)
-    .values
+    prod_auto.loc[mask_auto, "DATA"]
+            .apply(pd.Series)[top_feat]
+            .fillna(-1)
+            .values
 )
 
 print(f"Development mean {top_feat}:  {dev_feat_arr.mean():.1f}")
-print(f"Prod (auto-app) mean {top_feat}: {prod_feat_arr.mean():.1f}\n")
+print(f"Production mean {top_feat}:  {prod_feat_arr.mean():.1f}")
 
-# histogram
 plt.figure(figsize=(8,4))
-plt.hist(dev_feat_arr,  bins=50, alpha=0.6, label="Dev", density=True)
-plt.hist(prod_feat_arr, bins=50, alpha=0.6, label="Prod (auto-app)", density=True)
-plt.title(f"Drift in '{top_feat}'")
-plt.xlabel(top_feat)
-plt.ylabel("Density")
+plt.hist(dev_feat_arr,  bins=50, alpha=0.6, label="Dev",  density=True)
+plt.hist(prod_feat_arr, bins=50, alpha=0.6, label="Prod", density=True)
+plt.title(f"{top_feat} distribution shift")
 plt.legend()
 plt.show()
