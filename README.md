@@ -1,8 +1,8 @@
 import pandas as pd
+import numpy as np
 from zaml.analyze.data_analysis.distribution_drift import PSI
 
-# ─── 1) Load development back‐test scores ────────────────────────────────
-# this returns a dict of Series, indexed by ZEST_KEY
+# 1) grab your dev back‐test “score” object
 nonprod_scores, _, _ = get_nonprod_data(
     ["credit_card_consolidation"],
     dataset="test_2",
@@ -10,35 +10,40 @@ nonprod_scores, _, _ = get_nonprod_data(
 )
 dev_raw = nonprod_scores["credit_card_consolidation"]
 
-# wrap it into an N×1 DataFrame exactly like they do
-dev_df = dev_raw.to_frame(name="SCORE")
+# 2) turn it into an N×1 DataFrame called "SCORE"
+if isinstance(dev_raw, pd.Series):
+    dev_df = dev_raw.to_frame("SCORE")
+elif isinstance(dev_raw, np.ndarray):
+    dev_df = pd.DataFrame(dev_raw, columns=["SCORE"])
+else:
+    # if it’s a list or something list‐like
+    dev_df = pd.DataFrame(list(dev_raw), columns=["SCORE"])
 
-# ─── 2) Subset to your back‐test “auto‐approved” keys ─────────────────────
-# est_auto_approved_zest_keys comes from their cell [17]
+print("dev_df shape:", dev_df.shape)
+print(dev_df.head())
+
+# 3) filter to only your back‐test auto‐approved keys
 dev_auto = dev_df.loc[ est_auto_approved_zest_keys.intersection(dev_df.index) ]
+print("dev_auto shape:", dev_auto.shape)
 
-# ─── 3) Load production “all” and “approved” data ───────────────────────
-prod_all  = get_prod_data_updated("2024-07-01","2024-12-31", subset="all")
-prod_app  = get_prod_data_updated("2024-07-01","2024-12-31", subset="approved")
+# 4) load prod “approved” and extract auto‐approved slice
+prod_app = get_prod_data_updated("2024-07-01","2024-12-31", subset="approved")
 
-# ─── 4) Extract the prod auto‐approved slice ─────────────────────────────
-# auto_approved_rowids from their regex parsing in cell [18–19]
-mask   = prod_app["ROWID"].str.strip().isin(auto_approved_rowids)
-mask  &= prod_app["LOANPURPOSE"] == "Debt Consolidation"
+mask = (
+    prod_app["ROWID"].str.strip().isin(auto_approved_rowids)
+    & (prod_app["LOANPURPOSE"] == "Debt Consolidation")
+)
 prod_auto = (
     prod_app[mask]
     .groupby("APPID")["SCORE"]
-    .min()                  # pick the lowest of any duplicate scores
+    .min()
     .to_frame(name="SCORE")
 )
+print("prod_auto shape:", prod_auto.shape)
 
-# ─── 5) Compute PSI exactly like they do ────────────────────────────────
-psi = PSI()                  # default is equal‐pop bins (deciles)
+# 5) compute PSI exactly as their notebook does (decile bins)
+psi = PSI()
+psi.fit(dev_auto)              # fit on the dev auto‐approved distribution
+out = psi.transform(prod_auto) # transform on the prod auto‐approved distribution
 
-# fit on dev_auto (their “fit(nonprod_score_df)” step)
-psi.fit(dev_auto)
-
-# transform on prod_auto (their “transform(score_data)” step)
-psi_auto = psi.transform(prod_auto)
-
-print("Their auto‐approved PSI: ", psi_auto.iloc[0])
+print("Auto‐approved PSI:", out.iloc[0])
