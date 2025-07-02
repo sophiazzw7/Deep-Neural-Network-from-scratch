@@ -93,4 +93,7 @@ for seg in segments:
 
     psi = PSI()
     psi.fit(dev_score)
-    score_psi[seg]_
+    score_psi[seg] = to_psi_df(psi.transform(prod_score), ['score'])['psi'].iat[0]
+
+print("\n=== MODEL-SCORE PSI  (auto-approved only) ===")
+display(score_psi.to_frame('PSI'))
