@@ -1,13 +1,8 @@
 import numpy as np
 import pandas as pd
 
-# ─── Configuration ─────────────────────────────────────────────────────────────
-# (Adjust dates as needed for your production window)
-start_date = "2024-02-01"
-end_date   = "2024-04-30"
-dataset    = "test_2"
-
-# your segments and human-readable map
+# ─── 1) Configuration ────────────────────────────────────────────────────────────
+dataset = "test_2"
 segments = ["auto", "credit_card_consolidation", "home_improvement", "others"]
 segment_map = {
     "auto": "Auto",
@@ -16,27 +11,25 @@ segment_map = {
     "others": "Others"
 }
 
-# ─── Data Import ────────────────────────────────────────────────────────────────
-# dev scores, dev feature-values, dev targets
+# ─── 2) Load dev & prod data ────────────────────────────────────────────────────
+# dev scores, fe, target
 nonprod_scores, nonprod_fe, nonprod_target = get_nonprod_data(
     segments, dataset=dataset, subset="all"
 )
 
-# feature-importance dict (Shapley importances per segment)
+# dev feature‐importance
 fi_dict = get_nonprod_fi(segments)
 
-# production data (all, we'll filter by LOANPURPOSECATEGORY next)
-df = get_prod_data_updated(start_date, end_date, subset="all")
+# production data (full period)
+df = get_prod_data_updated(subset="all")   # <-- no start/end dates here
 
-
-# ─── PSI Helper ─────────────────────────────────────────────────────────────────
+# ─── 3) PSI helper ─────────────────────────────────────────────────────────────
 def calculate_psi(expected: np.ndarray,
                   actual:   np.ndarray,
                   buckets: int = 10) -> float:
     """
-    Compute Population Stability Index between two arrays of scores.
-    Bins are defined by quantiles of the 'expected' array.
-    Returns np.nan if either array is empty.
+    Population Stability Index between two arrays.
+    Bins are defined by quantiles of `expected`.
     """
     if expected.size == 0 or actual.size == 0:
         return np.nan
@@ -44,18 +37,18 @@ def calculate_psi(expected: np.ndarray,
     # 1) bin edges by expected quantiles
     qs = np.linspace(0, 100, buckets + 1)
     edges = np.percentile(expected, qs)
-    edges[0]  -= 1e-8  # expand first/last edge to catch extremes
+    edges[0]  -= 1e-8
     edges[-1] += 1e-8
 
-    # 2) histogram counts
-    exp_counts, _ = np.histogram(expected, bins=edges)
-    act_counts, _ = np.histogram(actual,   bins=edges)
+    # 2) counts
+    exp_cnt, _ = np.histogram(expected, bins=edges)
+    act_cnt, _ = np.histogram(actual,   bins=edges)
 
     # 3) to proportions
-    exp_pct = exp_counts / exp_counts.sum()
-    act_pct = act_counts / act_counts.sum()
+    exp_pct = exp_cnt / exp_cnt.sum()
+    act_pct = act_cnt / act_cnt.sum()
 
-    # 4) avoid zeros for log
+    # 4) avoid zeros
     eps = 1e-8
     exp_pct = np.where(exp_pct == 0, eps, exp_pct)
     act_pct = np.where(act_pct == 0, eps, act_pct)
@@ -65,24 +58,24 @@ def calculate_psi(expected: np.ndarray,
     return psi_vals.sum()
 
 
-# ─── Shapley-Weighted PSI by Segment ────────────────────────────────────────────
+# ─── 4) Compute Shapley‐weighted PSI per segment ────────────────────────────────
 results = pd.DataFrame(index=[dataset], columns=segments, dtype=float)
 
 for seg in segments:
-    # filter prod data to this segment
     model_label = segment_map[seg]
     prod_seg    = df[df["LOANPURPOSECATEGORY"] == model_label]
 
-    # unpack feature-matrix from the 'DATA' column (assumed dict-like)
-    prod_fe_df  = prod_seg["DATA"].apply(pd.Series)
+    # expand the 'DATA' dict‐column into a DataFrame of feature‐values
+    prod_fe_df = prod_seg["DATA"].apply(pd.Series)
 
-    # dev-period feature values & their importances
-    dev_fe_df   = nonprod_fe[seg]
-    fi_df       = fi_dict[seg]            # columns: ['feature','importance']
+    # dev‐period features & importances
+    dev_fe_df = nonprod_fe[seg]
+    fi_df     = fi_dict[seg]          # columns: ['feature','importance']
 
-    # only keep features present in both dev & prod
+    # only keep features present in both sets
     common_feats = dev_fe_df.columns.intersection(prod_fe_df.columns)
 
+    # compute raw PSI per feature
     psi_list = []
     for feat in common_feats:
         exp_arr = dev_fe_df[feat].dropna().values
@@ -92,12 +85,11 @@ for seg in segments:
 
     psi_df = pd.DataFrame(psi_list)
 
-    # merge on feature to bring in importance
+    # merge with Shapley importances and take weighted average
     merged = psi_df.merge(fi_df, on="feature", how="inner")
-
-    # compute Shapley-weighted PSI
     weighted_psi = (merged["psi"] * merged["importance"]).sum() / merged["importance"].sum()
+
     results.loc[dataset, seg] = weighted_psi
 
-# display
+# ─── 5) Show results ────────────────────────────────────────────────────────────
 print(results.T)
