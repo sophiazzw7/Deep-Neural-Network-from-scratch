@@ -1,89 +1,104 @@
-import numpy as np
+from zaml.analyze.data_analysis.distribution_drift import PSI
 import pandas as pd
+import numpy as np
 
-# ─── 1) Configuration ────────────────────────────────────────────────────────────
-segments = ["auto","credit_card_consolidation","home_improvement","others"]
+# Your custom PSI function
+def custom_psi(expected_df, actual_df, feature_col='feature', bins=10):
+    """
+    Custom PSI (Population Stability Index) calculation
+    
+    Parameters:
+    expected_df: DataFrame with expected/baseline data
+    actual_df: DataFrame with actual/comparison data  
+    feature_col: column name containing the feature values
+    bins: number of bins for discretization
+    
+    Returns:
+    DataFrame with PSI results
+    """
+    
+    # Example PSI calculation - replace with your logic
+    def calculate_psi_score(expected, actual, bins=bins):
+        # Discretize the data into bins
+        try:
+            # Create bins based on expected data quantiles
+            bin_edges = pd.qcut(expected, q=bins, duplicates='drop', retbins=True)[1]
+            
+            # Apply same bins to both datasets
+            expected_binned = pd.cut(expected, bins=bin_edges, include_lowest=True, duplicates='drop')
+            actual_binned = pd.cut(actual, bins=bin_edges, include_lowest=True, duplicates='drop')
+            
+            # Calculate proportions
+            expected_props = expected_binned.value_counts(normalize=True, sort=False)
+            actual_props = actual_binned.value_counts(normalize=True, sort=False)
+            
+            # Align indices and fill missing with small value to avoid log(0)
+            expected_props = expected_props.reindex(actual_props.index, fill_value=1e-10)
+            actual_props = actual_props.fillna(1e-10)
+            expected_props = expected_props.fillna(1e-10)
+            
+            # Calculate PSI
+            psi_values = (actual_props - expected_props) * np.log(actual_props / expected_props)
+            psi_score = psi_values.sum()
+            
+            return psi_score
+            
+        except Exception as e:
+            print(f"Error calculating PSI: {e}")
+            return np.nan
+    
+    # Calculate PSI score
+    psi_score = calculate_psi_score(expected_df[feature_col], actual_df[feature_col])
+    
+    # Return in format similar to original PSI function
+    result_df = pd.DataFrame({
+        'feature': [feature_col],
+        'psi': [psi_score]
+    })
+    
+    return result_df
+
+# Your existing code structure with custom PSI
+segments = ["auto", "credit_card_consolidation", "home_improvement", "others"]
 segment_map = {
-    "auto": "Auto",
-    "credit_card_consolidation": "Debt Consolidation",
-    "home_improvement": "Home Improvement",
-    "others": "Others"
+    'auto': 'Auto', 
+    'credit_card_consolidation': 'Debt Consolidation', 
+    'home_improvement': 'Home Improvement', 
+    'others': 'Others'
 }
-dataset = "test_2"
 
-# ─── 2) Load your data exactly as before ───────────────────────────────────────
-nonprod_scores, nonprod_fe, nonprod_target = get_nonprod_data(
-    segments, dataset=dataset, subset="all"
-)
+dataset = 'test2'
+nonprod_scores, nonprod_fe, nonprod_target = get_nonprod_data(segments, dataset=dataset, subset='all')
 fi_dict = get_nonprod_fi(segments)
-df      = get_prod_data_updated(subset="all")   # production DataFrame
+df = get_prod_data_updated(start_date, end_date, subset='all')
 
-# ─── 3) Plain-Python PSI function ───────────────────────────────────────────────
-def calculate_psi(expected: np.ndarray,
-                  actual:   np.ndarray,
-                  buckets:  int = 10) -> float:
-    """
-    Population Stability Index between two numeric arrays.
-    Bins by the quantiles of `expected`.
-    """
-    if expected.size == 0 or actual.size == 0:
-        return np.nan
+# Initialize results
+results = pd.DataFrame({'s': np.zeros(1) for s in segments})
+results.index = [dataset]
 
-    # 1) define bin edges using expected quantiles
-    quantiles = np.linspace(0, 100, buckets + 1)
-    edges = np.percentile(expected, quantiles)
-    edges[0]  -= 1e-8
-    edges[-1] += 1e-8
+for s in segments:
+    model_segment_filter = segment_map[s]
+    dffiltered = df[df['LOANPURPOSECATEGORY'] == model_segment_filter]
+    dffiltered['DATA'].apply(pd.Series)
+    fi_df = fi_dict[s]
+    nonprod_fe_df = nonprod_fe[s]
+    
+    # Fill missing values
+    nonprod_fe_df = nonprod_fe_df.fillna(-1)
+    
+    # Use your custom PSI function instead of PSI()
+    # Assuming dffiltered contains production features in same format as nonprod_fe_df
+    prod_fe_data = dffiltered  # You may need to transform this to match nonprod_fe_df format
+    
+    # Apply custom PSI
+    psi_results = custom_psi(nonprod_fe_df, prod_fe_data, feature_col='feature')  # Adjust column name as needed
+    
+    psi_df = psi_results
+    psi_df.index = psi_df.index.rename('feature')
+    psi_df = psi_df.rename({'psi'}, axis=1)
+    psi_df = psi_df.reset_index()
+    
+    merged = psi_df.merge(fi_df, on="feature")
+    results.loc[dataset, s] = (merged['psi'] * merged['importance']).sum() / merged['importance'].sum()
 
-    # 2) get counts
-    exp_cnt, _ = np.histogram(expected, bins=edges)
-    act_cnt, _ = np.histogram(actual,   bins=edges)
-
-    # 3) convert to proportions
-    exp_pct = exp_cnt / exp_cnt.sum()
-    act_pct = act_cnt / act_cnt.sum()
-
-    # 4) avoid zeros
-    eps = 1e-8
-    exp_pct = np.where(exp_pct == 0, eps, exp_pct)
-    act_pct = np.where(act_pct == 0, eps, act_pct)
-
-    # 5) PSI formula
-    return np.sum((act_pct - exp_pct) * np.log(act_pct / exp_pct))
-
-
-# ─── 4) Compute Shapley-Weighted Feature PSI ──────────────────────────────────
-results = pd.DataFrame(index=[dataset], columns=segments, dtype=float)
-
-for seg in segments:
-    label    = segment_map[seg]
-    prod_df  = df[df["LOANPURPOSECATEGORY"] == label]
-
-    # production-side feature matrix
-    prod_fe_df = pd.DataFrame(list(prod_df["DATA"]), index=prod_df.index)
-
-    # development-side feature matrix
-    dev_raw   = nonprod_fe[seg]
-    dev_fe_df = pd.DataFrame(list(dev_raw), index=dev_raw.index)
-
-    # get intersection of feature names
-    common_feats = dev_fe_df.columns.intersection(prod_fe_df.columns)
-
-    # compute PSI for each feature
-    psi_list = []
-    for feat in common_feats:
-        exp_vals = dev_fe_df[feat].dropna().values
-        act_vals = prod_fe_df[feat].dropna().values
-        psi_val  = calculate_psi(exp_vals, act_vals, buckets=10)
-        psi_list.append({"feature": feat, "psi": psi_val})
-
-    psi_df = pd.DataFrame(psi_list)
-
-    # merge with Shapley importances and do weighted average
-    merged = psi_df.merge(fi_dict[seg], on="feature", how="inner")
-    weighted_psi = (merged["psi"] * merged["importance"]).sum() / merged["importance"].sum()
-
-    results.loc[dataset, seg] = weighted_psi
-
-# ─── 5) Display ───────────────────────────────────────────────────────────────
-print(results.T)
+results.T
