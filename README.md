@@ -1,117 +1,37 @@
-import numpy as np
-import pandas as pd
+# focus on the Debt Con segment under auto_only
+seg = 'credit_card_consolidation'
+feat_importance = fi_dict[seg]
+# re-fit PSI on nonprod
+psi = PSI()
+psi.fit(nonprod_fe[seg].fillna(-1))
 
-# ─── manual PSI implementation ────────────────────────────────────────────────
-class PSI:
-    def __init__(self, buckets: int = 10):
-        self.buckets = buckets
-        self.exp_df: pd.DataFrame = None
-        self.breaks: dict[str, np.ndarray] = {}
+# extract prod_only auto-approved data
+prod_seg_auto = (prod_df
+                 [prod_df['LOANPURPOSECATEGORY'] == segment_map[seg]]
+                 [prod_df['approvedByCurrentStrategies'] == True])
+prod_feats_auto = prod_seg_auto['DATA'].apply(pd.Series)
 
-    def _ensure_df(self, data):
-        """Convert a Series-of-Series (or list‐of‐lists) into DataFrame, or pass through."""
-        if isinstance(data, pd.Series):
-            try:
-                return data.apply(pd.Series)
-            except Exception:
-                raise ValueError(f"Cannot convert Series to DataFrame (dtype={data.dtype})")
-        if not isinstance(data, pd.DataFrame):
-            raise TypeError(f"Expected DataFrame or Series, got {type(data).__name__}")
-        return data
+# compute per-feature PSI
+psi_vals = psi.transform(prod_feats_auto)
+psi_df = (psi_vals
+          .to_frame(name='psi')
+          .rename_axis('feature')
+          .reset_index())
 
-    def fit(self, expected):
-        """Learn bucket edges from non-prod (expected) data."""
-        df = self._ensure_df(expected).copy()
-        if df.empty:
-            raise ValueError("Expected DataFrame is empty")
-        self.exp_df = df
-        for col in df.columns:
-            vals = df[col].dropna().values
-            if len(vals) == 0:
-                raise ValueError(f"No non-null values in column '{col}'")
-            qs = np.linspace(0, 1, self.buckets + 1)
-            # unique to guard against constant columns
-            self.breaks[col] = np.unique(np.quantile(vals, qs))
+# pick the top‐drift feature
+top_feat = psi_df.sort_values('psi', ascending=False).iloc[0]['feature']
+print("top PSI feature:", top_feat)
 
-    def transform(self, actual) -> pd.Series:
-        """Compute PSI for each feature vs. the fitted non-prod data."""
-        df_act = self._ensure_df(actual)
-        if self.exp_df is None:
-            raise RuntimeError("`fit()` must be called before `transform()`")
-        psi_vals = {}
-        for col in df_act.columns:
-            if col not in self.exp_df.columns:
-                raise KeyError(f"Column '{col}' not seen in `fit()`")
-            exp = self.exp_df[col].dropna().values
-            act = df_act[col].dropna().values
-            bins = self.breaks[col]
+# pull raw values
+dev_vals  = nonprod_fe[seg][top_feat].dropna()
+prod_vals = prod_feats_auto[top_feat].dropna()
 
-            exp_pct = np.histogram(exp, bins=bins)[0] / len(exp)
-            act_pct = np.histogram(act, bins=bins)[0] / len(act)
-
-            # floor zeros
-            exp_pct = np.where(exp_pct == 0, 1e-8, exp_pct)
-            act_pct = np.where(act_pct == 0, 1e-8, act_pct)
-
-            psi_vals[col] = np.sum((act_pct - exp_pct) * np.log(act_pct / exp_pct))
-
-        return pd.Series(psi_vals, name="psi")
-# ────────────────────────────────────────────────────────────────────────────────
-
-# ─── your existing setup ───────────────────────────────────────────────────────
-segments    = ['auto','credit_card_consolidation','home_improvement','others']
-segment_map = {
-    'auto': 'Auto', 
-    'credit_card_consolidation': 'Debt Consolidation', 
-    'home_improvement': 'Home Improvement',
-    'others': 'Others'
-}
-dataset    = 'test'
-start_date = '2024-01-01'
-end_date   = '2024-06-30'
-
-# assume these come from your existing imports / earlier cells
-nonprod_scores, nonprod_fe, nonprod_target = get_nonprod_data(
-    segments, dataset=dataset, subset='all'
-)
-fi_dict = get_nonprod_fi(segments)
-
-df = get_prod_data_updated(
-    start_date, end_date, subset='all'
-)
-
-# prepare results container
-results = pd.DataFrame(
-    np.zeros((1, len(segments))),
-    index=[dataset],
-    columns=segments
-)
-
-# ─── loop over segments ────────────────────────────────────────────────────────
-for s in segments:
-    model_segment_filter = segment_map[s]
-    dffilt = df[df['LOANPURPOSECATEGORY'] == model_segment_filter]
-
-    # both of these may be Series-of-Series
-    prod_fe_data   = dffilt['DATA'].apply(pd.Series)
-    nonprod_fe_df  = nonprod_fe[s]
-    fi_df          = fi_dict[s]
-
-    # compute PSI
-    psi = PSI()
-    psi.fit(nonprod_fe_df.fillna(-1))        # mirror your old fillna(-1)
-    out = psi.transform(prod_fe_data)
-
-    # pivot into a DataFrame with feature → psi
-    psi_df = out.to_frame()
-    psi_df.index.rename('feature', inplace=True)
-    psi_df = psi_df.reset_index()            # now columns are ['feature','psi']
-
-    # merge with importance and compute weighted average
-    merged = psi_df.merge(fi_df, on='feature')
-    wpsi   = (merged['psi'] * merged['importance']).sum() / merged['importance'].sum()
-
-    results.loc[dataset, s] = wpsi
-
-# ─── show your final table ─────────────────────────────────────────────────────
-print(results.T)
+# plot normalized histograms
+plt.figure()
+plt.hist(dev_vals,  bins=30, density=True, alpha=0.6, label='Development')
+plt.hist(prod_vals, bins=30, density=True, alpha=0.6, label='Production')
+plt.xlabel(top_feat)
+plt.ylabel('Normalized Frequency')
+plt.title(f'Normalized Histogram Comparison for {top_feat}')
+plt.legend()
+plt.show()
