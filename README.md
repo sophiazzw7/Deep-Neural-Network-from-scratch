@@ -1,27 +1,38 @@
-You don’t need to guess it — it’s simply the number of rows in your “auto\_approved” subset of the live data.  As soon as you do:
+import numpy as np
 
-```python
-prod_auto = get_prod_data_updated("2024-07-01","2024-12-31", subset="auto_approved")
-```
+def manual_psi_eqfreq(baseline, current, bins=10, floor=1e-6):
+    """
+    PSI using equal-frequency bins defined on 'baseline' only.
+    
+    baseline: 1d array of dev scores
+    current:  1d array of prod scores (same metric)
+    bins:     number of quantile bins (commonly 10 for deciles)
+    floor:    small value to avoid log(0)
+    """
+    # 1) get the bin edges from the baseline quantiles
+    quantiles = np.linspace(0, 100, bins + 1)
+    edges = np.percentile(baseline, quantiles)
+    
+    # make sure edges are strictly increasing
+    edges[0]  -= 1e-8    # include anything == min
+    edges[-1] += 1e-8    # include anything == max
+    
+    # 2) histogram counts
+    b_cnts, _ = np.histogram(baseline, bins=edges)
+    c_cnts, _ = np.histogram(current,  bins=edges)
+    
+    # 3) convert to proportions + floor
+    b_pct = b_cnts / (b_cnts.sum() + floor) + floor
+    c_pct = c_cnts / (c_cnts.sum() + floor) + floor
+    
+    # 4) PSI sum
+    return np.sum((c_pct - b_pct) * np.log(c_pct / b_pct))
 
-you can just inspect
 
-```python
-auto_volume = prod_auto.shape[0]
-print("Auto-approved volume:", auto_volume)
-```
+# ── now recompute your auto-approved PSI using eq-freq bins ────────────────
 
-If instead you have already built the set of approved ROWIDs:
+dev_auto_arr  = dev_df_auto["SCORE"].values
+prod_auto_arr = prod_df_auto["SCORE"].values
 
-```python
-auto_approved_rowids = set(...)   # from your step [16]
-print("Auto-approved volume:", len(auto_approved_rowids))
-```
-
-Either one will give you the precise count.  In fact, in your notebook you saw:
-
-```
-num auto approved appids 599252
-```
-
-That is the volume of truly auto-approved applications over your scoring window.
+psi_auto_deciles = manual_psi_eqfreq(dev_auto_arr, prod_auto_arr, bins=10)
+print(f"Auto-approved PSI (decile bins): {psi_auto_deciles:.3f}")
