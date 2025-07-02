@@ -178,9 +178,17 @@ for s in segments:
     psi = PSI(nonprod_fe_df)
     out = psi.transform(prod_fe_data)
     psi_df = out
-    psi_df.index = psi_df.index.rename('feature')
-    psi_df = psi_df.rename({'psi'}, axis=1)
-    psi_df = psi_df.reset_index()
+    # Ensure the dataframe has the right structure for merging
+    if 'feature' not in psi_df.columns:
+        psi_df = psi_df.reset_index()
+        if psi_df.columns[0] != 'feature':
+            psi_df = psi_df.rename(columns={psi_df.columns[0]: 'feature'})
+    
+    # Make sure psi column exists
+    if 'psi' not in psi_df.columns:
+        # Find the PSI values column (should be the second column)
+        psi_col = [col for col in psi_df.columns if col != 'feature'][0]
+        psi_df = psi_df.rename(columns={psi_col: 'psi'})
     
     merged = psi_df.merge(fi_df, on="feature")
     results.loc[dataset, s] = (merged['psi'] * merged['importance']).sum() / merged['importance'].sum()
