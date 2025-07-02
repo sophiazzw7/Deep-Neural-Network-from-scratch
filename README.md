@@ -1,24 +1,27 @@
-import pandas as pd
+You don’t need to guess it — it’s simply the number of rows in your “auto\_approved” subset of the live data.  As soon as you do:
 
-# dev_raw might be a Series *or* a 1-col DataFrame
-dev_raw = nonprod_scores[segment_key]
+```python
+prod_auto = get_prod_data_updated("2024-07-01","2024-12-31", subset="auto_approved")
+```
 
-if isinstance(dev_raw, pd.Series):
-    # Series → single‐column DF
-    dev_df = dev_raw.to_frame(name="SCORE")
+you can just inspect
 
-elif isinstance(dev_raw, pd.DataFrame):
-    # already a DataFrame: just rename its sole column to “SCORE”
-    if dev_raw.shape[1] != 1:
-        raise ValueError("Expected nonprod_scores[...] to be 1-column, got %d cols" 
-                         % dev_raw.shape[1])
-    dev_df = dev_raw.copy()
-    dev_df.columns = ["SCORE"]
+```python
+auto_volume = prod_auto.shape[0]
+print("Auto-approved volume:", auto_volume)
+```
 
-else:
-    # scalar or list/array
-    dev_df = pd.DataFrame(dev_raw, columns=["SCORE"])
+If instead you have already built the set of approved ROWIDs:
 
-print("✔ dev_df is now an N×1 DataFrame with column ‘SCORE’")
-print(dev_df.shape)
-print(dev_df.head())
+```python
+auto_approved_rowids = set(...)   # from your step [16]
+print("Auto-approved volume:", len(auto_approved_rowids))
+```
+
+Either one will give you the precise count.  In fact, in your notebook you saw:
+
+```
+num auto approved appids 599252
+```
+
+That is the volume of truly auto-approved applications over your scoring window.
