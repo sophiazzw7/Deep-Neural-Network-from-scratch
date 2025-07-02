@@ -1,37 +1,93 @@
-# focus on the Debt Con segment under auto_only
-seg = 'credit_card_consolidation'
-feat_importance = fi_dict[seg]
-# re-fit PSI on nonprod
-psi = PSI()
-psi.fit(nonprod_fe[seg].fillna(-1))
+##############################################################################
+# 0.  PREREQUISITES ––– run the developer’s cells first
+#     -------------------------------------------------
+#     •  auto_approved_appids            (set of APPIDs in test_2 current-strategy file)
+#     •  est_auto_approved_zest_keys     (set of ZEST_KEYs mapped from those APPIDs)
+#     •  auto_approved_rowids            (set of RowId’s flagged WasAutoApproved == 1
+#                                         in the compiled-Zest production CSV)
+##############################################################################
 
-# extract prod_only auto-approved data
-prod_seg_auto = (prod_df
-                 [prod_df['LOANPURPOSECATEGORY'] == segment_map[seg]]
-                 [prod_df['approvedByCurrentStrategies'] == True])
-prod_feats_auto = prod_seg_auto['DATA'].apply(pd.Series)
+from zaml.analyze.data_analysis.distribution_drift import PSI
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
-# compute per-feature PSI
-psi_vals = psi.transform(prod_feats_auto)
-psi_df = (psi_vals
-          .to_frame(name='psi')
-          .rename_axis('feature')
-          .reset_index())
+# 1.  segments & pretty names – unchanged
+segments = ['auto', 'credit_card_consolidation', 'home_improvement', 'others']
+segment_map = {
+    'auto': 'Auto',
+    'credit_card_consolidation': 'Debt Consolidation',
+    'home_improvement': 'Home Improvement',
+    'others': 'Others',
+}
 
-# pick the top‐drift feature
-top_feat = psi_df.sort_values('psi', ascending=False).iloc[0]['feature']
-print("top PSI feature:", top_feat)
+# 2.  pull DEV (non-prod) features / importance – unchanged
+nonprod_scores, nonprod_fe, _ = get_nonprod_data(
+        segments, dataset='test_set', subset='all')
+fi_dict = get_nonprod_fi(segments)
 
-# pull raw values
-dev_vals  = nonprod_fe[seg][top_feat].dropna()
-prod_vals = prod_feats_auto[top_feat].dropna()
+# *** restrict DEV to auto-approved ***
+for seg in segments:
+    nonprod_fe[seg] = (
+        nonprod_fe[seg]                         # keep same feature set
+        .loc[nonprod_fe[seg].index
+             .intersection(est_auto_approved_zest_keys)]
+        .fillna(-1)
+    )
 
-# plot normalized histograms
-plt.figure()
-plt.hist(dev_vals,  bins=30, density=True, alpha=0.6, label='Development')
-plt.hist(prod_vals, bins=30, density=True, alpha=0.6, label='Production')
-plt.xlabel(top_feat)
-plt.ylabel('Normalized Frequency')
-plt.title(f'Normalized Histogram Comparison for {top_feat}')
-plt.legend()
-plt.show()
+# 3.  pull PROD → filter to auto-approved rowids once, then reuse
+prod_df_full = get_prod_data_updated(start_date, end_date, subset='approved')
+prod_df_auto = prod_df_full[
+        prod_df_full['RONID'].str.strip().isin(auto_approved_rowids)].copy()
+
+# 4.  run PSI per segment  (dev auto-approved  vs  prod auto-approved)
+results = pd.Series(index=segments, dtype=float)
+
+for seg in segments:
+    df_prod_seg = prod_df_auto[
+        prod_df_auto['LOANPURPOSECATEGORY'] == segment_map[seg]]
+
+    # explode JSON/struct column → regular wide DF
+    prod_feats = df_prod_seg['DATA'].apply(pd.Series).fillna(-1)
+
+    psi = PSI()
+    psi.fit(nonprod_fe[seg])          # dev   auto-approved
+    drift = psi.transform(prod_feats) # prod  auto-approved
+
+    # importance-weighted aggregation
+    psi_df = (drift.to_frame('psi')
+                    .reset_index()
+                    .rename(columns={'index': 'feature'}))
+    merged = psi_df.merge(fi_dict[seg], on='feature')
+    wpsi = (merged['psi'] * merged['importance']).sum() / merged['importance'].sum()
+    results[seg] = wpsi
+
+print("=== importance-weighted feature PSI  (auto-approved only) ===")
+display(results.to_frame('wPSI'))
+
+##############################################################################
+# 5.  OPTIONAL – score PSI (one value per segment) -- replicates dev’s cell
+##############################################################################
+score_results = pd.Series(index=segments, dtype=float)
+for seg in segments:
+    # DEV (restricted)
+    nonprod_score_df = nonprod_scores[seg].rename(columns=lambda _: 'SCORE')
+    nonprod_score_df = (
+        nonprod_score_df
+        .loc[nonprod_score_df.index.intersection(est_auto_approved_zest_keys)]
+        .fillna(-1)
+    )
+
+    # PROD (restricted)
+    score_prod = (
+        prod_df_auto[prod_df_auto['LOANPURPOSECATEGORY'] == segment_map[seg]]
+        .groupby('APPID')['SCORE'].min()     # same min() logic the dev used
+        .to_frame('SCORE')
+    )
+
+    psi = PSI()
+    psi.fit(nonprod_score_df)
+    score_results[seg] = psi.transform(score_prod)[0]
+
+print("\n=== model-score PSI  (auto-approved only) ===")
+display(score_results.to_frame('PSI'))
