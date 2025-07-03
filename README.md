@@ -31,58 +31,31 @@ For instance:
 | Others             | 0.270 | 0.1540 (set by Q2)    | Approximately 60% decline               |
 
 In particular, the Auto, Debt Consolidation, and Others segments would need to lose over half of their discriminatory power before triggering a red alert, significantly diminishing the practical effectiveness of KS monitoring.
-
----
-
-### Proposed Modification
-
-I suggest a minor yet impactful refinement:
-
-* Pool all funded loans across quarters first ("All Quarters") to reduce sensitivity to any single volatile quarter.
-* Replace the current 4σ (red) and 3σ (green) thresholds with **standard 3σ (red) and 2σ (yellow)** control limits.
-* Eliminate the "minimum-of-five" quarterly threshold selection, since pooling sufficiently addresses quarterly volatility.
-
-Applying the pooled approach using the values from Table 18-1 (All Quarters):
-
-| Segment            | μ (pooled) | σ (pooled) | Red (μ − 3σ) | Yellow (μ − 2σ) |
-| ------------------ | ---------- | ---------- | ------------ | --------------- |
-| Auto               | 0.3970     | 0.0350     | 0.2920       | 0.3270          |
-| Debt Consolidation | 0.3178     | 0.0428     | 0.1894       | 0.2322          |
-| Home Improvement   | 0.4412     | 0.0527     | 0.2831       | 0.3358          |
-| Others             | 0.3841     | 0.0288     | 0.2977       | 0.3265          |
-
----
-
-### Rationale and References for 3σ Control Bands
-
-* The **3σ limit** is a standard in statistical process control (SPC), originating from Shewhart's control chart methodology and widely endorsed across industries (see Montgomery, *Introduction to Statistical Quality Control*, 2019).
-* Three-sigma limits correspond to a 99.7% confidence interval assuming normality, widely accepted as the industry norm for identifying significant deviations that warrant review or intervention.
-* Adopting 3σ ensures thresholds remain actionable and appropriately sensitive to genuine deterioration in model performance.
-
----
-
-### Why Q2 Caused Excessive Threshold Volatility
-
 Quarter 2 specifically had fewer defaults, causing unusually large standard deviations:
 
 * **Auto segment:** Q2 KS σ = 0.0773 (more than double the pooled σ of 0.0350).
 * **Debt Consolidation segment:** Q2 KS σ = 0.0923 (more than double the pooled σ of 0.0428).
+==
 
-This unusually high variance in Q2 drove the calculated red thresholds down significantly (0.1616 for Auto and 0.1310 for Debt Consolidation), which is much lower than practically useful or plausible given historical performance.
+I suggest a minor yet impactful refinement:
+
+
+* Pool all funded loans across quarters first ("All Quarters") to reduce sensitivity to any single volatile quarter.
+* Eliminate the "minimum-of-five" quarterly threshold selection, since pooling sufficiently addresses quarterly volatility.
+
+Applying the pooled approach using the values from Table 18-1 (All Quarters):
+n.
+
+| Segment            | μ      | σ      |Red(μ−4σ) | Yellow (μ − 3σ) | 
+| ------------------ | ------ | ------ | -------- | --------------- | 
+| Auto               | 0.3970 | 0.0350 | 0.2570   | 0.2920          | 
+| Debt Consolidation | 0.3178 | 0.0155 | 0.2558   | 0.2713          | 
+| Home Improvement   | 0.4412 | 0.0273 | 0.3320   | 0.3593          |
+| Others             | 0.3841 | 0.0288 | 0.2689   | 0.2977          |           
+
+###
+
+
 
 ---
 
-### Next Steps
-
-If you're comfortable with this approach, I'd be happy to update our threshold tables accordingly and share a side-by-side comparison of recent quarterly performance.
-
-Thank you, and let me know if you have any questions or would like to discuss further.
-
-Best regards,
-\<Your Name>
-
----
-
-**Reference:**
-
-* Montgomery, D.C. (2019). *Introduction to Statistical Quality Control* (8th ed.). Wiley. (Chapter 5: "Methods and Philosophy of Statistical Process Control")
