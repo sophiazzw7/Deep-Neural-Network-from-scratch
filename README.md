@@ -1,109 +1,88 @@
-##############################################################################
-#  AUTO-APPROVED PSI  – feature + score  (pandas < 2.0 compatible)
-##############################################################################
-import numpy as np
-import pandas as pd
-from zaml.analyze.data_analysis.distribution_drift import PSI
+Here's your revised email, fully incorporating your requests, providing specific references, detailed examples, and clarity on volatility sources:
 
-# ── helpers ─────────────────────────────────────────────────────────────────
-def safe_df(obj, colnames=None):
-    """Force obj into a 2-D DataFrame."""
-    if isinstance(obj, pd.DataFrame):
-        out = obj.copy()
-    elif isinstance(obj, pd.Series):
-        out = obj.to_frame()
-    else:                       # list / ndarray / scalar
-        out = pd.DataFrame(obj)
-    if colnames is not None:
-        out.columns = colnames
-    return out
+---
 
-def to_psi_df(raw, feature_index):
-    """
-    Coerce PSI.transform() output into tidy DF →  columns:  feature | psi
-    Works for DataFrame, Series, ndarray, list.
-    """
-    # 1️⃣ already DataFrame
-    if isinstance(raw, pd.DataFrame):
-        out = raw.copy()
-        if out.shape[1] == 1:
-            out.columns = ['psi']
-        if 'feature' not in out.columns:
-            out.insert(0, 'feature', feature_index)
-        return out[['feature', 'psi']].reset_index(drop=True)
+**Subject:** Proposal to Adjust KS Thresholds Using Pooled 3σ Control Limits
 
-    # 2️⃣ Series
-    if isinstance(raw, pd.Series):
-        return (raw.rename('psi')
-                    .reset_index()                 # pandas < 2.0 syntax
-                    .rename(columns={'index': 'feature'}))
+Hi \<Name>,
 
-    # 3️⃣ ndarray / list
-    return pd.DataFrame({'feature': feature_index,
-                         'psi':     np.asarray(raw).ravel()})
+I've carefully reviewed the current KS threshold methodology and propose a minor adjustment that retains the bootstrap framework while improving threshold stability and interpretability.
 
-# ── 1. segments & pretty names ──────────────────────────────────────────────
-segments = ['auto', 'credit_card_consolidation', 'home_improvement', 'others']
-segment_map = {
-    'auto': 'Auto',
-    'credit_card_consolidation': 'Debt Consolidation',
-    'home_improvement': 'Home Improvement',
-    'others': 'Others',
-}
+---
 
-# ── 2. DEV data (restricted to auto-approved) ───────────────────────────────
-nonprod_scores, nonprod_fe, _ = get_nonprod_data(
-        segments, dataset='test_set', subset='all')
-fi_dict = get_nonprod_fi(segments)
+### Current Approach Overview
 
-for seg in segments:
-    nonprod_fe[seg] = (nonprod_fe[seg]
-                       .loc[nonprod_fe[seg].index
-                            .intersection(est_auto_approved_zest_keys)]
-                       .fillna(-1))
+The existing method for setting thresholds involves:
 
-# ── 3. PROD data (restricted to auto-approved) ──────────────────────────────
-prod_all  = get_prod_data_updated(start_date, end_date, subset='approved')
-prod_auto = prod_all[prod_all['RONID'].str.strip()
-                     .isin(auto_approved_rowids)].copy()
+1. Drawing 1,000 bootstrap samples per quarter (Q1–Q4 plus "All Quarters").
+2. Computing mean (μ) and standard deviation (σ) for each quarter.
+3. Defining thresholds: Red = μ − 4σ; Green = μ − 3σ.
+4. Selecting the **minimum** of the five quarterly thresholds.
 
-# ── 4-A. FEATURE-level importance-weighted PSI ──────────────────────────────
-feat_psi = pd.Series(index=segments, dtype=float)
+This approach performs well for AUC since its variance is relatively low (\~0.02). However, it becomes problematic for KS, as KS metrics show substantially higher volatility (σ ranges \~0.035 to 0.09). Specifically, Q2 had notably fewer default events, causing a large spike in standard deviation and significantly lowering the final thresholds.
 
-for seg in segments:
-    prod_seg = prod_auto[prod_auto['LOANPURPOSECATEGORY'] == segment_map[seg]]
-    prod_feats = prod_seg['DATA'].apply(pd.Series)
-    prod_feats = safe_df(prod_feats, colnames=nonprod_fe[seg].columns).fillna(-1)
+For instance:
 
-    psi = PSI()
-    psi.fit(safe_df(nonprod_fe[seg]))
-    drift_raw = psi.transform(prod_feats)
-    psi_df = to_psi_df(drift_raw, nonprod_fe[seg].columns)
+| Segment            | Q4 KS | Current Red Threshold | Performance Decline Needed for Red Flag |
+| ------------------ | ----- | --------------------- | --------------------------------------- |
+| Auto               | 0.380 | 0.1616 (set by Q2)    | Approximately 57% decline               |
+| Debt Consolidation | 0.277 | 0.1310 (set by Q2)    | Approximately 59% decline               |
+| Home Improvement   | 0.282 | 0.2475                | Approximately 44% decline               |
+| Others             | 0.270 | 0.1540 (set by Q2)    | Approximately 60% decline               |
 
-    merged = psi_df.merge(fi_dict[seg], on='feature')
-    feat_psi[seg] = (merged['psi'] * merged['importance']).sum() / merged['importance'].sum()
+In particular, the Auto, Debt Consolidation, and Others segments would need to lose over half of their discriminatory power before triggering a red alert, significantly diminishing the practical effectiveness of KS monitoring.
 
-print("\n=== Importance-weighted FEATURE PSI  (auto-approved only) ===")
-display(feat_psi.to_frame('wPSI'))
+---
 
-# ── 4-B. SCORE-level PSI (developer’s min-by-APPID logic) ───────────────────
-score_psi = pd.Series(index=segments, dtype=float)
+### Proposed Modification
 
-for seg in segments:
-    dev_score = (nonprod_scores[seg].rename(columns=lambda _: 'SCORE')
-                 .loc[nonprod_scores[seg].index
-                      .intersection(est_auto_approved_zest_keys)]
-                 .fillna(-1))
-    dev_score = safe_df(dev_score, ['SCORE'])
+I suggest a minor yet impactful refinement:
 
-    prod_score = (prod_auto[prod_auto['LOANPURPOSECATEGORY'] == segment_map[seg]]
-                  .groupby('APPID')['SCORE'].min()
-                  .to_frame('SCORE'))
-    prod_score = safe_df(prod_score, ['SCORE'])
+* Pool all funded loans across quarters first ("All Quarters") to reduce sensitivity to any single volatile quarter.
+* Replace the current 4σ (red) and 3σ (green) thresholds with **standard 3σ (red) and 2σ (yellow)** control limits.
+* Eliminate the "minimum-of-five" quarterly threshold selection, since pooling sufficiently addresses quarterly volatility.
 
-    psi = PSI()
-    psi.fit(dev_score)
-    score_psi[seg] = to_psi_df(psi.transform(prod_score), ['score'])['psi'].iat[0]
+Applying the pooled approach using the values from Table 18-1 (All Quarters):
 
-print("\n=== MODEL-SCORE PSI  (auto-approved only) ===")
-display(score_psi.to_frame('PSI'))
+| Segment            | μ (pooled) | σ (pooled) | Red (μ − 3σ) | Yellow (μ − 2σ) |
+| ------------------ | ---------- | ---------- | ------------ | --------------- |
+| Auto               | 0.3970     | 0.0350     | 0.2920       | 0.3270          |
+| Debt Consolidation | 0.3178     | 0.0428     | 0.1894       | 0.2322          |
+| Home Improvement   | 0.4412     | 0.0527     | 0.2831       | 0.3358          |
+| Others             | 0.3841     | 0.0288     | 0.2977       | 0.3265          |
+
+---
+
+### Rationale and References for 3σ Control Bands
+
+* The **3σ limit** is a standard in statistical process control (SPC), originating from Shewhart's control chart methodology and widely endorsed across industries (see Montgomery, *Introduction to Statistical Quality Control*, 2019).
+* Three-sigma limits correspond to a 99.7% confidence interval assuming normality, widely accepted as the industry norm for identifying significant deviations that warrant review or intervention.
+* Adopting 3σ ensures thresholds remain actionable and appropriately sensitive to genuine deterioration in model performance.
+
+---
+
+### Why Q2 Caused Excessive Threshold Volatility
+
+Quarter 2 specifically had fewer defaults, causing unusually large standard deviations:
+
+* **Auto segment:** Q2 KS σ = 0.0773 (more than double the pooled σ of 0.0350).
+* **Debt Consolidation segment:** Q2 KS σ = 0.0923 (more than double the pooled σ of 0.0428).
+
+This unusually high variance in Q2 drove the calculated red thresholds down significantly (0.1616 for Auto and 0.1310 for Debt Consolidation), which is much lower than practically useful or plausible given historical performance.
+
+---
+
+### Next Steps
+
+If you're comfortable with this approach, I'd be happy to update our threshold tables accordingly and share a side-by-side comparison of recent quarterly performance.
+
+Thank you, and let me know if you have any questions or would like to discuss further.
+
+Best regards,
+\<Your Name>
+
+---
+
+**Reference:**
+
+* Montgomery, D.C. (2019). *Introduction to Statistical Quality Control* (8th ed.). Wiley. (Chapter 5: "Methods and Philosophy of Statistical Process Control")
