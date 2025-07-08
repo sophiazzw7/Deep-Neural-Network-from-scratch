@@ -1,37 +1,45 @@
-4.1 2024Q2 Data Quality Review
+Here is your revised version, grouped into the following sections: **Distribution of Variables**, **Outliers**, **Missing or Duplicate Values**, and **Consistency Checks**, while maintaining formal tone and structure throughout.
 
-MRO independently reviewed all 214159 application records across 40 columns to assess the integrity, completeness, and plausibility of the dataset. This assessment was conducted as part of routine second-line oversight.
+---
 
-Distribution of Variables
+### 4.1 2024Q4 Data Quality Review
 
-MRO evaluated the distribution and range of key input variables. All model score values (SCORE) fell within the valid probability range of 0.0 to 1.0. No negative values were observed in PLRS scores or in any monetary amount fields. FICO scores ranged between 300 and 850, consistent with the conventional consumer credit scale. These findings confirm that all input features respect their natural business limits.
+MRO independently reviewed all 273,639 application records across 44 columns to assess the integrity, completeness, and plausibility of the dataset. This evaluation was conducted as part of second-line model risk oversight and follows the same quality control standards applied in previous quarters.
 
-MRO reviewed the target distribution and found that 210351 records, or 98.2% of the total dataset, were labeled as non-defaults (TARGET = 0). The remaining 3808 records, or 1.8%, were identified as defaults (TARGET = 1). This level of class imbalance is consistent with expectations for a prime-focused unsecured installment loan portfolio.
+#### Distribution of Variables
 
-An analysis of PLRS deciles revealed a monotonic trend: observed default rates declined steadily from approximately 3.6% in the lowest decile to 0.5% in the highest. This indicates that PD scores remained directionally aligned with credit risk across the spectrum.
+MRO assessed the range and distribution of key numerical fields. All model score values (SCORE) fell between 0 and 1, consistent with valid probability estimates. No negative values were observed in PLRS scores or any monetary variables. FICO scores ranged from 300 to 850, which conforms to standard consumer credit limits. These findings confirm that the dataset respects defined statistical and business constraints.
 
-Outliers
+MRO also reviewed the distribution of the binary target variable. Of the total population, 267,756 records—or 97.85%—were labeled as non-defaults (TARGET = 0), while 5,883 records—or 2.15%—were classified as defaults (TARGET = 1). This is consistent with expectations for a prime-oriented unsecured installment loan portfolio.
 
-MRO investigated extreme values in funded amount and application latency. A total of 43 loans exhibited funded amounts greater than five standard deviations above the mean, with loan sizes between 125000 and 250000 dollars. These values fall within the plausible bounds of the portfolio's high-ticket loan offering.
+In addition, MRO evaluated score calibration by PLRS decile. When accounts were grouped into ten equal-sized PLRS bands, the observed default rate declined steadily from approximately 4.3% in the lowest decile to 0.6% in the highest. This monotonic trend indicates that the PLRS score continues to rank-order credit risk appropriately.
 
-In terms of latency between approval and funding, 255 records exceeded five standard deviations, with durations ranging from approximately 2.6 to 2.9 days. The median latency was 2 days, while the average was around 7 days. These extended durations are atypical but fall within operational limits.
+#### Outliers
 
-Missing or Duplicate Values
+MRO investigated extreme values in the dataset. A total of 50 loans had funded amounts exceeding five standard deviations from the mean, with loan sizes ranging from \$125,000 to \$250,000. These values align with documented thresholds for high-ticket lending programs.
 
-MRO confirmed that the dataset contained no duplicated application records when excluding the large JSON-style DATA column. This verifies that each record is unique.
+Similarly, 385 records exhibited unusually long approval-to-funding latencies, ranging from approximately 2.7 to 3.1 days—more than five standard deviations above the mean. Although these records lie on the tail of the latency distribution, they remain within operational tolerance and may reflect manual review workflows.
 
-The CHARGEOFFDATE and CHARGEOFFAMOUNT fields were missing in 211237 records, or 98.7% of the dataset. These fields are populated only for charged-off loans, which comprise approximately 1.8% of the dataset.
+#### Missing or Duplicate Values
 
-All eight delinquency count features (COUNT60DPDWITHIN..., COUNT90DPDWITHIN...) were missing in 183 records, accounting for approximately 0.09% of the data. These accounts had a 0% observed default rate, suggesting that the absence of values corresponds to a lack of past-due history. MRO separately identified a group of 183 records with all DPD features missing.
+MRO verified that the dataset contained no duplicate application records when excluding the large JSON-style `DATA` column, confirming that each loan record is unique.
 
-Four records were missing ZESTZAMLPROCESSINGID, and one record was missing a PLRS score. These data gaps affected fewer than 0.01% of records and are not material.
+With respect to missing data, CHARGEOFFDATE and CHARGEOFFAMOUNT fields were absent in 268,799 records, which is approximately 98.2% of the file. This is expected, as only loans that have charged off populate these fields.
 
-Consistency Checks
+All eight delinquency count variables were missing in 437 records, or 0.16% of the dataset. These records had an observed default rate of 0%, suggesting that the missingness reflects the absence of any past-due events. MRO also identified a distinct segment of 437 accounts where all delinquency counters were absent, further supporting this interpretation.
 
-MRO evaluated the temporal consistency of date-related fields. In 14011 records, or 6.5% of the dataset, the ApprovalDate appeared later than the FundedDate. Review of the timestamps revealed that most occurred within the same day, likely due to time-of-day sequencing.
+Three legacy identifier fields—LIDS, DECISIONLIDS, and BEST\_LIDS—were missing in 108,050 records, representing 39.5% of the dataset. These variables are not model inputs, and the observed pattern is consistent with data exclusion practices for refinance transactions.
 
-In 203017 records, or 94.8%, the FundedDate followed the Score_Date as expected by the application process.
+A total of four records were missing ZESTZAMLPROCESSINGID, and two were missing either PLRS or BEST\_PLRS scores. These data gaps represent less than 0.01% of the dataset and were assessed to be immaterial.
 
-No instances were found where the ChargeoffDate preceded the FundedDate, confirming that the charge-off sequencing is logically valid.
+MRO also noted that 1,043 defaulted accounts lacked a recorded CHARGEOFFAMOUNT. These cases represent approximately 18% of all defaults and reflect known lags in data transmission between servicing systems and downstream reporting structures.
 
-MRO's independent data quality review for the 2024Q2 dataset did not reveal any material issues. All observed data patterns, missingness levels, value ranges, and timestamp relationships are consistent with prior expectations. Based on this review, the data is suitable for model monitoring and validation activities.
+#### Consistency Checks
+
+MRO evaluated the internal consistency of timestamp fields. In 17,702 records, or 6.5% of the dataset, the ApprovalDate was recorded as occurring after the FundedDate. Further inspection showed that nearly all of these anomalies took place within the same calendar day, likely due to timestamp formatting or sequencing.
+
+In 260,675 records—accounting for 95.3% of the total—the FundedDate followed the Score\_Date, aligning with the intended application workflow. No records were found where ChargeoffDate preceded FundedDate, confirming proper temporal sequencing.
+
+---
+
+MRO's independent review of the 2024Q4 dataset revealed no material data quality issues. The observed patterns of missingness, value ranges, outlier behavior, and date relationships are consistent with business expectations and prior quarters. Based on these assessments, the dataset is deemed appropriate for model monitoring and validation.
