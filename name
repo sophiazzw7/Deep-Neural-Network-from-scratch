@@ -1,15 +1,31 @@
-Hi Cheng,
-I reviewed the decomposition of the pooled AUC and compared it with segment-level results. Below are the key reasons I recommend discontinuing the pooled AUC as a monitored metric:
+Here’s a professional and clear message you can send to the user to ask for clarification and follow-up on additional segment coverage:
 
-1. Pooled AUC is dominated by cross-segment comparisons (≈ 71 %).
-* • When I break the overall AUC metric into components, ~71 % of the positive vs negative pairs come from different segments.
-* • As a result, the pooled AUC largely reflects how the four segment score scales line up with each other, not how well any model discriminates within its own population.
+---
 
-2. Cross-segment comparisons are risky and can mislead.
-* Example from the 2024Q2 data: the average score for a non-default in the credit-card-consolidation segment (0.047) is higher than the average score for a default in the auto segment (0.039).
-* This scale mismatch means a borrower who actually defaulted in auto can score lower than a borrower who repaid in credit-card, yet the pooled AUC treats that as “good” rank ordering.
-* Any shift in segment mix or a minor calibration tweak in one segment model could push the pooled AUC sharply up or down, even though no individual segment model has changed. The metric therefore measures “apples vs. oranges” rather than true model performance.
+**Subject:** Follow-up on Compensating Controls and ZORS Usage in Decisioning
 
-Please let me know your thoughts.
+Hi Vera,
 
-Sophia
+Thank you for the detailed information shared earlier regarding the recently approved policy adjustments and the FICO/DTI matrix.
+
+As part of our ongoing review, we would appreciate further clarification on the following points:
+
+1. **Interaction between ZORS and FICO/DTI in underwriting:**
+   We understand from the MDD that ZORS is used in conjunction with the FICO score and other policy rules, with thresholds like 650+ for auto-approval and 630–649 triggering manual review. Could you help us better understand how ZORS and the FICO/DTI matrix interact operationally during credit decisioning? For example:
+
+   * Are both ZORS and FICO/DTI conditions required to be met simultaneously for approval?
+   * If there is a conflict between ZORS and FICO/DTI outcomes (e.g., ZORS passes but FICO/DTI does not), which takes precedence?
+   * Are there any override conditions based on one score but not the other?
+
+2. **Coverage for other consumer-purpose segments:**
+   While we appreciate the targeted controls for Home Improvement loans, we also observed declining discrimination metrics (particularly KS) in the *Other* and *Debt Consolidation* segments. Are there plans to extend compensating controls to these segments during the interim period prior to model rebuild completion?
+
+Please let us know if a short call would be helpful to walk through these items together. We are happy to assist in reviewing any draft documentation or implementation plans.
+
+Best regards,
+\[Your Name]
+Model Risk Oversight (MRO)
+
+---
+
+Let me know if you'd like to tailor the tone to be firmer or more collaborative.
