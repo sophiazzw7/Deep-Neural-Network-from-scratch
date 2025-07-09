@@ -1,71 +1,19 @@
-Here’s a self-contained snippet you can drop into your notebook after you’ve loaded `df` (make sure it has columns `APPID`, `BEST_SCORE`, `target`, and `LOANPURPOSE`). It de-duplicates to one row per application (the max score), drops nulls, then computes AUC, KS and Gini by loan purpose and overall.
+Here is a concise yet formal **summary of the data quality assessment** based on the 2024Q2 and 2024Q4 independent reviews, incorporating your request to highlight the need for developer-side data controls:
 
-```python
-import pandas as pd
-import numpy as np
-from sklearn.metrics import roc_curve, auc
+---
 
-# ------------------------------------------------------------------------------
-# 1) Deduplicate: keep only the row with the highest BEST_SCORE per APPID
-# ------------------------------------------------------------------------------
-df_clean = df.copy()
+### Summary of Data Quality Assessment — 2024Q2 and 2024Q4
 
-# assume BEST_SCORE is the score column
-df_clean = df_clean[df_clean['BEST_SCORE'] == df_clean.groupby('APPID')['BEST_SCORE'].transform('max')]
+MRO conducted independent data quality reviews of the 2024Q2 and 2024Q4 production files for the LightStream PD model. Each file contained over 200,000 application records and was evaluated across dozens of fields for completeness, logical consistency, outliers, and calibration integrity.
 
-# ------------------------------------------------------------------------------
-# 2) Drop any rows missing score or target
-# ------------------------------------------------------------------------------
-df_clean = df_clean.dropna(subset=['BEST_SCORE', 'target'])
+Across both quarters, MRO observed no material data quality concerns. Variable ranges remained within expected business and statistical bounds; the model score consistently respected the \[0, 1] probability range, and all FICO values fell within the 300–850 band. No duplicate records were found in either dataset once the JSON-style `DATA` field was excluded. Additionally, missing values were generally limited to fields logically blank for most accounts (e.g., charge-off fields in non-defaulted loans), and no violations were found in the temporal sequencing of key application milestones.
 
-# ------------------------------------------------------------------------------
-# 3) Define metric functions
-# ------------------------------------------------------------------------------
-def compute_metrics(y_true, y_scores):
-    # ROC / AUC
-    fpr, tpr, _ = roc_curve(y_true, y_scores)
-    roc_auc = auc(fpr, tpr)
-    # KS = max distance between TPR and FPR
-    ks_stat = np.max(np.abs(tpr - fpr))
-    # Gini = 2 * AUC - 1
-    gini = 2 * roc_auc - 1
-    return roc_auc, ks_stat, gini
+Both datasets showed consistent levels of missingness in delinquency history fields, with a stable subset of accounts (183 in Q2, 437 in Q4) showing no past-due information and a correspondingly low observed default rate. In Q4, MRO also identified that 1,043 defaulted loans (approximately 18% of defaults) lacked CHARGEOFFAMOUNT values, a pattern consistent with lag between servicing systems and bureau reporting.
 
-# ------------------------------------------------------------------------------
-# 4) Loop over segments + overall
-# ------------------------------------------------------------------------------
-segments = df_clean['LOANPURPOSE'].unique().tolist()
-results = []
+Outlier analysis revealed small pockets of extreme values in funded amounts and latency, but all such records were explainable and remained within plausible operational ranges. Calibration by PLRS decile remained monotonic in both quarters, confirming directional consistency of the PD scores.
 
-for seg in segments + ['Overall']:
-    if seg == 'Overall':
-        sub = df_clean
-    else:
-        sub = df_clean[df_clean['LOANPURPOSE'] == seg]
-    
-    y_true   = sub['target'].astype(int)
-    y_scores = sub['BEST_SCORE'].astype(float)
-    
-    roc_auc, ks_stat, gini = compute_metrics(y_true, y_scores)
-    results.append({
-        'Loan Purpose': seg,
-        'AUC': roc_auc,
-        'KS': ks_stat,
-        'Gini': gini
-    })
+While the overall data structure and content remain appropriate for model performance monitoring, MRO notes that the consistency of missingness patterns and data anomalies across quarters underscores the importance of robust first-line data controls. The model development team should establish formalized monitoring and reconciliation checks to validate the integrity of production scoring files prior to use. These controls should ensure timely and complete ingestion of all required fields, particularly for delinquency history and charge-off attributes, to safeguard downstream model performance and reporting accuracy.
 
-# ------------------------------------------------------------------------------
-# 5) Display
-# ------------------------------------------------------------------------------
-results_df = pd.DataFrame(results)
-print(results_df.to_string(index=False, float_format='%.4f'))
-```
+---
 
-**What this does**
-
-1. **Deduplication**: `groupby(APPID).transform('max')` ensures one score per loan.
-2. **Null-filtering**: removes any apps without a valid score or target.
-3. **Metrics**: uses `sklearn`’s ROC to get AUC, then KS as `max|TPR−FPR|`, and Gini = 2·AUC−1.
-4. **Loop**: runs per segment and then “Overall.”
-
-That should reproduce the developer’s ZORS numbers exactly.
+Let me know if you'd like this adapted into an email, MDD language, or a presentation slide.
