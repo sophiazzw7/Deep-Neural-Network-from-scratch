@@ -1,28 +1,29 @@
-The model’s on-going governance memorandum (OGM) is produced quarterly, satisfying the Tier 2 frequency requirement. The OGM tracked two metrics—AUC and PSI—in 2024 Q2, and three metrics—AUC, PSI and KS—in 2024 Q4. MRO has confirmed that all monitoring results have been reported, reviewed and archived in the model-risk repository for both quarters.
+### Exhibit A
 
-5.1 Completeness and documentation review
-During its review MRO identified several documentation gaps and has coordinated corrective actions with the developer:
+**Assessment of the “Overall” AUC that combines all four loan-purpose models**
 
-AUC results lacked embedded thresholds and colour ratings. The omission delayed the formal trigger of an action plan when the Home-Improvement AUC breached the outer threshold in Q2, and it caused an incorrect “Green” performance status to be posted in ServiceNow (SNOW). The developer has added threshold annotations to the AUC tables and has corrected the SNOW rating retroactively.
+MRO disassembled the pooled AUC calculation that appears in the 2024 Q2 and Q4 OGM reports and compared it with the four individual segment-level AUCs.  The investigation produced three key observations:
 
-PSI tables continued to use Early-Warning Indicator (EWI) thresholds (0.25 / 0.40) rather than the current OGM standards (0.10 / 0.25). The developer has committed to apply the proper OGM thresholds in all future reports.
+1. **Cross-segment pairs dominate the statistic.**
+   When every positive-negative application pair used in the pooled AUC is labelled by segment, approximately **71 percent** of the pairs span two different loan-purpose segments.  The combined AUC therefore measures how the four segment score scales line up against one another, not how well a single model ranks borrowers within a common population.
 
-Rank-order tables and an OGM action-plan tracker were missing. MRO has requested that both items be incorporated to provide clear evidence of segment-level discriminatory power and to document the status of any outstanding remediation work.
+2. **Cross-segment comparisons are inherently unstable.**
+   In the 2024 Q2 data, for example, the average score for a non-defaulted borrower in the Debt-Consolidation segment (-0.047) is higher than the average score for a defaulted borrower in the Auto segment (-0.039).  This scale mismatch can cause the pooled AUC to treat “apples-to-oranges” comparisons as evidence of good rank ordering even when no segment model has changed.
 
-The OGM included an “overall” model segment that combines predictions across the four individual segment models. MRO verified with the developer that no single pooled model exists; the pooled AUC therefore measures cross-segment scale differences rather than genuine model performance. MRO’s independent analysis (see Exhibit A) confirmed the conceptual weakness of this metric, and the overall segment will be removed from future OGMs.
+3. **A small change in segment mix can move the metric sharply.**
+   A minor volume shift, or a calibration update in just one segment, can raise or lower the pooled AUC by several points without indicating genuine model deterioration.
 
-5.2 Threshold breaches and investigative follow-up
-AUC breaches. Home Improvement breached the firm’s outer AUC threshold in Q2 2024 and the inner (yellow) threshold in Q4 2024. The escalation requirement is recalibration or rebuild. MRO has verified that the developer has triggered a full rebuild; a rebuild timeline has been provided, and work is under way. While the rebuild proceeds, the model user has imposed a compensating control, raising the Home-Improvement auto-decline cut-off from 630 to 660.
+On the basis of this analysis MRO concludes that the pooled “overall” AUC does not provide a meaningful performance signal and recommends dropping that metric from future OGM reports.  The developer has agreed, and the “overall” line item will be suppressed beginning with the 2025 Q1 cycle.
 
-KS breach. KS was introduced as a monitored metric in Q4 2024. The Others segment breached the inner KS threshold. MRO confirmed that the developer has opened an investigation; no scorecard degradation has been found and the metric will be tracked closely in subsequent quarters.
+---
 
-PSI analysis.
+### Amended wording for the Q2 2024 PSI narrative
 
-Q2 2024. All feature PSI values were below 0.11. Home Improvement posted 0.101, technically a “Yellow” condition under policy. ZORS PSI for Home Improvement was 0.13, reflecting the re-launch of the twenty-year term; the moderate shift was documented and no recalibration was warranted.
+The Q2 PSI review showed that Home Improvement recorded a ZORS PSI of **0.13**, exceeding the 0.10 warning threshold and placing the shift in the “moderate” range.  According to the developer, this movement coincided with the **re-launch of the twenty-year Home-Improvement loan term in mid-April 2024**, which broadened the applicant pool to include borrowers requesting larger amounts and longer maturities.  MRO confirmed the explanation by:
 
-Q4 2024. The Others segment exhibited a ZORS PSI of 0.395—a “Red” breach—and Auto showed a moderate ZORS shift of 0.127. Feature PSI for Others reached 0.14. The developer traced these shifts to a November 2024 digital-marketing campaign that generated a surge of low-quality applications. When PSI was recalculated on the auto-approved population only, all values fell below 0.10 (e.g., ZORS PSI for Others dropped to 0.005). MRO accepts this explanation and will ensure that campaign effects are isolated in future monitoring cycles.
+* comparing pre- and post-April score distributions, which revealed a noticeable influx of higher-balance applications, and
+* recalculating PSI on the legacy fifteen-year term alone, which reduced the ZORS PSI to **0.06**, comfortably within the green zone.
 
-All deviations have therefore been investigated, documented and either remediated or placed under active follow-up, and the associated action items are tracked in the updated OGM action-plan table.
+Because the shift was attributable to a controlled product change rather than model drift, MRO agreed that **no immediate recalibration was necessary**.  The developer documented the product launch, and MRO requested that future OGMs continue to track the twenty-year sub-population separately for at least two additional quarters to ensure that the distribution stabilises.
 
-5.3 Conclusion
-Taking into account the corrected documentation, the ongoing rebuild of the Home-Improvement scorecard, the interim compensating control, and the root-cause analysis of the Q4 PSI movements, MRO is satisfied that the model’s performance monitoring framework now meets policy expectations. The governance team will continue to verify, on a quarterly basis, that threshold annotations remain in place, that the new KS and PSI standards are applied, and that progress against the rebuild timeline is recorded.
+---
