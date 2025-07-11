@@ -1,24 +1,16 @@
-Here’s a polished version of your draft incorporating both your analysis and the content from the image:
+The MOD13512 model is developed to support credit decisioning by classifying applicants as either likely “good” or “bad” based on their probability of default. It uses a supervised machine learning algorithm, XGBoost, to estimate the likelihood that an applicant will become 60 or more days delinquent within an 18-month performance window.
 
----
+Target and Data:
+The model was trained using historical default events from funded applicants—defined as those who completed the loan process and received disbursed funds. Since default outcomes are only observable for funded loans, unfunded applicants were assigned outcomes through reject inference. The model's target is a binary flag indicating whether a funded borrower reached the default threshold.
 
-### Assessment of Compensating Measures
+Segmentation:
+To address variation across loan types, the model is segmented into four sub-models corresponding to major loan-purpose groups. This segmentation reflects the developers’ view that self-reported loan purposes may affect risk characteristics and should be modeled independently.
 
-During the 2025 annual review of MOD13512, MRO noted multiple signals of model performance deterioration in the Home Improvement segment. Specifically, the 2024Q2 OGM report showed an **outer breach in AUC**, and the 2024Q4 OGM report indicated an **inner breach in AUC** for the same segment. In parallel, **KS statistics also evidenced degradation**, with an **outer breach observed in the 2024Q4 KS** for Home Improvement. Based on these findings, a model rebuild has been initiated.
+Methodology and Alternatives:
+Several modeling approaches were evaluated, including logistic regression, naïve Bayes, random forest, and support vector machines. XGBoost was selected for its strong performance and ability to handle large, complex datasets. The model uses a log-loss objective function appropriate for binary classification problems like credit risk prediction.
 
-Given the rebuild timeline, the model developer proposed a set of **compensating measures** as an interim control. These measures, detailed in the updated OGM documentation, aim to mitigate risk exposure until the new model is deployed. For the Home Improvement segment, the proposed actions include:
+Feature Selection:
+Features were selected through a recursive feature elimination process using gain-based importance scores. This approach efficiently narrowed down the most relevant predictors and is consistent with industry practices for feature selection in machine learning.
 
-* Increasing the **auto-decline FICO cutoff from 630 to 660** (implemented on 7/23).
-* Implementing **auto-decline for credit history <5 years** (timeline TBD, likely by Sept/Oct).
-* Implementing **auto-decline for credit builders with Open Secured Card** (timeline TBD, likely by Sept/Oct).
-* Implementing **auto-decline for current delinquents with Open Secured Card** (timeline TBD, likely by Sept/Oct).
-
-These changes are designed to tighten underwriting standards for higher-risk applicants based on non-model criteria, as the model alone no longer reliably separates good and bad loans in this segment.
-
-Since the compensating measures were introduced post hoc and outside of a controlled testing framework, MRO cannot directly compare model performance with and without the measures at this time. However, MRO will evaluate their impact in future reviews by tracking trends in observed credit performance, approval mix, and model metrics. This evaluation will help determine whether the interim measures were effective in mitigating the observed degradation.
-
-MRO supports the inclusion of these compensating controls as a reasonable short-term response, but reiterates that the long-term solution remains the successful deployment of a recalibrated model.
-
----
-
-Let me know if you'd like a version formatted for inclusion in a report or slide deck.
+Conclusion:
+The use of XGBoost, combined with gain-based feature selection and segment-specific models, is appropriate for the objective of predicting borrower creditworthiness. The methodology is consistent with industry standards and well-aligned with the model’s intended purpose.
