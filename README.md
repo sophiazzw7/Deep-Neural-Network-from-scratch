@@ -1,1 +1,16 @@
-MRO’s independent assessment concluded that the 2024Q2 and 2024Q4 production datasets are structurally sound and appropriate for model monitoring. Input fields, target labels, and overall data integrity met expectations, with no material data issues identified. However, a formal OGM data control process has not yet been established, and MRO recommends that the model development team implement first-line controls to ensure continued data quality. Performance testing revealed breaches in AUC and KS thresholds for select loan-purpose segments. While a full model rebuild is in progress, compensating controls—such as tightened auto-decline rules and targeted monitoring—have been implemented to mitigate risk in the interim.
+The model has not been performing as intended for four consecutive quarters, and since the redevelopment won’t be completed until Dec 2026, we wanted to check if there are any compensating measures the user can implement in the meantime to help mitigate the risk.
+
+Questions Regarding [Model Name/ID] – Annual Review
+
+Hi [Developer’s Name],
+
+Hope you're doing well. I'm currently working on the annual review for [Model Name or ID] and had a couple of questions I was hoping to clarify with you.
+
+[Insert your questions as a list here]
+
+Let me know if you'd prefer to discuss any of these over a quick call — happy to coordinate.
+
+Thanks in advance for your help!
+
+Best regards,
+Phoebe
