@@ -1,16 +1,3 @@
-The model has not been performing as intended for four consecutive quarters, and since the redevelopment won’t be completed until Dec 2026, we wanted to check if there are any compensating measures the user can implement in the meantime to help mitigate the risk.
+Thank you for confirming that the OGM cadence has been increased in line with the action plan. However, since the model has not been performing as intended for five consecutive quarters, and no compensating measures are currently in place, MRO is concerned that increased monitoring alone may not sufficiently mitigate the risk associated with continued use of the model. We wanted to check if there are any interim actions or controls the user can implement to help manage risk exposure prior to redevelopment completion in Dec 2026.
 
-Questions Regarding [Model Name/ID] – Annual Review
-
-Hi [Developer’s Name],
-
-Hope you're doing well. I'm currently working on the annual review for [Model Name or ID] and had a couple of questions I was hoping to clarify with you.
-
-[Insert your questions as a list here]
-
-Let me know if you'd prefer to discuss any of these over a quick call — happy to coordinate.
-
-Thanks in advance for your help!
-
-Best regards,
-Phoebe
+Additionally, we reviewed the deck you shared, and noted it was dated March 2024 and focused on analyzing the 2023Q4 override breach. Could you let us know if any further root cause analysis has been conducted for the 2024Q1 through 2025Q1 breaches? In particular, we’re interested in whether any override patterns, trends, or recurring drivers have been identified.
