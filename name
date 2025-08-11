@@ -1,11 +1,6 @@
-Thank You and Looking Ahead
-Hi [Boss’s Name],
 
-I hope you’re enjoying your time off! CJ announced my promotion at the all-hands yesterday, and I wanted to take a moment to thank you. I really appreciate your support throughout this process.
+Step 1: Intro to Python (Fundamentals) - Goal: Learn Python basics — variables, data types, loops, functions, and conditionals. - Purpose: Build a foundation so you can read/write analysis code. - Fit for us: Ensures everyone understands syntax before working with datasets.
+Step 2: Data Analysis & Visualization with pandas + Matplotlib - Goal: Apply Python to real validation tasks. - Covers: Data loading, cleaning (missing/duplicate handling), slicing, aggregation. - Visualization: Histograms, bar charts, heatmaps. - Fit for us: Directly maps to our Data Quality and Data Appropriateness checks.
+Path: Step 1 builds your language skills → Step 2 applies them to real model validation workflows.
 
-When you're back, I’d love to connect to better understand any new responsibilities, expectations, or next steps.
-
-Looking forward to catching up soon!
-
-Best,
-[Your Name]
+Python Learning Path for Model Validation
