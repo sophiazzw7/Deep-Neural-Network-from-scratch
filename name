@@ -1,6 +1,183 @@
+awesome—here are **simple, copy-pasteable** code snippets you can drop into the “Data Appropriateness” section of your slides. they stick to safe, generic columns and basic pandas/numpy only.
 
-Step 1: Intro to Python (Fundamentals) - Goal: Learn Python basics — variables, data types, loops, functions, and conditionals. - Purpose: Build a foundation so you can read/write analysis code. - Fit for us: Ensures everyone understands syntax before working with datasets.
-Step 2: Data Analysis & Visualization with pandas + Matplotlib - Goal: Apply Python to real validation tasks. - Covers: Data loading, cleaning (missing/duplicate handling), slicing, aggregation. - Visualization: Histograms, bar charts, heatmaps. - Fit for us: Directly maps to our Data Quality and Data Appropriateness checks.
-Path: Step 1 builds your language skills → Step 2 applies them to real model validation workflows.
+# 0) tiny helpers (reuse across checks)
 
-Python Learning Path for Model Validation
+```python
+import pandas as pd, numpy as np
+
+def _has(df, col): 
+    return col in df.columns
+
+def pct(x): 
+    return round(100 * float(x), 2)
+```
+
+# 1) schema + type fitness
+
+```python
+# expected core fields for modeling
+expected = {"id","date","segment","score","label"}
+
+missing  = expected - set(df.columns)
+extra    = set(df.columns) - expected
+schema_ok = (len(missing) == 0)
+
+# cast to usable types when present
+if _has(df, "date"):
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
+for c in ["score","label","feature_a"]:
+    if _has(df, c):
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+```
+
+# 2) cleaning: duplicates, irrelevant/incorrect rows
+
+```python
+# remove exact duplicates
+before = len(df)
+df = df.drop_duplicates()
+removed_dups = before - len(df)
+
+# filter obviously invalid numeric ranges (examples)
+if _has(df, "score"):
+    df = df[df["score"].ge(0)]         # score >= 0
+if _has(df, "label"):
+    df = df[df["label"].isin([0, 1])]  # binary label only
+```
+
+# 3) cleaning: formatting normalization
+
+```python
+# tidy column names
+df.columns = [c.strip().lower() for c in df.columns]
+
+# trim spaces and standardize case for object columns
+for c in df.select_dtypes("object").columns:
+    df[c] = df[c].astype(str).str.strip()
+
+# controlled mapping for common variants (example)
+if _has(df, "feature_b"):
+    norm_map = {"n/a":"not applicable", "N/A":"not applicable",
+                "Not Applicable":"not applicable"}
+    df["feature_b"] = df["feature_b"].replace(norm_map)
+```
+
+# 4) outlier detection (flag; do not auto-drop)
+
+```python
+def zscore_flags(s, z=3.0):
+    s = pd.to_numeric(s, errors="coerce")
+    return s.sub(s.mean()).div(s.std(ddof=0)).abs() > z
+
+outlier_summary = {}
+for c in ["feature_a","score"]:
+    if _has(df, c):
+        flags = zscore_flags(df[c], z=3.0)
+        outlier_summary[c] = int(flags.sum())
+        # keep a flagged column for review, not removal
+        df[f"{c}_outlier_flag"] = flags
+```
+
+*(talking point: “treatment must be justified; we **flag first** and only remove with evidence of error.”)*
+
+# 5) missing data handling (simple, explicit)
+
+```python
+missing_rate = df.isna().mean().sort_values(ascending=False)
+
+# example backfills (only where present); keep it minimal and explicit
+if _has(df, "feature_a"):
+    df["feature_a"] = df["feature_a"].fillna(df["feature_a"].median())
+
+if _has(df, "feature_b"):
+    df["feature_b"] = df["feature_b"].fillna("missing")
+
+# optional: drop rows missing the target or id
+if _has(df, "label"):
+    df = df.dropna(subset=["label"])
+if _has(df, "id"):
+    df = df.dropna(subset=["id"])
+```
+
+# 6) pooling / partition choices (documented)
+
+```python
+# time-based partition for validation (example: train before a cutoff date)
+if _has(df, "date"):
+    cutoff = pd.Timestamp("2024-12-31")
+    dev_df  = df[df["date"] <= cutoff].copy()
+    prod_df = df[df["date"] >  cutoff].copy()
+else:
+    # fallback: simple split (not time-aware)
+    dev_df  = df.sample(frac=0.7, random_state=1)
+    prod_df = df.drop(dev_df.index)
+
+# stratified check (ensure both classes exist in each split when possible)
+def class_counts(x):
+    return x["label"].value_counts(dropna=False) if _has(x, "label") else pd.Series(dtype=int)
+
+dev_counts  = class_counts(dev_df)
+prod_counts = class_counts(prod_df)
+```
+
+# 7) sampling / re-sampling notes (log only; apply intentionally)
+
+```python
+# compute simple class prevalence to inform any weighting decisions (no resampling yet)
+if _has(df, "label"):
+    prevalence = df["label"].mean()  # baseline event rate
+```
+
+# 8) transformations (binning / normalization – safe examples)
+
+```python
+# binning (for summaries/plots; not mandatory)
+if _has(df, "score"):
+    df["score_bin"] = pd.qcut(df["score"], q=10, duplicates="drop")
+
+# simple z-norm for a numeric feature (if needed downstream)
+if _has(df, "feature_a"):
+    fa = pd.to_numeric(df["feature_a"], errors="coerce")
+    df["feature_a_z"] = (fa - fa.mean()) / fa.std(ddof=0)
+```
+
+# 9) relevance & representativeness (fit to objectives)
+
+```python
+# compare segment mix to development (if you have dev_df)
+if _has(df, "segment") and "dev_df" in globals() and _has(dev_df, "segment"):
+    cur = df["segment"].value_counts(normalize=True)
+    ref = dev_df["segment"].value_counts(normalize=True)
+    mix_cmp = pd.concat([cur, ref], axis=1, keys=["current","dev"]).fillna(0.0)
+    mix_cmp["abs_diff"] = (mix_cmp["current"] - mix_cmp["dev"]).abs()
+    # large diffs may signal the data isn’t representative for the intended use
+```
+
+# 10) light “rule table” validator (easy to explain)
+
+```python
+rules = []
+
+def add_rule(ok, msg):
+    rules.append({"ok": bool(ok), "message": msg})
+
+add_rule(schema_ok, f"schema ok (missing={list(missing)})")
+if _has(df, "label"): add_rule(df["label"].isin([0,1]).all(), "label is binary")
+if _has(df, "score"): add_rule((df["score"] >= 0).all(), "score non-negative")
+if _has(df, "segment"): add_rule(df["segment"].notna().all(), "segment present")
+
+appropriateness_report = pd.DataFrame(rules)
+```
+
+# 11) quick export of findings
+
+```python
+with pd.ExcelWriter("data_appropriateness_checks.xlsx") as xw:
+    df.head(20).to_excel(xw, "sample_rows", index=False)
+    missing_rate.to_frame("missing_pct").to_excel(xw, "missing", index=True)
+    if 'mix_cmp' in locals(): mix_cmp.to_excel(xw, "segment_mix", index=True)
+    appropriateness_report.to_excel(xw, "rules_summary", index=False)
+```
+
+want me to drop these into your deck as new slides (split across “Cleaning,” “Outliers & Missing,” “Partition/Pooling,” and “Relevance & Mix”)? I can regenerate the PPT with these blocks exactly as shown.
