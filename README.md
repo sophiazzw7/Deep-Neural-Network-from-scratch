@@ -1,61 +1,55 @@
-/* ============ EDIT THIS PATH ONLY ============ */
+/* ===== EDIT THIS to your desired target ===== */
 %let OUT_XLSX = /sasdata/mrmg1/kevin_snapshot_simple.xlsx;
-/* ============================================ */
+/* =========================================== */
 
-/* 0) Sanity: show where SAS is running and that the output folder exists */
-%put NOTE: Host=&SYSHOSTNAME  User=&SYSUSERID  OS=&SYSSCPL;
-filename outdir "%sysfunc(filepath(work))"; /* just to show WORK path */
-%put NOTE: WORK path = %sysfunc(pathname(work));
-%let OUT_DIR = %substr(&OUT_XLSX,1,%length(&OUT_XLSX)-%length(%scan(&OUT_XLSX,-1,'/'))); /* crude dir pull */
-
-/* Confirm Kevin_Snapshot exists and has rows */
-%macro _chk_ds(ds);
+/* 0) Confirm the dataset exists and row count */
+%macro check_ds(ds);
   %if %sysfunc(exist(&ds)) %then %do;
     proc sql noprint; select count(*) into :_n from &ds; quit;
-    %put NOTE: &ds exists with &_n observations.;
+    %put NOTE: &ds exists with &_n rows.;
   %end;
-  %else %do;
-    %put ERROR: Dataset &ds not found. Stop.;
-    %abort cancel;
-  %end;
+  %else %do; %put ERROR: Dataset &ds not found. Stop.; %abort cancel; %end;
 %mend;
-%_chk_ds(work.Kevin_Snapshot);
+%check_ds(work.Kevin_Snapshot);
 
-/* 1) Try ODS EXCEL (most reliable on UNIX SAS) */
+/* 1) Try ODS EXCEL (robust on UNIX SAS) */
 ods _all_ close;
 ods excel file="&OUT_XLSX" options(sheet_name="Snapshot" embedded_titles='yes');
 title "Kevin Snapshot";
 proc print data=work.Kevin_Snapshot noobs; run;
 ods excel close;
+title;
 
-/* 1a) Verify the file now exists */
+/* 2) If ODS did not create the file, also write via XLSX engine */
+libname xout xlsx "&OUT_XLSX";
+data xout.Snapshot; set work.Kevin_Snapshot; run;
+libname xout clear;
+
+/* 3) Verify the exact file exists (server-side path) */
 data _null_;
-  length p $512;
-  p = resolve('' " &OUT_XLSX " '');
-  if fileexist("&OUT_XLSX") then put "NOTE: Wrote XLSX via ODS: &OUT_XLSX";
-  else put "WARN: ODS EXCEL did not create &OUT_XLSX";
+  if fileexist("&OUT_XLSX") then put "NOTE: XLSX created at &OUT_XLSX";
+  else do;
+    put "ERROR: Could not create &OUT_XLSX. Will try /tmp fallback.";
+    call symputx('OUT_XLSX_FB','/tmp/kevin_snapshot_simple.xlsx','G');
+  end;
 run;
 
-/* 2) If not created, try LIBNAME XLSX engine */
-%macro _fallback_xlsx;
-  %if %sysfunc(fileexist("&OUT_XLSX"))=0 %then %do;
-    libname xout xlsx "&OUT_XLSX";
-    /* replace Snapshot sheet if it exists */
-    proc datasets lib=xout nolist; delete Snapshot; quit;
-    data xout.Snapshot; set work.Kevin_Snapshot; run;
-    libname xout clear;
-    data _null_; 
-      if fileexist("&OUT_XLSX") then put "NOTE: Wrote XLSX via LIBNAME XLSX: &OUT_XLSX";
-      else put "ERROR: Could not create &OUT_XLSX via either method.";
+/* 4) Fallback to /tmp if needed */
+%macro fallback;
+  %if not %sysfunc(fileexist(&OUT_XLSX)) %then %do;
+    ods _all_ close;
+    ods excel file="&OUT_XLSX_FB" options(sheet_name="Snapshot");
+    proc print data=work.Kevin_Snapshot noobs; run;
+    ods excel close;
+
+    libname xfb xlsx "&OUT_XLSX_FB";
+    data xfb.Snapshot; set work.Kevin_Snapshot; run;
+    libname xfb clear;
+
+    data _null_;
+      if fileexist("&OUT_XLSX_FB") then put "NOTE: Wrote XLSX to fallback: &OUT_XLSX_FB";
+      else put "ERROR: Fallback write also failed. Check path/permissions.";
     run;
   %end;
 %mend;
-%_fallback_xlsx;
-
-/* 3) List the target directory so you can see the file server-side */
-filename lsdir pipe "ls -l %sysfunc(dequote(&OUT_DIR))";
-data _null_;
-  infile lsdir truncover;
-  input line $char300.;
-  putlog line;
-run;
+%fallback;
