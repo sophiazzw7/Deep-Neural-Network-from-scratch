@@ -1,102 +1,61 @@
-/* ====== SETUP ====== */
-options mprint mlogic symbolgen;
-libname ogm "/sasdata/mrmg1";
+/* ============ EDIT THIS PATH ONLY ============ */
+%let OUT_XLSX = /sasdata/mrmg1/kevin_snapshot_simple.xlsx;
+/* ============================================ */
 
-/* Edit these if names/paths differ */
-%let DS_ALL   = ogm.all_table_2503_1;         /* instrument snapshot */
-%let DS_F_ABL = ogm.abl_lgd_factor_2503_abl;  /* LGD factor ABL */
-%let DS_F_SF  = ogm.abl_lgd_factor_2503_sf;   /* LGD factor SF  */
-%let OUT_CSV  = /sasdata/mrmg1/kevin_snapshot_simple.csv;
+/* 0) Sanity: show where SAS is running and that the output folder exists */
+%put NOTE: Host=&SYSHOSTNAME  User=&SYSUSERID  OS=&SYSSCPL;
+filename outdir "%sysfunc(filepath(work))"; /* just to show WORK path */
+%put NOTE: WORK path = %sysfunc(pathname(work));
+%let OUT_DIR = %substr(&OUT_XLSX,1,%length(&OUT_XLSX)-%length(%scan(&OUT_XLSX,-1,'/'))); /* crude dir pull */
 
-/* Helper: check whether a variable exists */
-%macro hasvar(ds, var);
-  %local dsid pos rc;
-  %let dsid=%sysfunc(open(&ds));
-  %if &dsid %then %do;
-    %let pos=%sysfunc(varnum(&dsid,&var));
-    %let rc=%sysfunc(close(&dsid));
-    %sysfunc(ifc(&pos>0,1,0))
-  %end;
-  %else 0
-%mend;
-
-/* ====== 1) Base snapshot (only essentials, no collateral yet) ====== */
-data _base0;
-  set &DS_ALL;
-
-  length LOB $3 Facility_Type $60 Risk_Rating $20 LGD_Rating $10;
-
-  /* LOB: use SF flag when available; otherwise infer from LOB name */
-  if nmiss(SF)=0 then LOB = ifc(SF=1,'SF','ABL');
-  else do;
-    LOB = '';
-    if not missing(STI_lob_nm) then do;
-      if index(upcase(STI_lob_nm),'STRUCTURED')>0 then LOB='SF';
-      else if index(upcase(STI_lob_nm),'ABL')>0 then LOB='ABL';
-    end;
-  end;
-
-  Facility_Type = coalescec(strip(STI_sub_lob_nm), strip(STI_lob_nm));
-  Risk_Rating   = strip(TFC_rsk_grd);
-  LGD_Rating    = strip(final_lgd_grade);
-  Commitment    = tfc_face_amt;
-  Drawn         = tfc_curr_bal;
-
-  /* Utilization: only if commitment > 0; cap to [0,1] */
-  if Commitment>0 then Util_fac = max(0, min(1, Drawn/Commitment));
-  else Util_fac = .;
-
-  keep LOB Facility_Type Risk_Rating LGD_Rating
-       Commitment Drawn Util_fac
-       c_obg c_obl TFC_Account_Nbr;
-run;
-
-/* ====== 2) Collateral from factor tables (ABL + SF) ====== */
-/* Build views that always provide c_obg, c_obl, collateralclass, dt (dt=. if absent) */
-%let HAS_DT_ABL = %hasvar(&DS_F_ABL, dt);
-%let HAS_DT_SF  = %hasvar(&DS_F_SF,  dt);
-
-%macro make_view(src, viewnm, hasdt);
-  %if &hasdt=1 %then %do;
-    proc sql; create view &viewnm as
-      select c_obg, c_obl, collateralclass, dt from &src; quit;
+/* Confirm Kevin_Snapshot exists and has rows */
+%macro _chk_ds(ds);
+  %if %sysfunc(exist(&ds)) %then %do;
+    proc sql noprint; select count(*) into :_n from &ds; quit;
+    %put NOTE: &ds exists with &_n observations.;
   %end;
   %else %do;
-    proc sql; create view &viewnm as
-      select c_obg, c_obl, collateralclass, . as dt from &src; quit;
+    %put ERROR: Dataset &ds not found. Stop.;
+    %abort cancel;
   %end;
 %mend;
+%_chk_ds(work.Kevin_Snapshot);
 
-%make_view(&DS_F_ABL, F_ABL_V, &HAS_DT_ABL);
-%make_view(&DS_F_SF,  F_SF_V,  &HAS_DT_SF);
+/* 1) Try ODS EXCEL (most reliable on UNIX SAS) */
+ods _all_ close;
+ods excel file="&OUT_XLSX" options(sheet_name="Snapshot" embedded_titles='yes');
+title "Kevin Snapshot";
+proc print data=work.Kevin_Snapshot noobs; run;
+ods excel close;
 
-data _fact_all;
-  set F_ABL_V F_SF_V;
+/* 1a) Verify the file now exists */
+data _null_;
+  length p $512;
+  p = resolve('' " &OUT_XLSX " '');
+  if fileexist("&OUT_XLSX") then put "NOTE: Wrote XLSX via ODS: &OUT_XLSX";
+  else put "WARN: ODS EXCEL did not create &OUT_XLSX";
 run;
 
-/* Choose one collateral row per facility: latest dt if present */
-proc sort data=_fact_all;
-  by c_obg c_obl descending dt;
-run;
+/* 2) If not created, try LIBNAME XLSX engine */
+%macro _fallback_xlsx;
+  %if %sysfunc(fileexist("&OUT_XLSX"))=0 %then %do;
+    libname xout xlsx "&OUT_XLSX";
+    /* replace Snapshot sheet if it exists */
+    proc datasets lib=xout nolist; delete Snapshot; quit;
+    data xout.Snapshot; set work.Kevin_Snapshot; run;
+    libname xout clear;
+    data _null_; 
+      if fileexist("&OUT_XLSX") then put "NOTE: Wrote XLSX via LIBNAME XLSX: &OUT_XLSX";
+      else put "ERROR: Could not create &OUT_XLSX via either method.";
+    run;
+  %end;
+%mend;
+%_fallback_xlsx;
 
-data _coll_dom;
-  set _fact_all;
-  by c_obg c_obl;
-  if first.c_obl then output;
-run;
-
-/* ====== 3) Join collateral into base (factor-only) ====== */
-proc sql;
-  create table Kevin_Snapshot as
-  select b.*,
-         f.collateralclass as Collateral_Class
-  from _base0 b
-  left join _coll_dom f
-    on b.c_obg=f.c_obg and b.c_obl=f.c_obl;
-quit;
-
-/* ====== 4) Export for Excel ====== */
-proc export data=Kevin_Snapshot
-  outfile="&OUT_CSV" dbms=csv replace;
-  putnames=yes;
+/* 3) List the target directory so you can see the file server-side */
+filename lsdir pipe "ls -l %sysfunc(dequote(&OUT_DIR))";
+data _null_;
+  infile lsdir truncover;
+  input line $char300.;
+  putlog line;
 run;
