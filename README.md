@@ -1,168 +1,109 @@
-/* ======================= SETUP ======================= */
-options mprint mlogic symbolgen nosource2;
+/* ============== SETUP ============== */
+options mprint mlogic symbolgen;
 libname ogm "/sasdata/mrmg1";
 
-/* ---- INPUT TABLES (edit names if yours differ) ---- */
-%let DS_ALL   = ogm.all_table_2503_1;           /* OGM instrument snapshot */
-%let DS_F_ABL = ogm.abl_lgd_factor_2503_abl;    /* Factor output (has f_fac/productid) */
-%let DS_ACP   = ogm.asset_collateral_product;   /* Asset_Collateral_product */
+/* Input tables */
+%let DS_ALL   = ogm.all_table_2503_1;         /* instrument snapshot */
+%let DS_F_ABL = ogm.abl_lgd_factor_2503_abl;  /* LGD factor ABL */
+%let DS_F_SF  = ogm.abl_lgd_factor_2503_sf;   /* LGD factor SF  */
 
-/* =================== 1) BASE SNAPSHOT =================== */
-/* Keep only the fields Kevin needs and compute utilization */
-data BASE0;
+/* Output CSV */
+%let OUT_CSV  = /sasdata/mrmg1/kevin_snapshot_simple.csv;
+
+/* ============== 1) BASE SNAPSHOT (only essentials) ============== */
+data _base0;
   set &DS_ALL;
-  length segment $3 risk_grade $6 lgd_grade $1 facility_type $40;
-  segment      = ifc(SF=1,'SF','ABL');
-  facility_type= coalescec(strip(STI_lob_nm),'');
-  risk_grade   = strip(TFC_rsk_grd);
-  lgd_grade    = strip(final_lgd_grade);
-  commit       = tfc_face_amt;
-  drawn        = tfc_curr_bal;
-  asof_dt      = datepart(f_uplddt);
-  format asof_dt date9.;
-  if commit>0 then util = min(max(drawn/commit,0),1);
-  keep segment facility_type risk_grade lgd_grade commit drawn util
-       collateralclass asof_dt
-       c_obg c_obl TFC_Account_Nbr TFC_Account_Nbr_New;
+
+  /* LOB: prefer SF flag if present; otherwise derive from LOB name */
+  length LOB $3 Facility_Type $60 Risk_Rating $20 LGD_Rating $10;
+  if nmiss(SF)=0 then LOB = ifc(SF=1,'SF','ABL');
+  else do;
+    LOB = '';
+    if not missing(STI_lob_nm) then do;
+      if index(upcase(STI_lob_nm),'STRUCTURED')>0 then LOB='SF';
+      else if index(upcase(STI_lob_nm),'ABL')>0 then LOB='ABL';
+    end;
+  end;
+
+  Facility_Type = coalescec(strip(STI_sub_lob_nm), strip(STI_lob_nm));
+  Risk_Rating   = strip(TFC_rsk_grd);
+  LGD_Rating    = strip(final_lgd_grade);
+  Commitment    = tfc_face_amt;
+  Drawn         = tfc_curr_bal;
+
+  /* Utilization: only if commitment > 0; cap to [0,1] */
+  if Commitment>0 then Util_fac = max(0, min(1, Drawn/Commitment));
+  else Util_fac = .;
+
+  keep LOB Facility_Type Risk_Rating LGD_Rating
+       Commitment Drawn Util_fac
+       collateralclass  /* keep if already present */
+       c_obg c_obl TFC_Account_Nbr;
 run;
 
-/* =================== 2) COLLATERAL ENRICHMENT =================== */
-/* 2a. Build c_obg/c_obl -> productid (f_fac) map from factor output */
-proc contents data=&DS_F_ABL noprint out=_ff_vars_; run;
+/* ============== 2) COLLATERAL FROM FACTOR TABLES (no ACP) ============== */
+/* Make views that always have: c_obg, c_obl, collateralclass, dt (dt as . if not present) */
+%macro hasvar(ds, var);
+  %local dsid pos rc;
+  %let dsid=%sysfunc(open(&ds));
+  %if &dsid %then %do;
+    %let pos=%sysfunc(varnum(&dsid,&var));
+    %let rc=%sysfunc(close(&dsid));
+    %sysfunc(ifc(&pos>0,1,0))
+  %end;
+  %else 0
+%mend;
 
-proc sql noprint;
-  /* 1 if f_fac is character */
-  select (type=2) into :is_char_ffac
-  from _ff_vars_
-  where upcase(name)='F_FAC';
-quit;
+%let HAS_DT_ABL = %hasvar(&DS_F_ABL, dt);
+%let HAS_DT_SF  = %hasvar(&DS_F_SF,  dt);
 
-%macro make_fac_key;
-  %if &is_char_ffac=1 %then %do;
-    proc sql;
-      create table FAC_KEY as
-      select distinct c_obg, c_obl,
-             input(strip(f_fac), best32.) as productid
-      from &DS_F_ABL
-      where not missing(c_obg) and not missing(c_obl) and not missing(f_fac);
-    quit;
+%macro make_view(src, viewnm, hasdt);
+  %if &hasdt=1 %then %do;
+    proc sql; create view &viewnm as
+      select c_obg, c_obl, collateralclass, dt from &src; quit;
   %end;
   %else %do;
-    proc sql;
-      create table FAC_KEY as
-      select distinct c_obg, c_obl, f_fac as productid
-      from &DS_F_ABL
-      where not missing(c_obg) and not missing(c_obl) and not missing(f_fac);
-    quit;
+    proc sql; create view &viewnm as
+      select c_obg, c_obl, collateralclass, . as dt from &src; quit;
   %end;
 %mend;
-%make_fac_key;
 
-/* 2b. Attach productid to BASE0 (ABL rows will populate productid; SF typically stays missing) */
-proc sql;
-  create table BASE1 as
-  select a.*, b.productid
-  from BASE0 as a
-  left join FAC_KEY as b
-    on a.c_obg=b.c_obg and a.c_obl=b.c_obl;
-quit;
+%make_view(&DS_F_ABL, F_ABL_V, &HAS_DT_ABL);
+%make_view(&DS_F_SF,  F_SF_V,  &HAS_DT_SF);
 
-/* 2c. Join to Asset_Collateral_product with dt <= asof_dt, then pick the latest dt per row */
-proc sql;
-  create table ACP_JOIN as
-  select a.*,
-         acp.collateralclass as acp_collateralclass,
-         acp.dt              as acp_dt
-  from BASE1 as a
-  left join &DS_ACP as acp
-    on a.productid = acp.productid
-   and acp.dt     <= a.asof_dt;
-quit;
-
-proc sort data=ACP_JOIN;
-  by TFC_Account_Nbr c_obg c_obl asof_dt productid acp_dt;
+data _fact_all;
+  set F_ABL_V F_SF_V;
 run;
 
-data BASE2;
-  set ACP_JOIN;
-  by TFC_Account_Nbr c_obg c_obl asof_dt productid acp_dt;
-  /* keep the latest eligible ACP record per facility row */
-  if first.productid then _keep=.;
-  if last.productid then do;
-    /* fill collateral if missing in all_table */
-    collateralclass_fix = coalesce(collateralclass, acp_collateralclass);
-    output;
-  end;
-  drop _keep acp_collateralclass acp_dt;
+/* Choose one collateral row per instrument: latest dt if available */
+proc sort data=_fact_all;
+  by c_obg c_obl descending dt;
 run;
 
-/* Final snapshot for Kevin */
-data KEVIN_SNAPSHOT;
-  set BASE2;
-  collateralclass = collateralclass_fix;
-  drop collateralclass_fix;
+data _coll_dom;
+  set _fact_all;
+  by c_obg c_obl;
+  if first.c_obl then output;
 run;
 
-/* =================== 3) QUICK CHECKS =================== */
+/* Join collateral back; if all_table already had collateralclass, keep it */
 proc sql;
-  create table QC as
-  select segment,
-         count(*)                           as n_rows,
-         sum(commit>0)                      as n_with_commit,
-         mean(util)                         as avg_util format=percent8.2,
-         mean(missing(collateralclass))     as pct_missing_collat format=percent8.2
-  from KEVIN_SNAPSHOT
-  group by 1;
+  create table Kevin_Snapshot as
+  select b.*,
+         coalesce(b.collateralclass, f.collateralclass) as Collateral_Class
+  from _base0 b
+  left join _coll_dom f
+    on b.c_obg=f.c_obg and b.c_obl=f.c_obl;
 quit;
 
-/* =================== 4) UTILIZATION BY RISK =================== */
-/* EAD-weighted (sum drawn / sum commit). Suppress sparse bins (n<10). */
-proc sql;
-  create table UTIL_BY_RISK as
-  select risk_grade,
-         count(*)                 as n_facilities,
-         sum(drawn) / sum(commit) as util_ead_wtd format=percent8.2
-  from KEVIN_SNAPSHOT
-  where commit>0
-  group by 1
-  having n_facilities >= 10
-  order by risk_grade;
-quit;
+/* Optional: drop the original collateralclass if you only want the joined one */
+data Kevin_Snapshot;
+  set Kevin_Snapshot;
+  drop collateralclass;
+run;
 
-/* =================== 5) UTILIZATION BY RISK x COLLATERAL (ABL only) =================== */
-proc sql;
-  create table UTIL_BY_RISK_COLLAT as
-  select risk_grade,
-         collateralclass,
-         count(*)                 as n_facilities,
-         sum(drawn) / sum(commit) as util_ead_wtd format=percent8.2
-  from KEVIN_SNAPSHOT
-  where segment='ABL' and commit>0 and not missing(collateralclass)
-  group by 1,2
-  having n_facilities >= 10
-  order by risk_grade, collateralclass;
-quit;
-
-/* =================== 6) OPTIONAL: MIGRATION VIEW (time series, if asof varies) =================== */
-proc sql;
-  create table UTIL_TS as
-  select intnx('qtr', asof_dt, 0, 'b') as asof_qtr format=yyq6.,
-         risk_grade,
-         count(*)                 as n_facilities,
-         sum(drawn) / sum(commit) as util_ead_wtd format=percent8.2
-  from KEVIN_SNAPSHOT
-  where commit>0 and not missing(asof_dt)
-  group by 1,2
-  having n_facilities >= 10
-  order by asof_qtr, risk_grade;
-quit;
-
-/* =================== 7) OPTIONAL: EXPORT TO EXCEL =================== */
-/* Uncomment and set a path if you want an .xlsx extract
-filename xout "/sasdata/mrmg1/kevin_utilization_results.xlsx";
-proc export data=KEVIN_SNAPSHOT outfile=xout dbms=xlsx replace; sheet="Snapshot"; run;
-proc export data=UTIL_BY_RISK   outfile=xout dbms=xlsx replace; sheet="Util_by_Risk"; run;
-proc export data=UTIL_BY_RISK_COLLAT outfile=xout dbms=xlsx replace; sheet="Util_by_Risk_Collat"; run;
-proc export data=UTIL_TS        outfile=xout dbms=xlsx replace; sheet="Util_TS"; run;
-filename xout clear;
-*/
+/* Export for Excel */
+proc export data=Kevin_Snapshot
+  outfile="&OUT_CSV" dbms=csv replace;
+  putnames=yes;
+run;
