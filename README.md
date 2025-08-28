@@ -1,10 +1,10 @@
-Subject: Follow-up on LGD Methodology and Data Questions
+Hi [Team],
 
-Hi Kevin,
+Thanks for confirming. I’ve also checked with Mary and the governance team but wasn’t able to locate the original MCA form either. In this case, we’d recommend re-submitting the MCA.
 
-It was great speaking with you last Thursday. I’m following up to share my responses to the LGD methodology, EAD definition, SF portfolio clarification, and related data questions. Please see the attached write-up and supporting Excel for details.
+Additionally, the MDD mentions that the model covered “~$1B in PAG deals annually prior to 2019” with limited or no PAG deals since. Could you advise on the expected model coverage going forward? It may be worth aligning with the model owner or user to determine whether PAG volumes are expected to resume, or whether coverage should be revised.
 
-Let me know if you have any questions or would like to discuss further. I’ll be out Thursday and Friday, but happy to follow up after.
+Happy to discuss further if helpful.
 
-Best regards,
+Best,
 Phoebe
