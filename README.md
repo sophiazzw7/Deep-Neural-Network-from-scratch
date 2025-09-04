@@ -1,9 +1,11 @@
 /* ============================================================= */
-/*   Repeats & Counts by Quarter (OGM-aligned)                   */
-/*   - last-12mo window (ABL) / imp_dtsf..cutoff (SF)            */
-/*   - exclude operational reasons                               */
-/*   - de-dup by c_obgobl + f_uplddt (keep LAST)                 */
-/*   - material override = abs(OVRD_SEVERITY) > 1                */
+/* Repeats & Counts by Quarter (OGM-aligned, safe de-dup)        */
+/*  - ABL: last-12mo window using f_uplddt <= cutoff             */
+/*  - SF : imp_dtsf .. cutoff using f_uplddt                     */
+/*  - Exclude operational reasons                                */
+/*  - De-dup: keep LAST per (c_obgobl, f_uplddt), deterministic  */
+/*  - Material override = abs(OVRD_SEVERITY) > 1                 */
+/*  - Outputs: quarter_summary, global_share                     */
 /* ============================================================= */
 
 options compress=yes reuse=yes;
@@ -26,7 +28,7 @@ run;
 
 /* ---------- Stack + alias layer ---------- */
 data NEW_OGM.all_table_6ymm_1;
-  length OGM_Qtr $6 Seg $2 Override_Reason $20 c_obgobl $200;
+  length OGM_Qtr $6 Seg $2 Override_Reason $30 c_obgobl $200;
   set
     q2.join_mod1497_tot_2024q2_abl (in=a1)
     q2.join_mod1497_tot_2024q2_sf  (in=a2)
@@ -35,7 +37,8 @@ data NEW_OGM.all_table_6ymm_1;
     q4.join_mod1497_tot_2024q4_abl (in=c1)
     q4.join_mod1497_tot_2024q4_sf  (in=c2)
     q1.join_mod1497_tot_2025q1_abl (in=d1)
-    q1.join_mod1497_tot_2025q1_sf  (in=d2);
+    q1.join_mod1497_tot_2025q1_sf  (in=d2)
+  ;
 
   if a1 or a2 then OGM_Qtr='2024Q2';
   else if b1 or b2 then OGM_Qtr='2024Q3';
@@ -44,12 +47,12 @@ data NEW_OGM.all_table_6ymm_1;
 
   Seg = ifc(a2 or b2 or c2 or d2,'sf','abl');
 
-  /* Reason alias */
+  /* Reason alias (stay character) */
   if missing(Override_Reason) then Override_Reason = strip(model_or_reason);
 
   /* Obligor key alias */
-  if not missing(c_obgobl) then c_obgobl=strip(c_obgobl);
-  else if not missing(c_obg_obl) then c_obgobl=strip(c_obg_obl);
+  if not missing(c_obgobl) then c_obgobl = strip(c_obgobl);
+  else if not missing(c_obg_obl) then c_obgobl = strip(c_obg_obl);
   else c_obgobl = cats(c_obg,'_',c_obl);
 
   /* Face amount alias if needed */
@@ -93,17 +96,45 @@ run;
     if Override_Reason in ('3','4','5','6','7','32','33','36','37','38') then delete;
   run;
 
-  /* de-dup: keep last per (c_obgobl, f_uplddt) */
-  proc sort data=Override_&OGM_Qtr._&Seg
-            out=Override_&OGM_Qtr._&Seg._srt;
-    by c_obgobl f_uplddt;
+  /* ===== De-dup: keep LAST per (c_obgobl, f_uplddt), don’t over-drop ===== */
+
+  /* Tag read order for deterministic LAST */
+  data _or_src_;
+    set Override_&OGM_Qtr._&Seg;
+    _obs = _N_;
   run;
 
-  data Override_&OGM_Qtr._dedup_&Seg;
-    set Override_&OGM_Qtr._&Seg._srt;
+  /* Split on date presence (missing dates are kept as-is) */
+  data _has_dt _no_dt;
+    set _or_src_;
+    if missing(f_uplddt) then output _no_dt;
+    else output _has_dt;
+  run;
+
+  /* Sort dated bucket; _obs as stable tie-breaker */
+  proc sort data=_has_dt out=_has_dt_srt;
+    by c_obgobl f_uplddt _obs;
+  run;
+
+  /* Keep LAST per (c_obgobl, f_uplddt) */
+  data _has_dt_dedup;
+    set _has_dt_srt;
     by c_obgobl f_uplddt;
     if last.f_uplddt;
   run;
+
+  /* Recombine */
+  data Override_&OGM_Qtr._dedup_&Seg;
+    set _has_dt_dedup _no_dt;
+    drop _obs;
+  run;
+
+  /* Optional: log counts */
+  proc sql noprint;
+    select count(*) into :_n_before from _or_src_;
+    select count(*) into :_n_after  from Override_&OGM_Qtr._dedup_&Seg;
+  quit;
+  %put NOTE: OGM de-dup &OGM_Qtr &seg — kept &_n_after of &_n_before rows (removed %eval(&_n_before - &_n_after)).;
 
 %mend OR;
 
@@ -156,13 +187,13 @@ proc sql;
   having calculated Qtr_Count > 1;
 quit;
 
-/* ---------- Quarterly outputs you asked for ---------- */
+/* ---------- Quarterly outputs ---------- */
 /* A) total observations (after de-dup) and distinct obligors */
 proc sql;
   create table by_qtr_all as
   select OGM_Qtr,
-         count(*)                               as Total_Obs,
-         count(distinct c_obgobl)               as Distinct_Obligors
+         count(*)                         as Total_Obs,
+         count(distinct c_obgobl)         as Distinct_Obligors
   from all_quarters_all
   group by OGM_Qtr
   order by OGM_Qtr;
@@ -172,14 +203,14 @@ quit;
 proc sql;
   create table by_qtr_mat as
   select OGM_Qtr,
-         count(*)                               as Mat_OR_Events,
-         count(distinct c_obgobl)               as Mat_OR_Obligors
+         count(*)                         as Mat_OR_Events,
+         count(distinct c_obgobl)         as Mat_OR_Obligors
   from mat_or_all
   group by OGM_Qtr
   order by OGM_Qtr;
 quit;
 
-/* C) repeating obligors and their events (per quarter) */
+/* C) repeating obligors and events (per quarter) */
 proc sql;
   /* tag repeaters on the mat table */
   create table _mat_tag as
@@ -191,9 +222,9 @@ proc sql;
   /* per quarter counts for repeaters */
   create table by_qtr_repeat as
   select OGM_Qtr,
-         sum(Is_Repeater)                           as Repeating_Events,
-         count(distinct case when Is_Repeater=1 then c_obgobl end) 
-                                                      as Repeating_Obligors_GE2Qtrs
+         sum(Is_Repeater)                                       as Repeating_Events,
+         count(distinct case when Is_Repeater=1 then c_obgobl end)
+                                                                as Repeating_Obligors_GE2Qtrs
   from _mat_tag
   group by OGM_Qtr
   order by OGM_Qtr;
