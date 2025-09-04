@@ -109,4 +109,158 @@ run;
     else output _has_dt;
   run;
 
-  proc sort data=_has_
+  proc sort data=_has_dt out=_has_dt_srt;
+    by c_obgobl upld_dt _obs;
+  run;
+
+  data _has_dt_dedup;
+    set _has_dt_srt;
+    by c_obgobl upld_dt;
+    if last.upld_dt;
+  run;
+
+  /* Base population AFTER de-dup (use this for "Total Observations") */
+  data Override_&OGM_Qtr._dedup_&Seg;
+    set _has_dt_dedup _no_dt;
+    drop _obs;
+  run;
+
+  /* ------------------- Material overrides (now drop op reasons) ------------------- */
+  data Override_&OGM_Qtr._mat_&Seg;
+    set Override_&OGM_Qtr._dedup_&Seg;
+    /* Exclude operational override reasons for material calc */
+    if Override_Reason in ('3','4','5','6','7','32','33','36','37','38') then delete;
+    if abs(OVRD_SEVERITY) > 1;   /* material */
+  run;
+
+%mend OR;
+
+/* ---------- Build quarters (ABL/SF + ALL) ---------- */
+%macro build_all_quarters;
+  /* 2024Q2 */
+  %OR(seg=abl, OGM_Qtr=2024Q2, OGM_Cutoff='30JUN2024'd);
+  %OR(seg=sf , OGM_Qtr=2024Q2, OGM_Cutoff='30JUN2024'd);
+  data Override_2024Q2_dedup_all; set Override_2024Q2_dedup_abl Override_2024Q2_dedup_sf; OGM_Qtr='2024Q2'; run;
+  data Override_2024Q2_mat_all;   set Override_2024Q2_mat_abl   Override_2024Q2_mat_sf;   OGM_Qtr='2024Q2'; run;
+
+  /* 2024Q3 */
+  %OR(seg=abl, OGM_Qtr=2024Q3, OGM_Cutoff='30SEP2024'd);
+  %OR(seg=sf , OGM_Qtr=2024Q3, OGM_Cutoff='30SEP2024'd);
+  data Override_2024Q3_dedup_all; set Override_2024Q3_dedup_abl Override_2024Q3_dedup_sf; OGM_Qtr='2024Q3'; run;
+  data Override_2024Q3_mat_all;   set Override_2024Q3_mat_abl   Override_2024Q3_mat_sf;   OGM_Qtr='2024Q3'; run;
+
+  /* 2024Q4 */
+  %OR(seg=abl, OGM_Qtr=2024Q4, OGM_Cutoff='31DEC2024'd);
+  %OR(seg=sf , OGM_Qtr=2024Q4, OGM_Cutoff='31DEC2024'd);
+  data Override_2024Q4_dedup_all; set Override_2024Q4_dedup_abl Override_2024Q4_dedup_sf; OGM_Qtr='2024Q4'; run;
+  data Override_2024Q4_mat_all;   set Override_2024Q4_mat_abl   Override_2024Q4_mat_sf;   OGM_Qtr='2024Q4'; run;
+
+  /* 2025Q1 */
+  %OR(seg=abl, OGM_Qtr=2025Q1, OGM_Cutoff='31MAR2025'd);
+  %OR(seg=sf , OGM_Qtr=2025Q1, OGM_Cutoff='31MAR2025'd);
+  data Override_2025Q1_dedup_all; set Override_2025Q1_dedup_abl Override_2025Q1_dedup_sf; OGM_Qtr='2025Q1'; run;
+  data Override_2025Q1_mat_all;   set Override_2025Q1_mat_abl   Override_2025Q1_mat_sf;   OGM_Qtr='2025Q1'; run;
+%mend build_all_quarters;
+
+%build_all_quarters;
+
+/* ---------- Base population & material events across quarters ---------- */
+data all_quarters_base;
+  set Override_2024Q2_dedup_all
+      Override_2024Q3_dedup_all
+      Override_2024Q4_dedup_all
+      Override_2025Q1_dedup_all;
+run;
+
+data mat_or_all;
+  set Override_2024Q2_mat_all
+      Override_2024Q3_mat_all
+      Override_2024Q4_mat_all
+      Override_2025Q1_mat_all;
+  keep OGM_Qtr c_obgobl SF Override_Reason OVRD_SEVERITY upld_dt legacy_bank_new;
+run;
+
+/* ---------- Repeaters (>=2 quarters with material overrides) ---------- */
+proc sql;
+  create table repeated as
+  select c_obgobl, count(distinct OGM_Qtr) as Qtr_Count, count(*) as Mat_OR_Count
+  from mat_or_all
+  group by c_obgobl
+  having calculated Qtr_Count > 1;
+quit;
+
+/* ---------- Per-quarter metrics ---------- */
+proc sql;
+  /* A) Totals after de-dup (base pop) */
+  create table by_qtr_all as
+  select OGM_Qtr,
+         count(*)                 as Total_Obs,
+         count(distinct c_obgobl) as Distinct_Obligors
+  from all_quarters_base
+  group by OGM_Qtr
+  order by OGM_Qtr;
+
+  /* B) Material override events & distinct obligors */
+  create table by_qtr_mat as
+  select OGM_Qtr,
+         count(*)                 as Mat_OR_Events,
+         count(distinct c_obgobl) as Mat_OR_Obligors
+  from mat_or_all
+  group by OGM_Qtr
+  order by OGM_Qtr;
+
+  /* C) Repeating obligors and events (per quarter) */
+  create table _mat_tag as
+  select m.*, (case when r.c_obgobl is not null then 1 else 0 end) as Is_Repeater
+  from mat_or_all m
+  left join repeated r
+    on m.c_obgobl = r.c_obgobl;
+
+  create table by_qtr_repeat as
+  select OGM_Qtr,
+         sum(Is_Repeater)                                       as Repeating_Events,
+         count(distinct case when Is_Repeater=1 then c_obgobl end)
+                                                                as Repeating_Obligors_GE2Qtrs
+  from _mat_tag
+  group by OGM_Qtr
+  order by OGM_Qtr;
+quit;
+
+/* ---------- Final per-quarter table ---------- */
+proc sql;
+  create table quarter_summary as
+  select a.OGM_Qtr,
+         a.Total_Obs,
+         a.Distinct_Obligors,
+         b.Mat_OR_Events,
+         b.Mat_OR_Obligors,
+         coalesce(c.Repeating_Obligors_GE2Qtrs,0) as Repeating_Obligors_GE2Qtrs,
+         coalesce(c.Repeating_Events,0)           as Repeating_Events
+  from by_qtr_all a
+  left join by_qtr_mat b on a.OGM_Qtr=b.OGM_Qtr
+  left join by_qtr_repeat c on a.OGM_Qtr=c.OGM_Qtr
+  order by a.OGM_Qtr;
+quit;
+
+/* ---------- Display ---------- */
+title "Quarterly Summary: totals, material overrides, repeaters";
+proc print data=quarter_summary noobs; run;
+title;
+
+/* ---------- Global share of events from repeaters ---------- */
+proc sql noprint;
+  select sum(Mat_OR_Events), sum(Repeating_Events)
+    into :tot_mat, :rep_events
+  from quarter_summary;
+quit;
+
+data global_share;
+  Total_Material_Override_Events = &tot_mat.;
+  Repeating_Events               = &rep_events.;
+  if &tot_mat.>0 then Share_Repeating_Events = &rep_events./&tot_mat.;
+  format Share_Repeating_Events percent8.2;
+run;
+
+title "Global Share of Material-Override Events from Repeaters";
+proc print data=global_share noobs; run;
+title;
