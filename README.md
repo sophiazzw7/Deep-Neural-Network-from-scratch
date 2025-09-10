@@ -1,21 +1,10 @@
-You're right — here's a more natural revision:
+Hi [Boss's Name],
 
----
+Hope you're doing well. Cheng followed up today asking for an estimated timeline for the Credit Karma portion of MOD13512 validation, as LightStream is waiting to implement.
 
-**Subject:** Quick Follow-Up: MCA Re-submission and PAG Coverage
+Since I’m currently at full capacity, I wanted to check with you on what would be the best path forward. You had previously mentioned the possibility of an exception to implement without validation — just wanted to confirm whether that’s still an option being considered, or if we should revisit resourcing for this piece.
 
-Hi John,
-
-Hope you're doing well. Just following up on the MCA re-submission and the PAG coverage question. Thanks again for your earlier response — wanted to check if there’s been any update on either the form being re-submitted or the expected PAG volumes going forward.
-
-As the validation is scheduled to wrap up around the **last week of September**, this would likely be noted as a **sub-issue** if it remains unresolved.
-
-Thanks again for your help.
+Happy to align with whatever makes most sense.
 
 Best,
-Sophia
-
----
-
-Let me know if you want a version with firmer tone or more urgency.
-
+Phoebe
