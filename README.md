@@ -1,123 +1,120 @@
-/* ====== MOD1497 repeat override analysis using developer DEDUP tables ====== */
+/* ========= MOD1497 override repeat analysis (NO MACROS) ========= */
+/* 1) Point to where you saved the developer DEDUP tables */
+options compress=yes reuse=yes;
+libname ogm "/sasdata/mrmg1/MOD1497/override_dedup" access=readonly;
+/* Optional place to save outputs; comment out if you only want WORK */
+libname out "/sasdata/mrmg1/MOD1497/override_results";
 
-options compress=yes reuse=yes mprint;
+/* 2) Stack ABL across quarters (edit the list if you have different quarters) */
+data _ABL;
+  length quarter $7 seg $3 obligor_key $64;
+  set
+    ogm.OVERRIDE_2024Q2_DEDUP_ABL (in=in1  keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
+                                                 model_lgd_grade_num final_lgd_grade_num Override_Reason)
+    ogm.OVERRIDE_2024Q3_DEDUP_ABL (in=in2  keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
+                                                 model_lgd_grade_num final_lgd_grade_num Override_Reason)
+    ogm.OVERRIDE_2024Q4_DEDUP_ABL (in=in3  keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
+                                                 model_lgd_grade_num final_lgd_grade_num Override_Reason)
+    ogm.OVERRIDE_2025Q1_DEDUP_ABL (in=in4  keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
+                                                 model_lgd_grade_num final_lgd_grade_num Override_Reason)
+  ;
+  seg = "ABL";
+  obligor_key = c_obgobl;
 
-/* EDIT: where you saved the DEDUP datasets */
-libname ogm  "/sasdata/mrmg1/MOD1497/override_dedup";   /* <- your folder */
-libname out  "/sasdata/mrmg1/MOD1497/override_results"; /* outputs */
+  if in1 then quarter = "2024Q2";
+  else if in2 then quarter = "2024Q3";
+  else if in3 then quarter = "2024Q4";
+  else if in4 then quarter = "2025Q1";
 
-/* Quarters you saved (labels must match the dataset names) */
-%let qtrs = 2024Q2 2024Q3 2024Q4 2025Q1;
-%let segs = ABL SF;
+  /* Recompute/patch if needed */
+  if missing(OVRD_SEVERITY) and nmiss(final_lgd_grade_num,model_lgd_grade_num)=0 then
+    OVRD_SEVERITY = final_lgd_grade_num - model_lgd_grade_num;
 
-/* Stack all quarters and segments */
-%macro stack_all;
-  %do s=1 %to %sysfunc(countw(&segs));
-    %let seg=%scan(&segs,&s);
+  if missing(override_ind) and not missing(OVRD_SEVERITY) then
+    override_ind = (OVRD_SEVERITY ne 0);
 
-    data work._&seg;
-      length quarter $7 seg $3 obligor_key $64;
-      set
-      %do i=1 %to %sysfunc(countw(&qtrs));
-        %let q=%scan(&qtrs,&i);
-        %if %sysfunc(exist(ogm.OVERRIDE_&q._DEDUP_&seg)) %then %do;
-          ogm.OVERRIDE_&q._DEDUP_&seg (in=in&i
-            keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
-                 model_lgd_grade_num final_lgd_grade_num Override_Reason)
-        %end;
-      %end;
-      ;
-      seg="&seg";
-      obligor_key = c_obgobl;
-      %do i=1 %to %sysfunc(countw(&qtrs));
-        %let q=%scan(&qtrs,&i);
-        if in&i then quarter="&q";
-      %end;
+  /* Developer definition of material override */
+  material_1notch = (abs(OVRD_SEVERITY) > 1);
+run;
 
-      /* If OVRD_SEVERITY was not carried, re-compute from numeric grades */
-      if missing(OVRD_SEVERITY) and nmiss(final_lgd_grade_num,model_lgd_grade_num)=0 then
-        OVRD_SEVERITY = final_lgd_grade_num - model_lgd_grade_num;
+/* 3) Stack SF across quarters */
+data _SF;
+  length quarter $7 seg $3 obligor_key $64;
+  set
+    ogm.OVERRIDE_2024Q2_DEDUP_SF (in=in1  keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
+                                             model_lgd_grade_num final_lgd_grade_num Override_Reason)
+    ogm.OVERRIDE_2024Q3_DEDUP_SF (in=in2  keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
+                                             model_lgd_grade_num final_lgd_grade_num Override_Reason)
+    ogm.OVERRIDE_2024Q4_DEDUP_SF (in=in3  keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
+                                             model_lgd_grade_num final_lgd_grade_num Override_Reason)
+    ogm.OVERRIDE_2025Q1_DEDUP_SF (in=in4  keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
+                                             model_lgd_grade_num final_lgd_grade_num Override_Reason)
+  ;
+  seg = "SF";
+  obligor_key = c_obgobl;
 
-      /* Developer material definition */
-      material_1notch = (abs(OVRD_SEVERITY) > 1);
+  if in1 then quarter = "2024Q2";
+  else if in2 then quarter = "2024Q3";
+  else if in3 then quarter = "2024Q4";
+  else if in4 then quarter = "2025Q1";
 
-      /* Safety: if override_ind missing but severity non-zero, set it */
-      if missing(override_ind) and not missing(OVRD_SEVERITY) then
-        override_ind = (OVRD_SEVERITY ne 0);
-    run;
-  %end;
+  if missing(OVRD_SEVERITY) and nmiss(final_lgd_grade_num,model_lgd_grade_num)=0 then
+    OVRD_SEVERITY = final_lgd_grade_num - model_lgd_grade_num;
 
-  data work.allq;
-    set work._ABL work._SF;
-  run;
-%mend;
-%stack_all;
+  if missing(override_ind) and not missing(OVRD_SEVERITY) then
+    override_ind = (OVRD_SEVERITY ne 0);
 
-/* -------- Summary by quarter × segment -------- */
+  material_1notch = (abs(OVRD_SEVERITY) > 1);
+run;
+
+/* 4) Combine ABL + SF */
+data allq;
+  set _ABL _SF;
+run;
+
+/* 5) Summary by quarter × segment */
 proc sql;
-  create table out.ovr_summary_by_qtr_seg as
+  create table ovr_summary_by_qtr_seg as
   select quarter, seg,
          count(*)                                    as obs_cnt,
          sum(override_ind)                            as ovr_cnt,
          calculated ovr_cnt / calculated obs_cnt      as ovr_rate format=percent8.2,
          sum(material_1notch)                         as mat_cnt,
          calculated mat_cnt / calculated obs_cnt      as mat_rate format=percent8.2
-  from work.allq
+  from allq
   group by quarter, seg
   order by quarter, seg;
 quit;
 
-/* -------- Repeats across quarters (obligor-level) -------- */
+/* 6) Repeats across quarters (obligor-level) */
 proc sql;
-  create table work._per_obligor as
+  create table _per_obligor as
   select seg, obligor_key,
-         count(distinct quarter)                    as qtrs_seen,
-         sum(override_ind>0)                        as qtrs_overridden,
-         sum(material_1notch>0)                     as qtrs_material,
-         min(quarter)                               as first_qtr,
-         max(quarter)                               as last_qtr
-  from work.allq
+         count(distinct quarter) as qtrs_seen,
+         sum(override_ind>0)    as qtrs_overridden,
+         sum(material_1notch>0) as qtrs_material,
+         min(quarter)           as first_qtr,
+         max(quarter)           as last_qtr
+  from allq
   group by seg, obligor_key;
 quit;
 
-data out.repeat_overrides_any;
-  set work._per_obligor;
-  where qtrs_overridden >= 2;  /* repeated overrides */
-run;
+data repeat_overrides_any;      set _per_obligor; if qtrs_overridden >= 2; run;
+data repeat_overrides_material; set _per_obligor; if qtrs_material  >= 2; run;
 
-data out.repeat_overrides_material;
-  set work._per_obligor;
-  where qtrs_material >= 2;    /* repeated MATERIAL overrides */
-run;
+/* 7) (Optional) Save results to a permanent library */
+proc datasets lib=work nolist;
+  copy in=work out=out memtype=data;
+  select ovr_summary_by_qtr_seg _per_obligor repeat_overrides_any repeat_overrides_material allq;
+quit;
 
-/* -------- Optional detail table for audit trail -------- */
-proc sort data=work.allq out=out.obligor_quarter_detail;
-  by seg obligor_key quarter;
-run;
-
-/* Quick prints */
-title "MOD1497 Override & Material Rates by Quarter × Segment";
-proc print data=out.ovr_summary_by_qtr_seg noobs; run;
+/* 8) Quick looks (optional) */
+title "Override & Material Rates by Quarter × Segment";
+proc print data=ovr_summary_by_qtr_seg noobs; run;
 
 title "Obligors with Repeated Overrides (≥2 quarters)";
-proc print data=out.repeat_overrides_any(obs=100) noobs; run;
+proc print data=repeat_overrides_any(obs=100) noobs; run;
 
 title "Obligors with Repeated MATERIAL Overrides (≥2 quarters)";
-proc print data=out.repeat_overrides_material(obs=100) noobs; run;
+proc print data=repeat_overrides_material(obs=100) noobs; run;
 title;
-/* Define a permanent library where you want to store outputs */
-libname ogm "/sasdata/mrmg1/MOD1497/override_dedup";  
-
-/* Copy dedup tables from WORK into your permanent library */
-proc datasets lib=work nolist;
-  copy in=work out=ogm memtype=data;
-  select 
-    OVERRIDE_2024Q2_DEDUP_ABL
-    OVERRIDE_2024Q2_DEDUP_SF
-    OVERRIDE_2024Q3_DEDUP_ABL
-    OVERRIDE_2024Q3_DEDUP_SF
-    OVERRIDE_2024Q4_DEDUP_ABL
-    OVERRIDE_2024Q4_DEDUP_SF
-    OVERRIDE_2025Q1_DEDUP_ABL
-    OVERRIDE_2025Q1_DEDUP_SF;
-quit;
