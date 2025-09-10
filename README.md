@@ -1,5 +1,10 @@
-proc datasets lib=work nolist; delete _abl_attrs _abl_enriched _flags_join _obg_: _t: abl_:; quit;
+/* ---------- safe cleanup (do NOT purge abl_material_repeat_by_qtr) ---------- */
+proc datasets lib=work nolist;
+  delete _abl_attrs _abl_enriched _flags_join _reason_seq _reason_stick _t1 _t2 _t3 _t4
+         abl_mat_obl_per_obg abl_mat_obl_per_obg_dist;
+quit;
 
+/* ---------- build one attributes table with consistent wide lengths ---------- */
 data _abl_attrs;
   length quarter $7 c_obgobl $200 c_obg 8 c_obl 8
          legacy_bank_new $100 business_group $100
@@ -8,22 +13,37 @@ data _abl_attrs;
          Override_Reason $200
          TFC_Curr_Bal 8 tfc_face_amt 8;
   set
-    ogm.OVERRIDE_2024Q2_DEDUP_ABL(in=i1 keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm TFC_src_sys_cd STI_rating_model LASFACILITYNBR)
-    ogm.OVERRIDE_2024Q3_DEDUP_ABL(in=i2 keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm TFC_src_sys_cd STI_rating_model LASFACILITYNBR)
-    ogm.OVERRIDE_2024Q4_DEDUP_ABL(in=i3 keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm TFC_src_sys_cd STI_rating_model LASFACILITYNBR)
-    ogm.OVERRIDE_2025Q1_DEDUP_ABL(in=i4 keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm TFC_src_sys_cd STI_rating_model LASFACILITYNBR)
+    ogm.OVERRIDE_2024Q2_DEDUP_ABL(in=i1 keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
+                                         legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
+                                         TFC_src_sys_cd STI_rating_model LASFACILITYNBR
+                                   rename=(Override_Reason=_or))
+    ogm.OVERRIDE_2024Q3_DEDUP_ABL(in=i2 keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
+                                         legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
+                                         TFC_src_sys_cd STI_rating_model LASFACILITYNBR
+                                   rename=(Override_Reason=_or))
+    ogm.OVERRIDE_2024Q4_DEDUP_ABL(in=i3 keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
+                                         legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
+                                         TFC_src_sys_cd STI_rating_model LASFACILITYNBR
+                                   rename=(Override_Reason=_or))
+    ogm.OVERRIDE_2025Q1_DEDUP_ABL(in=i4 keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
+                                         legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
+                                         TFC_src_sys_cd STI_rating_model LASFACILITYNBR
+                                   rename=(Override_Reason=_or))
   ;
   if i1 then quarter='2024Q2';
   else if i2 then quarter='2024Q3';
   else if i3 then quarter='2024Q4';
   else if i4 then quarter='2025Q1';
+  Override_Reason = strip(_or);
+  drop _or;
 run;
 
 proc sort data=_abl_attrs nodupkey; by quarter c_obgobl; run;
 
+/* ---------- join attributes to your obligation-level table ---------- */
 proc sql;
   create table _abl_enriched as
-  select a.*, 
+  select a.*,
          b.c_obg, b.c_obl, b.TFC_Curr_Bal, b.tfc_face_amt, b.Override_Reason,
          b.legacy_bank_new, b.business_group, b.STI_lob_nm, b.STI_sub_lob_nm,
          b.TFC_src_sys_cd, b.STI_rating_model, b.LASFACILITYNBR
@@ -32,7 +52,7 @@ proc sql;
     on a.quarter=b.quarter and a.c_obgobl=b.c_obgobl;
 quit;
 
-/* Inflation and multi-obligation picture */
+/* ---------- inflation & distributions ---------- */
 proc sql;
   create table abl_inflation_qtr as
   select quarter,
@@ -61,7 +81,7 @@ proc sql;
   order by quarter, mat_obligations;
 quit;
 
-/* Severity and direction */
+/* ---------- severity & direction ---------- */
 data _abl_enriched;
   set _abl_enriched;
   length sev_bucket $6;
@@ -99,7 +119,7 @@ proc sql;
   order by quarter;
 quit;
 
-/* Exposure view */
+/* ---------- exposure share ---------- */
 proc sql;
   create table abl_exposure_share as
   select quarter,
@@ -114,7 +134,7 @@ proc sql;
   order by quarter;
 quit;
 
-/* Clustering */
+/* ---------- clustering ---------- */
 proc sql;
   create table abl_by_heritage as
   select quarter, coalesce(legacy_bank_new,'(missing)') as heritage,
@@ -146,72 +166,13 @@ proc sql;
   order by quarter, mat_cnt desc;
 quit;
 
-proc sql;
-  create table abl_by_srcsys as
-  select quarter, coalesce(TFC_src_sys_cd,'(missing)') as src_sys,
-         count(*) as obs, sum(material_1notch) as mat_cnt,
-         calculated mat_cnt/calculated obs as mat_rate format=percent8.2
-  from _abl_enriched
-  group by quarter, calculated src_sys
-  order by quarter, mat_rate desc;
-quit;
+/* ---------- repeat clustering & reason stickiness (with proper sorts) ---------- */
+proc sort data=_abl_enriched; by quarter c_obgobl; run;
+proc sort data=_abl_flags;     by quarter c_obgobl; run;
 
-proc sql;
-  create table abl_by_model as
-  select quarter, coalesce(STI_rating_model,'(missing)') as rating_model,
-         count(*) as obs, sum(material_1notch) as mat_cnt,
-         calculated mat_cnt/calculated obs as mat_rate format=percent8.2
-  from _abl_enriched
-  group by quarter, calculated rating_model
-  order by quarter, mat_rate desc;
-quit;
-
-/* Repeat clustering */
-proc sql;
-  create table _flags_join as
-  select f.*, a.legacy_bank_new, a.STI_lob_nm, a.STI_sub_lob_nm, a.Override_Reason
-  from _abl_flags f
-  left join _abl_attrs a
-    on f.quarter=a.quarter and f.c_obgobl=a.c_obgobl;
-quit;
-
-proc sql;
-  create table abl_repeat_heritage as
-  select quarter, coalesce(legacy_bank_new,'(missing)') as heritage,
-         sum(material_1notch) as mat_total,
-         sum(repeat_material) as mat_repeat,
-         calculated mat_repeat/max(calculated mat_total,1) as repeat_pct format=percent8.2
-  from _flags_join
-  group by quarter, calculated heritage
-  order by quarter, repeat_pct desc;
-quit;
-
-proc sql;
-  create table abl_repeat_lob as
-  select quarter, coalesce(STI_lob_nm,'(missing)') as lob,
-         sum(material_1notch) as mat_total,
-         sum(repeat_material) as mat_repeat,
-         calculated mat_repeat/max(calculated mat_total,1) as repeat_pct format=percent8.2
-  from _flags_join
-  group by quarter, calculated lob
-  order by quarter, repeat_pct desc;
-quit;
-
-proc sql;
-  create table abl_repeat_reason as
-  select quarter, coalesce(Override_Reason,'(missing)') as reason,
-         sum(material_1notch) as mat_total,
-         sum(repeat_material) as mat_repeat,
-         calculated mat_repeat/max(calculated mat_total,1) as repeat_pct format=percent8.2
-  from _flags_join
-  group by quarter, calculated reason
-  order by quarter, repeat_pct desc;
-quit;
-
-/* Reason stickiness across quarters for the same obligor */
 data _reason_seq;
   merge _abl_enriched(in=a keep=quarter c_obgobl c_obg material_1notch Override_Reason qtr_idx)
-        _abl_flags(in=b keep=quarter c_obgobl obligor_key qtr_idx material_1notch repeat_material rename=(obligor_key=c_obgobl2));
+        _abl_flags   (in=b keep=quarter c_obgobl qtr_idx material_1notch repeat_material);
   by quarter c_obgobl;
   if a;
 run;
@@ -242,6 +203,7 @@ proc sql;
   order by quarter;
 quit;
 
+/* ---------- concise prints ---------- */
 title "Material Repeat by Quarter";
 proc print data=abl_material_repeat_by_qtr noobs label; 
   var quarter total_observations mat_total mat_repeat mat_repeat_pct mat_first_time mat_first_time_pct;
@@ -268,29 +230,20 @@ proc print data=abl_direction noobs;
   var quarter downgrades upgrades mat_downgrades mat_upgrades;
 run;
 
-title "Where Materials Concentrate (Heritage, top 10 by rate each quarter)";
 proc sort data=abl_by_heritage out=_t1; by quarter descending mat_rate; run;
+title "Where Materials Concentrate (Heritage, top 10 by rate each quarter)";
 proc print data=_t1(obs=10) noobs; var quarter heritage obs mat_cnt mat_rate; run;
 
-title "Where Materials Concentrate (LOB, top 10)";
 proc sort data=abl_by_lob out=_t2; by quarter descending mat_rate; run;
+title "Where Materials Concentrate (LOB, top 10)";
 proc print data=_t2(obs=10) noobs; var quarter lob sub_lob obs mat_cnt mat_rate; run;
 
-title "Reasons (top 10 by material count)";
 proc sort data=abl_by_reason out=_t3; by quarter descending mat_cnt; run;
+title "Reasons (top 10 by material count)";
 proc print data=_t3(obs=10) noobs; var quarter reason obs ovr_cnt mat_cnt mat_rate; run;
-
-title "Repeat Clustering (Heritage, top 10 by % repeat)";
-proc sort data=abl_repeat_heritage out=_t4; by quarter descending repeat_pct; run;
-proc print data=_t4(obs=10) noobs; var quarter heritage mat_total mat_repeat repeat_pct; run;
-
-title "Repeat Clustering (LOB, top 10)";
-proc sort data=abl_repeat_lob out=_t5; by quarter descending repeat_pct; run;
-proc print data=_t5(obs=10) noobs; var quarter lob mat_total mat_repeat repeat_pct; run;
 
 title "Same-Reason Repeats";
 proc print data=abl_reason_stickiness noobs; 
   var quarter mat_total mat_repeat same_reason same_reason_pct;
 run;
-
 title;
