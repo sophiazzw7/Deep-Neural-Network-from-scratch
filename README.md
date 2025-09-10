@@ -1,58 +1,50 @@
-/* =========  ABL investigation add-ons (paste after abl_material_repeat_by_qtr)  ========= */
-/* Uses libname ogm already defined earlier. If not, re-define it here. */
 
-/* -- A) Pull attributes from the saved developer DEDUP tables and join to your _ABL -- */
-data _attrs_q2;
-  length quarter $7 c_obgobl $200 legacy_bank_new $100 business_group $100
-         STI_lob_nm $400 STI_sub_lob_nm $400 TFC_src_sys_cd $50 STI_rating_model $50
-         LASFACILITYNBR $100;
-  set ogm.OVERRIDE_2024Q2_DEDUP_ABL
-      (keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
-            legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
-            TFC_src_sys_cd STI_rating_model LASFACILITYNBR);
-  quarter="2024Q2";
+
+### 1) Fixed attributes build + join (paste this right after your `abl_material_repeat_by_qtr` step)
+
+```sas
+/* Clean up any older attrs tables (optional) */
+proc datasets lib=work nolist; delete _attrs_: _ABL_attrs _ABL_enriched _flags_join; quit;
+
+/* --- Build ONE attributes table for all quarters with WIDE, consistent lengths --- */
+data _ABL_attrs;
+  length quarter $7 
+         /* keys */
+         c_obgobl $200 c_obg 8 c_obl 8
+         /* business attributes */
+         legacy_bank_new $100 business_group $100 
+         STI_lob_nm $400 STI_sub_lob_nm $400
+         TFC_src_sys_cd $200 STI_rating_model $200 LASFACILITYNBR $200
+         /* amounts */
+         TFC_Curr_Bal 8 tfc_face_amt 8
+         /* reason */
+         Override_Reason $200;
+  set
+    ogm.OVERRIDE_2024Q2_DEDUP_ABL (keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
+                                         legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
+                                         TFC_src_sys_cd STI_rating_model LASFACILITYNBR in=in1)
+    ogm.OVERRIDE_2024Q3_DEDUP_ABL (keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
+                                         legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
+                                         TFC_src_sys_cd STI_rating_model LASFACILITYNBR in=in2)
+    ogm.OVERRIDE_2024Q4_DEDUP_ABL (keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
+                                         legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
+                                         TFC_src_sys_cd STI_rating_model LASFACILITYNBR in=in3)
+    ogm.OVERRIDE_2025Q1_DEDUP_ABL (keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
+                                         legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
+                                         TFC_src_sys_cd STI_rating_model LASFACILITYNBR in=in4)
+  ;
+  if in1 then quarter='2024Q2';
+  else if in2 then quarter='2024Q3';
+  else if in3 then quarter='2024Q4';
+  else if in4 then quarter='2025Q1';
 run;
 
-data _attrs_q3;
-  length quarter $7 c_obgobl $200 legacy_bank_new $100 business_group $100
-         STI_lob_nm $400 STI_sub_lob_nm $400 TFC_src_sys_cd $50 STI_rating_model $50
-         LASFACILITYNBR $100;
-  set ogm.OVERRIDE_2024Q3_DEDUP_ABL
-      (keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
-            legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
-            TFC_src_sys_cd STI_rating_model LASFACILITYNBR);
-  quarter="2024Q3";
-run;
-
-data _attrs_q4;
-  length quarter $7 c_obgobl $200 legacy_bank_new $100 business_group $100
-         STI_lob_nm $400 STI_sub_lob_nm $400 TFC_src_sys_cd $50 STI_rating_model $50
-         LASFACILITYNBR $100;
-  set ogm.OVERRIDE_2024Q4_DEDUP_ABL
-      (keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
-            legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
-            TFC_src_sys_cd STI_rating_model LASFACILITYNBR);
-  quarter="2024Q4";
-run;
-
-data _attrs_q1;
-  length quarter $7 c_obgobl $200 legacy_bank_new $100 business_group $100
-         STI_lob_nm $400 STI_sub_lob_nm $400 TFC_src_sys_cd $50 STI_rating_model $50
-         LASFACILITYNBR $100;
-  set ogm.OVERRIDE_2025Q1_DEDUP_ABL
-      (keep=c_obg c_obl c_obgobl TFC_Curr_Bal tfc_face_amt Override_Reason
-            legacy_bank_new business_group STI_lob_nm STI_sub_lob_nm
-            TFC_src_sys_cd STI_rating_model LASFACILITYNBR);
-  quarter="2025Q1";
-run;
-
-data _ABL_attrs; set _attrs_q2 _attrs_q3 _attrs_q4 _attrs_q1; run;
 proc sort data=_ABL_attrs nodupkey; by quarter c_obgobl; run;
 
-/* Join attributes onto your obligation-level _ABL table */
+/* --- Join attributes onto your obligation-level _ABL --- */
 proc sql;
   create table _ABL_enriched as
-  select a.*, 
+  select a.*,
          b.c_obg, b.c_obl, b.TFC_Curr_Bal, b.tfc_face_amt, b.Override_Reason,
          b.legacy_bank_new, b.business_group, b.STI_lob_nm, b.STI_sub_lob_nm,
          b.TFC_src_sys_cd, b.STI_rating_model, b.LASFACILITYNBR
@@ -60,8 +52,14 @@ proc sql;
   left join _ABL_attrs as b
     on a.quarter=b.quarter and a.c_obgobl=b.c_obgobl;
 quit;
+```
 
-/* -- B) Inflation check: obligations vs unique obligors with MATERIAL overrides -- */
+---
+
+### 2) Investigation tables (root-cause clues + inflation checks)
+
+```sas
+/* Inflation: obligations vs unique obligors with material per quarter */
 proc sql;
   create table abl_material_inflation_qtr as
   select quarter,
@@ -92,7 +90,7 @@ proc sql;
   order by quarter, obligations_with_material;
 quit;
 
-/* -- C) Severity shape and upgrade/downgrade mix (obligation level) -- */
+/* Severity shape and upgrade/downgrade mix */
 data _ABL_enriched;
   set _ABL_enriched;
   length sev_bucket $6;
@@ -129,7 +127,7 @@ proc sql;
   order by quarter;
 quit;
 
-/* -- D) Exposure-weighted material impact -- */
+/* Exposure-weighted material impact */
 proc sql;
   create table abl_mat_amounts as
   select quarter,
@@ -146,7 +144,7 @@ proc sql;
   order by quarter;
 quit;
 
-/* -- E) Where do (material) overrides concentrate? (heritage / LOB / reason / source system) -- */
+/* Clustering by heritage / LOB / reason / source system / rating model */
 proc sql;
   create table abl_mat_by_heritage as
   select quarter, coalesce(legacy_bank_new,'(missing)') as heritage,
@@ -198,7 +196,7 @@ proc sql;
   order by quarter, mat_rate desc;
 quit;
 
-/* -- F) Repeats: where do they cluster? (join flags to attributes) -- */
+/* Repeats clustered by heritage / LOB / reason (using your _ABL_flags) */
 proc sql;
   create table _flags_join as
   select f.*, a.legacy_bank_new, a.STI_lob_nm, a.STI_sub_lob_nm, a.Override_Reason
@@ -240,7 +238,7 @@ proc sql;
   order by quarter, mat_repeat_pct desc;
 quit;
 
-/* -- G) Consecutive repeats (immediately prior quarter also material) -- */
+/* Consecutive (immediately prior quarter) repeat share */
 data _ABL_flags2;
   set _ABL_flags;
   by obligor_key qtr_idx;
@@ -263,3 +261,77 @@ proc sql;
   group by quarter
   order by quarter;
 quit;
+```
+
+---
+
+### 3) Lightweight PRINTS (key result tables)
+
+```sas
+title "ABL — Material Repeat Share by Quarter";
+proc print data=abl_material_repeat_by_qtr noobs label; 
+  var quarter total_observations mat_total mat_repeat mat_repeat_pct mat_first_time mat_first_time_pct;
+  label total_observations='Obs' mat_total='Material' mat_repeat='Repeats' 
+        mat_repeat_pct='% Repeat' mat_first_time='First-Time' mat_first_time_pct='% First-Time';
+run;
+
+title "ABL — Inflation Check: Obligations vs Unique Obligors (Material)";
+proc print data=abl_material_inflation_qtr noobs label; 
+  var quarter mat_total_obligations mat_total_obligors extra_obligations obligations_per_obligor;
+  label mat_total_obligations='Material (Obligations)'
+        mat_total_obligors='Material (Unique Obligors)'
+        extra_obligations='Extra Obligations'
+        obligations_per_obligor='Obligations per Obligor';
+run;
+
+title "ABL — Upgrade/Downgrade Mix";
+proc print data=abl_updown noobs label; 
+  var quarter downgrades upgrades mat_downgrade mat_upgrade;
+  label mat_downgrade='Material DG' mat_upgrade='Material UG';
+run;
+
+title "ABL — Exposure-Weighted Material Share";
+proc print data=abl_mat_amounts noobs label; 
+  var quarter face_amt_total face_amt_material face_amt_material_share curr_bal_total curr_bal_material curr_bal_material_share;
+  label face_amt_total='Face Total' face_amt_material='Face Material' face_amt_material_share='% Face Material'
+        curr_bal_total='CurrBal Total' curr_bal_material='CurrBal Material' curr_bal_material_share='% CurrBal Material';
+run;
+
+title "ABL — Where Materials Concentrate (Top by Rate)";
+proc sort data=abl_mat_by_heritage out=_t1; by quarter descending mat_rate; run;
+proc print data=_t1 (obs=10) noobs label; 
+  var quarter heritage obs mat_cnt mat_rate; 
+  label mat_cnt='Material' mat_rate='% Material';
+run;
+
+proc sort data=abl_mat_by_lob out=_t2; by quarter descending mat_rate; run;
+proc print data=_t2 (obs=10) noobs label; 
+  var quarter lob sub_lob obs mat_cnt mat_rate;
+run;
+
+title "ABL — Repeats by Heritage/LOB (Top by % Repeat)";
+proc sort data=abl_repeat_by_heritage out=_t3; by quarter descending mat_repeat_pct; run;
+proc print data=_t3 (obs=10) noobs label; 
+  var quarter heritage mat_total mat_repeat mat_repeat_pct;
+run;
+
+proc sort data=abl_repeat_by_lob out=_t4; by quarter descending mat_repeat_pct; run;
+proc print data=_t4 (obs=10) noobs label; 
+  var quarter lob mat_total mat_repeat mat_repeat_pct;
+run;
+
+title "ABL — Consecutive (Back-to-Back) Material Share";
+proc print data=abl_consecutive_share noobs label;
+  var quarter mat_total mat_consec mat_consec_pct;
+  label mat_consec='Consecutive' mat_consec_pct='% Consecutive';
+run;
+title;
+```
+
+---
+
+### Why the warning disappears
+
+All character variables that vary by quarter (`TFC_src_sys_cd`, `STI_rating_model`, `LASFACILITYNBR`, etc.) are now set to **wide, uniform lengths** **before** reading any tables. That stops the “multiple lengths specified” / truncation warnings.
+
+If any field name in your environment differs slightly, drop it from the `keep=` list for now—the rest of the analyses will still run.
