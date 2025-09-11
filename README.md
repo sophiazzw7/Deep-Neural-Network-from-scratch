@@ -1,25 +1,29 @@
 options compress=yes reuse=yes;
 
-libname src "/sasdata/your/path/with/all_tables";  /* <-- set path */
+/* 1) Point each quarter lib to its folder */
+libname q2 "/sasdata/.../2024Q2_v2.1";
+libname q3 "/sasdata/.../2024Q3_v2.1";
+libname q4 "/sasdata/.../2024Q4_v2.1";
+libname q1 "/sasdata/.../2025Q1_v2.2";
 
-proc sql;
-  create table _tables as
-  select memname,
-         scan(memname,3,'_') as ym
-  from dictionary.tables
-  where libname='SRC' and upcase(memname) like 'ALL_TABLE_%'
-  order by memname;
-quit;
+/* 2) Tell SAS which dataset name lives in which lib and what quarter label to use */
+data _tables;
+  length lib $8 memname $32 quarter $7;
+  infile datalines truncover;
+  input lib $ memname $ quarter $;
+datalines;
+q2 all_table_2406_1 2024Q2
+q3 all_table_2409_1 2024Q3
+q4 all_table_2412_1 2024Q4
+q1 all_table_2503_1 2025Q1
+;
+run;
 
+/* 3) Run the QC pack for each table (developer keys) */
 data _null_;
   set _tables;
-  length quarter $7 ds $200;
-  ds = cats('src.', memname);
-  yy = input(substr(ym,1,2),2.);
-  mm = input(substr(ym,3,2),2.);
-  yr = 2000+yy;
-  q  = qtr(mdy(mm,1,yr));
-  quarter = cats(put(yr,4.),'Q',q);
+  length ds $64;
+  ds = cats(lib,'.',memname);
 
   call execute("proc sql; create table qc_rowcount_"||quarter||" as
                  select '"||quarter||"' as quarter length=7,
@@ -37,7 +41,7 @@ data _null_;
   call execute("proc sql; create table qc_dups_obgobl_"||quarter||" as
                  select cats(put(c_obg,z10.),put(c_obl,z5.)) as c_obgobl length=15, count(*) as n
                  from "||ds||"
-                 group by cats(put(c_obg,z10.),put(c_obl,z5.))
+                 group by calculated c_obgobl
                  having n>1; quit;");
 
   call execute("proc sql; create table qc_dups_pair_"||quarter||" as
@@ -45,7 +49,7 @@ data _null_;
                         TFC_Account_Nbr_New,
                         count(*) as n
                  from "||ds||"
-                 group by cats(put(c_obg,z10.),put(c_obl,z5.)), TFC_Account_Nbr_New
+                 group by calculated c_obgobl, TFC_Account_Nbr_New
                  having n>1; quit;");
 
   call execute("proc sql; create table qc_missing_"||quarter||" as
@@ -96,6 +100,7 @@ data _null_;
   call execute("proc means data=_util_"||quarter||" n nmiss min p5 p50 p95 max; var util; title 'Utilization Summary "||quarter||"'; run; title;");
 run;
 
+/* 4) Collate quick summaries across quarters */
 data qc_rowcounts_all; set qc_rowcount_:; run;
 data qc_missing_all;   set qc_missing_:;   run;
 data qc_ranges_all;    set qc_ranges_:;    run;
