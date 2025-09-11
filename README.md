@@ -1,1 +1,1 @@
-Tracking repeat overrides at the obligor level to monitor persistence.
+repeats are defined as overrides by obligors who had a prior material override in any earlier quarter
