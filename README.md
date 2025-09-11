@@ -1,111 +1,30 @@
-/* ===== Reason-code stickiness from _flags_join2 (defensive, no qtr_idx needed) ===== */
-/* Requires in _flags_join2: QUARTER, C_OBGOBL, MATERIAL_1NOTCH, REPEAT_MATERIAL
-   Optional: OBLIGOR_KEY and/or C_OBG, OVERRIDE_REASON                                  */
+Got it — if you’re attaching the tables, here’s the polished version ready to send:
 
-%macro reason_stick_from_flags(ds=_flags_join2);
+---
 
-  /* Discover which ID/Reason columns exist */
-  %local dsid rc has_ok has_cobg has_reason has_quarter has_mat has_rpt has_obgobl;
-  %let dsid=%sysfunc(open(&ds));
-  %if &dsid = 0 %then %do; %put ERROR: Cannot open &ds..; %return; %end;
+**Subject:** Follow-up on MOD1497 Root Cause Analysis and Repeat Overrides
 
-  %let has_ok      = %sysfunc(varnum(&dsid,obligor_key));
-  %let has_cobg    = %sysfunc(varnum(&dsid,c_obg));
-  %let has_reason  = %sysfunc(varnum(&dsid,Override_Reason));
-  %let has_quarter = %sysfunc(varnum(&dsid,quarter));
-  %let has_mat     = %sysfunc(varnum(&dsid,material_1notch));
-  %let has_rpt     = %sysfunc(varnum(&dsid,repeat_material));
-  %let has_obgobl  = %sysfunc(varnum(&dsid,c_obgobl));
-  %let rc=%sysfunc(close(&dsid));
+Hi Amit and Jiao,
 
-  /* Minimal checks */
-  %if &has_quarter=0 or &has_mat=0 or &has_rpt=0 or &has_obgobl=0 %then %do;
-    %put ERROR: &ds must contain QUARTER, C_OBGOBL, MATERIAL_1NOTCH, REPEAT_MATERIAL.;
-    %return;
-  %end;
+Hope you're doing well. Just following up on the root cause and repeat override analysis you mentioned would be available by mid this week—let us know if there's an update on timing.
 
-  /* Choose an obligor identifier */
-  %if &has_ok>0 %then %let IDVAR=obligor_key;
-  %else %if &has_cobg>0 %then %let IDVAR=c_obg;
-  %else %let IDVAR=c_obgobl;           /* fallback (obligation-level) */
+Separately, MRO completed a quick repeat override analysis covering 2024Q2–2025Q1. Key findings (see attached tables for detail):
 
-  /* 1) Normalize ID & REASON (treat missing reason as 'MISSING') */
-  data _rr_rows;
-    set &ds;
-    length obg_id $200 reason $200;
-    obg_id = strip(&IDVAR);
-    %if &has_reason>0 %then %do;
-      reason = upcase(strip(coalescec(Override_Reason,'MISSING')));
-    %end;
-    %else %do;
-      reason = 'MISSING';
-    %end;
+* **High repeat rate:** \~90–96% of material overrides each quarter are repeats (2024Q2 is baseline).
+* **Upgrade skew:** Upgrades consistently exceed downgrades, suggesting directional bias.
+* **Significant exposure:** \~22–25% of balances each quarter are under material overrides.
+* **Concentrated reasons:** A small number of override reasons (e.g., codes 20, 21, 8, and “MISSING”) appear frequently across quarters. This suggests recurring override patterns, but MRO does not have access to the full reason code mapping, so we are unable to determine which specific business drivers (e.g., collateral-related, input adjustments) dominate.
 
-    /* ensure flags are numeric */
-    if missing(material_1notch) then material_1notch = 0;
-    if missing(repeat_material)  then repeat_material  = 0;
-  run;
+These results suggest the need for compensating controls while redevelopment is pending. We recommend:
 
-  /* 2) Evaluate stickiness once per obligor–quarter (order by QUARTER string) */
-  proc sort data=_rr_rows; by obg_id quarter c_obgobl; run;
+1. Maintaining a repeat override tracker for recurring obligors.
+2. Conducting a basic root cause analysis of dominant override drivers once the code mapping is available.
 
-  data _obg_qtr_stick;
-    set _rr_rows;
-    by obg_id quarter c_obgobl;
+We’ll include the override reason distribution chart in the appendix for context. Please let us know if you'd like to discuss further.
 
-    retain last_mat_reason ' ' has_mat 0 has_rpt 0 match_in_qtr 0
-           got_first 0 first_mat_reason $200;
+Best,
+Phoebe
 
-    if first.obg_id then last_mat_reason = ' ';
-    if first.quarter then do;
-      has_mat=0; has_rpt=0; match_in_qtr=0;
-      got_first=0; first_mat_reason=' ';
-    end;
+---
 
-    /* consider only MATERIAL rows */
-    if material_1notch=1 then do;
-      has_mat = 1;
-
-      /* capture first material reason this quarter (to carry forward) */
-      if got_first=0 then do; first_mat_reason = reason; got_first=1; end;
-
-      if repeat_material=1 then do;
-        has_rpt = 1;
-        /* treat missing reason as non-match to avoid inflating stickiness */
-        if not missing(last_mat_reason) and last_mat_reason^='MISSING'
-           and reason^='MISSING' and reason = last_mat_reason
-        then match_in_qtr = 1;
-      end;
-    end;
-
-    /* emit one row per obligor–quarter; then advance last_mat_reason */
-    if last.quarter then do;
-      output;
-      if has_mat then last_mat_reason = first_mat_reason;
-    end;
-
-    keep quarter obg_id has_mat has_rpt match_in_qtr;
-  run;
-
-  /* 3) Quarter-level table you want */
-  proc sql;
-    create table same_reason_repeat as
-    select quarter,
-           sum(has_mat)      as mat_total,
-           sum(has_rpt)      as mat_repeat,
-           sum(match_in_qtr) as same_reason,
-           calculated same_reason / max(calculated mat_repeat,1)
-             as same_reason_pct format=percent8.2
-    from _obg_qtr_stick
-    group by quarter
-    order by quarter;
-  quit;
-
-  title "Reason Code Stickiness (Same-Reason Repeats among Material Repeats)";
-  proc print data=same_reason_repeat noobs label; run;
-  title;
-
-%mend;
-
-/* Run it */
-%reason_stick_from_flags(ds=_flags_join2);
+Do you want me to also draft a **caption/summary blurb** for each table (so when you attach them, the reader immediately knows what each one shows)?
