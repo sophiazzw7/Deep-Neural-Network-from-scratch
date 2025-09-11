@@ -1,81 +1,51 @@
-/* ===== Reason code stickiness using _abl_enriched + _ABL_flags ===== */
-/* Assumes both tables contain: quarter, qtr_idx, c_obg, c_obgobl
-   _abl_enriched : Override_Reason
-   _ABL_flags    : material_1notch, repeat_material
-*/
+Great catch—and thanks for the screenshot. Those `79-322 / 22-322` errors come from using `ORDER BY` inside a subquery plus `monotonic()` (finicky in PROC SQL). Easiest, bullet-proof fix: **SORT + DATA step ranking** per quarter.
 
-/* 1) Merge to one obligation-level table with all needed fields */
-proc sort data=_abl_enriched
-          out=__re1(keep=quarter qtr_idx c_obg c_obgobl Override_Reason);
-  by c_obg qtr_idx c_obgobl;
+Drop this in (it replaces the earlier ranking bit) ⬇️
+
+```sas
+/* Top 10 Material Override Reasons within each quarter */
+proc sort data=abl_by_reason out=abl_reason_sorted;
+    by quarter descending mat_cnt reason;   /* reason as tiebreaker = deterministic */
 run;
 
-proc sort data=_ABL_flags
-          out=__re2(keep=quarter qtr_idx c_obg c_obgobl material_1notch repeat_material);
-  by c_obg qtr_idx c_obgobl;
+data abl_reason_top10;
+    set abl_reason_sorted;
+    by quarter;
+    retain rank_within_qtr;
+    if first.quarter then rank_within_qtr = 0;
+    rank_within_qtr + 1;
+    if rank_within_qtr <= 10;               /* keep only top 10 for this quarter */
 run;
 
-data __seq; /* obligation grain */
-  merge __re1(in=a) __re2(in=b);
-  by c_obg qtr_idx c_obgobl;
-  if a and b;  /* keep only rows present in both */
-  length reason $200;
-  reason = upcase(strip(coalescec(Override_Reason,'MISSING')));
+title "Material Override Reasons (Top 10 by Material Count within Quarter)";
+proc print data=abl_reason_top10 noobs label;
+    var quarter reason obs ovr_cnt mat_cnt mat_rate;
 run;
-
-/* 2) Collapse to ONE decision per obligor–quarter */
-/* We compare this quarter’s MATERIAL reason(s) to the last prior MATERIAL reason
-   for that obligor (carried between quarters). If any repeated material reason
-   matches the prior reason, mark match_in_qtr=1. */
-proc sort data=__seq; by c_obg qtr_idx c_obgobl; run;
-
-data __obg_qtr;
-  set __seq;
-  by c_obg qtr_idx c_obgobl;
-
-  retain last_mat_reason ' '  /* last prior material reason across quarters */
-         has_material 0 has_repeat 0 match_in_qtr 0
-         got_first_reason 0 first_mat_reason $200;
-
-  if first.c_obg then last_mat_reason = ' ';
-  if first.qtr_idx then do;
-     has_material = 0; has_repeat = 0; match_in_qtr = 0;
-     got_first_reason = 0; first_mat_reason = ' ';
-  end;
-
-  if material_1notch=1 then do;
-     has_material = 1;
-     if got_first_reason=0 then do; first_mat_reason = reason; got_first_reason=1; end;
-     if repeat_material=1 then do;
-        has_repeat = 1;
-        if not missing(last_mat_reason) and reason = last_mat_reason then match_in_qtr = 1;
-     end;
-  end;
-
-  /* emit one row per obligor-quarter and then advance the "last" reason */
-  if last.qtr_idx then do;
-     output;
-     if has_material then last_mat_reason = first_mat_reason; /* carry forward */
-  end;
-
-  keep quarter qtr_idx c_obg has_material has_repeat match_in_qtr;
-run;
-
-/* 3) Aggregate to the final table you use: same_reason_repeat */
-proc sql;
-  create table same_reason_repeat as
-  select quarter,
-         sum(has_material)                              as mat_total,   /* # obligor-quarters with any material */
-         sum(has_repeat)                                as mat_repeat,  /* # obligor-quarters where material was a repeat */
-         sum(match_in_qtr)                              as same_reason, /* of those repeats, reason matched prior */
-         calculated same_reason / max(calculated mat_repeat,1)
-                                                        as same_reason_pct format=percent8.2
-  from __obg_qtr
-  group by quarter
-  order by quarter;
-quit;
-
-/* (Optional) quick print */
-title "Reason Code Stickiness (Same-Reason Repeats among Material Repeats)";
-proc print data=same_reason_repeat noobs label; run;
 title;
+```
+
+**Optional (to hide “missing” reasons):**
+
+```sas
+data abl_reason_top10;
+    set abl_reason_sorted;
+    by quarter;
+    retain rank_within_qtr;
+    if upcase(reason) = 'MISSING' then delete;   /* or exclude earlier in a WHERE */
+    if first.quarter then rank_within_qtr = 0;
+    rank_within_qtr + 1;
+    if rank_within_qtr <= 10;
+run;
+```
+
+**Quick sanity check (not required, just handy):**
+
+```sas
+proc sql;
+  select quarter, count(*) as rows
+  from abl_reason_top10
+  group by quarter;
+quit;   /* should be <= 10 for every quarter */
+```
+
+This keeps your existing `abl_by_reason` build intact and guarantees **top-10 per quarter** without SQL ranking quirks.
