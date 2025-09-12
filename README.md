@@ -1,47 +1,21 @@
-/* ---------- build _ABL from quarterly OVERRIDE_*_DEDUP_ABL ---------- */
+Here’s a concise draft you can adapt:
 
-/* empty shell (so PROC APPEND has a base) */
-data _ABL;
-  length quarter $7 qtr_idx 8
-         c_obgobl $200 f_uplddt 8
-         override_ind 8 OVRD_SEVERITY 8
-         model_lgd_grade_num 8 final_lgd_grade_num 8
-         material_1notch 8
-         /* ids we need later */
-         STI_obl_nbr 8 c_obl 8 fpb_lgdappid 8
-         Override_Reason $200 TFC_Curr_Bal 8 tfc_face_amt 8;
-  stop;
-run;
+---
 
-/* small macro to keep the code tiny */
-%macro add_qtr(q=, ds=);
-data _ABL_&q.;
-  length quarter $7;
-  set &ds (keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
-                 model_lgd_grade_num final_lgd_grade_num
-                 STI_obl_nbr c_obl fpb_lgdappid
-                 Override_Reason TFC_Curr_Bal tfc_face_amt);
-  quarter="&q.";
-  qtr_idx = input(substr(quarter,1,4),8.)*10 + input(substr(quarter,6,1),8.);
+**Subject:** Follow-up on MOD1497 Override Analysis
 
-  /* backfill severity if needed (your existing rule) */
-  if missing(OVRD_SEVERITY) and nmiss(final_lgd_grade_num,model_lgd_grade_num)=0 then
-    OVRD_SEVERITY = final_lgd_grade_num - model_lgd_grade_num;
+Hi \[Boss’s Name],
 
-  if missing(override_ind) then override_ind = (OVRD_SEVERITY ne 0);
-  material_1notch = (abs(OVRD_SEVERITY) > 1);
-run;
+I wanted to get your thoughts on the developer’s recent analysis (attached in Amit’s email). Their results confirm that most material overrides (≈60–70%) are due to “Other Collateral Strengths,” and that repeated overrides account for about 30–50% of events across 2024Q2–2025Q1. While this aligns with our initial observations, the override reason coding appears too broad (e.g., “Other Collateral”), which limits our ability to identify specific drivers.
 
-proc append base=_ABL data=_ABL_&q. force; run;
-proc datasets lib=work nolist; delete _ABL_&q.; quit;
-%mend;
+Given the current rebuild timeline (2027), my suggestion is to propose a compensating control in the form of a structured root-cause analysis, requiring more granular sub-reason coding so recurring themes can be tracked and monitored. If we do not receive further clarifications from MD before validation closes (around September 19th), I plan to raise this as a sub-issue in the report.
 
-/* call for the four quarters you’re using */
-%add_qtr(q=2024Q2, ds=ogm.OVERRIDE_2024Q2_DEDUP_ABL);
-%add_qtr(q=2024Q3, ds=ogm.OVERRIDE_2024Q3_DEDUP_ABL);
-%add_qtr(q=2024Q4, ds=ogm.OVERRIDE_2024Q4_DEDUP_ABL);
-%add_qtr(q=2025Q1, ds=ogm.OVERRIDE_2025Q1_DEDUP_ABL);
+Please let me know if you have alternative suggestions or if there are any follow-ups you’d like me to pursue with the developer team.
 
-/* ---------- obligation + LGD approval repeat (add-on, leaves your obligor logic intact) ---------- */
+Thanks,
+Phoebe
 
+---
+
+Do you want me to make this slightly **softer in tone** (more exploratory) or **firmer** (flagging the control gap more assertively)?
 
