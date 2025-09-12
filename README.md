@@ -1,62 +1,47 @@
-/* ===== Obligation + LGD approval repeat (minimal add-on) ===== */
-/* Assumes _ABL already has: quarter, qtr_idx, material_1notch, OVRD_SEVERITY,
-   and (from step 1) STI_obl_nbr, c_obl, fpb_lgdappid              */
+/* ---------- build _ABL from quarterly OVERRIDE_*_DEDUP_ABL ---------- */
 
-data _ABL_oblapp_prep;
-  length obligation_key $40 lgd_app_id $40;
-  set _ABL;
-
-  /* Build obligation_key (prefer STI_obl_nbr, else c_obl) as character */
-  if not missing(STI_obl_nbr) then obligation_key = strip(put(STI_obl_nbr,best16.));
-  else if not missing(c_obl)   then obligation_key = strip(put(c_obl,best16.));
-  else obligation_key='';
-
-  /* LGD approval id as character */
-  if not missing(fpb_lgdappid) then lgd_app_id = strip(put(fpb_lgdappid,best16.));
-  else lgd_app_id='';
-
-  /* Drop rows without a composite key */
-  if missing(obligation_key) or missing(lgd_app_id) then delete;
+/* empty shell (so PROC APPEND has a base) */
+data _ABL;
+  length quarter $7 qtr_idx 8
+         c_obgobl $200 f_uplddt 8
+         override_ind 8 OVRD_SEVERITY 8
+         model_lgd_grade_num 8 final_lgd_grade_num 8
+         material_1notch 8
+         /* ids we need later */
+         STI_obl_nbr 8 c_obl 8 fpb_lgdappid 8
+         Override_Reason $200 TFC_Curr_Bal 8 tfc_face_amt 8;
+  stop;
 run;
 
-proc sort data=_ABL_oblapp_prep out=_ABL_oblapp_sorted;
-  by obligation_key lgd_app_id qtr_idx;
+/* small macro to keep the code tiny */
+%macro add_qtr(q=, ds=);
+data _ABL_&q.;
+  length quarter $7;
+  set &ds (keep=c_obgobl f_uplddt override_ind OVRD_SEVERITY
+                 model_lgd_grade_num final_lgd_grade_num
+                 STI_obl_nbr c_obl fpb_lgdappid
+                 Override_Reason TFC_Curr_Bal tfc_face_amt);
+  quarter="&q.";
+  qtr_idx = input(substr(quarter,1,4),8.)*10 + input(substr(quarter,6,1),8.);
+
+  /* backfill severity if needed (your existing rule) */
+  if missing(OVRD_SEVERITY) and nmiss(final_lgd_grade_num,model_lgd_grade_num)=0 then
+    OVRD_SEVERITY = final_lgd_grade_num - model_lgd_grade_num;
+
+  if missing(override_ind) then override_ind = (OVRD_SEVERITY ne 0);
+  material_1notch = (abs(OVRD_SEVERITY) > 1);
 run;
 
-/* Flag repeats for the SAME (obligation, LGD approval) across any prior quarter */
-data ABL_flags_oblapp;
-  set _ABL_oblapp_sorted;
-  by obligation_key lgd_app_id;
+proc append base=_ABL data=_ABL_&q. force; run;
+proc datasets lib=work nolist; delete _ABL_&q.; quit;
+%mend;
 
-  retain prior_mat 0;
-  if first.lgd_app_id then prior_mat=0;
+/* call for the four quarters you’re using */
+%add_qtr(q=2024Q2, ds=ogm.OVERRIDE_2024Q2_DEDUP_ABL);
+%add_qtr(q=2024Q3, ds=ogm.OVERRIDE_2024Q3_DEDUP_ABL);
+%add_qtr(q=2024Q4, ds=ogm.OVERRIDE_2024Q4_DEDUP_ABL);
+%add_qtr(q=2025Q1, ds=ogm.OVERRIDE_2025Q1_DEDUP_ABL);
 
-  repeat_material_oblapp = 0;
-  if material_1notch=1 then do;
-    if prior_mat>0 then repeat_material_oblapp=1;
-    prior_mat+1;
-  end;
-run;
+/* ---------- obligation + LGD approval repeat (add-on, leaves your obligor logic intact) ---------- */
 
-/* Quarter summary at obligation+LGD level (names parallel your existing table) */
-proc sql;
-  create table abl_material_repeat_by_qtr_oblapp as
-  select quarter,
-         count(*)                                        as total_observations,
-         sum(material_1notch)                            as mat_total,
-         sum(repeat_material_oblapp)                     as mat_repeat,
-         sum(material_1notch)-sum(repeat_material_oblapp) as mat_first_time,
-         calculated mat_repeat     / max(calculated mat_total,1) as mat_repeat_pct     format=percent8.2,
-         calculated mat_first_time / max(calculated mat_total,1) as mat_first_time_pct format=percent8.2
-  from ABL_flags_oblapp
-  group by quarter
-  order by quarter;
-quit;
 
-/* Optional quick print to mirror your current output style */
-title "Material Overrides Repeat by Quarter (Obligation + LGD Approval)";
-proc print data=abl_material_repeat_by_qtr_oblapp noobs label;
-  var quarter total_observations mat_total mat_repeat mat_repeat_pct
-      mat_first_time mat_first_time_pct;
-run;
-title;
