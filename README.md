@@ -1,4 +1,5 @@
 4.2 data quality testing
+Model use monitoring showed ABL obligations declining from 256 in 2024Q2 to 219 in 2025Q1. Over the same period, ABL dollars outstanding moved between $3.14 billion and $3.28 billion, while commitments decreased from $13.5 billion to $11.6 billion. SF obligations increased from 57 in 2024Q2 to 82 in 2025Q1, with dollars outstanding rising from $117.2 million to $182.6 million and commitments from $752 million to $1.37 billion.
 
 4.2.1 data quality testing by MD
 
