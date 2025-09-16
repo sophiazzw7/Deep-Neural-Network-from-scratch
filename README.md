@@ -1,6 +1,1 @@
-Hi Kevin,
-
-Just following up on my earlier note. Given the broad use of “Other Collateral Strengths” and the high share of repeat overrides, do you think adding more granular sub-reason coding and structured root-cause analysis each OGM cycle is a reasonable interim step until the rebuild? Please let me know if you’d suggest a different approach.
-
-Thanks,
-Sophia
+Dear [Developer’s Name], As part of our validation review, we would like to clarify one point. The model assigns LGD ratings G–K to exposures classified as unsecured, but it appears that third-party guarantees may not be reflected in these ratings. Could you please confirm how guarantees are incorporated into the LGD assignment for loans categorized as unsecured? Separately, most overrides were coded under “Other Collateral Strengths.” If applicable, please confirm whether this category is intended to capture guarantees, or if it is meant to represent other considerations. Given the validation timeline, we would appreciate your response by Monday, Sep 22, as the validation is scheduled to close on Friday, Sep 26. If we do not hear back by then, we will document this as a sub-issue in the validation report. Thank you for your attention to this matter. + attache the table is that clear enough?
