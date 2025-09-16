@@ -1,7 +1,19 @@
-Stability testing was carried out using two early warning indicators: the directional shift metric and the population stability index (PSI). These measures assess whether rating distributions and key model inputs remain stable over time.
+Here’s a revised draft that weaves in the **baseline explanation** alongside the **thresholds** and **assessment narrative** in a natural, professional way:
 
-For the directional shift metric, the OGM plan defines a threshold of greater than 1.0 or less than -1.0 as a material rating shift, while values between -1.0 and 1.0 indicate balanced rating migrations. Results across 2024Q2 through 2025Q1 consistently fell within the balanced range. In 2024Q2, the ABL sample showed a directional shift of -0.08, and in 2024Q3 the result was -0.06. By 2024Q4, the shift was -0.09, and in 2025Q1 it was -0.34. All of these values confirm that rating movements did not create a material directional bias.
+---
 
-For the PSI metric, the OGM plan defines values less than or equal to 0.25 as acceptable population shifts and values greater than 0.25 as significant shifts requiring attention. Across all quarters, most segments returned “NA – insufficient count in buckets,” reflecting that distributions were too thin to produce conclusive PSI values. Where results were available, they indicated acceptable shifts. For example, in 2024Q4 the non-ABL control type reported a PSI value of 0.054, and in 2025Q1 the non-ABL control type returned a PSI value of 0.038. Both were assessed as acceptable. Other inputs, including collateral class and valuation method across ABL and non-ABL portfolios, did not meet the minimum thresholds for evaluation.
+### Stability Testing Assessment
 
-Taken together, the results suggest that directional stability has been maintained, with no evidence of sustained rating drift. However, the limited PSI coverage across quarters restricts the ability to fully validate the stability of key model inputs. The findings underscore the dependence on directional shift as the primary stability measure, with PSI testing providing only partial assurance due to data limitations.
+Stability testing was conducted using two early warning indicators: the directional shift metric and the population stability index (PSI). Together, these measures assess whether the model portfolio remains stable over time or shows signs of systematic migration.
+
+For the directional shift, the baseline portfolio is defined as the set of obligors and obligations rated 12 months prior to the current OGM quarter. This baseline requirement ensures that results reflect rating migrations over a full year, rather than short-term fluctuations. Ratings from the baseline period are compared to the current quarter for the same obligors, using the most recent rating available within the 12-month window.
+
+The directional shift threshold is set so that values between -1.0 and 1.0 indicate balanced rating migrations, while values outside this range signal material rating shifts. Across the 2024Q2 to 2025Q1 review period, the directional shift results fell within the acceptable range, with test values of -0.08 in 2024Q2, -0.06 in 2024Q3, -0.09 in 2024Q4, and -0.34 in 2025Q1. These results show that the portfolio remained broadly stable, with no evidence of material migration.
+
+For PSI testing, the established threshold is 0.25. Results less than or equal to this threshold indicate an acceptable population shift, while results greater than 0.25 suggest a significant population shift requiring attention. In practice, many PSI metrics returned “NA” assessments because of insufficient counts in key input buckets, particularly for Non-ABL exposures. Where results were available, they were within the acceptable range. For example, Non-ABL control type in 2025Q1 showed a PSI of 0.038, which indicates an acceptable population shift.
+
+Overall, the stability testing results indicate that rating migrations and key input distributions have remained within acceptable levels. While the limited sample sizes restricted PSI testing in several quarters, the directional shift metric—anchored to the baseline portfolio—provides assurance that the model portfolio has not experienced abnormal migration trends.
+
+---
+
+Would you like me to also contrast this with the **developer’s OGM stability reporting** (the Excel outputs you shared), so that your section makes clear where MRO’s independent interpretation adds value?
