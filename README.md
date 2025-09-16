@@ -1,3 +1,6 @@
-Sensitivity testing was performed during model development to confirm that the scorecard responds logically to variation in collateral, valuation, control, and guarantee assumptions. Results were directionally consistent with expectations: stronger collateral types (cash, government receivables) and tighter controls produced lower LGDs and stronger ratings, while weaker assets (IP, unsecured) or looser controls and guarantees produced higher LGDs. Valuation methods also ranked sensibly, with liquidation values yielding lower LGDs than book or market values. The magnitude of changes was proportionate, with differences generally in the 5–10 percentage point range rather than abrupt shifts.
+Hi Kevin,
 
-Overall, the sensitivity results were intuitive and reasonable, providing assurance that the model’s marginal responses align with risk drivers and expert expectations.
+Just following up on my earlier note. Given the broad use of “Other Collateral Strengths” and the high share of repeat overrides, do you think adding more granular sub-reason coding and structured root-cause analysis each OGM cycle is a reasonable interim step until the rebuild? Please let me know if you’d suggest a different approach.
+
+Thanks,
+Sophia
