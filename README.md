@@ -1,11 +1,3 @@
-Here’s a structured draft for your **Model Performance Review** section based on the eight backtesting/performance screenshots you shared:
+Sensitivity testing was performed during model development to confirm that the scorecard responds logically to variation in collateral, valuation, control, and guarantee assumptions. Results were directionally consistent with expectations: stronger collateral types (cash, government receivables) and tighter controls produced lower LGDs and stronger ratings, while weaker assets (IP, unsecured) or looser controls and guarantees produced higher LGDs. Valuation methods also ranked sensibly, with liquidation values yielding lower LGDs than book or market values. The magnitude of changes was proportionate, with differences generally in the 5–10 percentage point range rather than abrupt shifts.
 
----
-
-### Model Performance Review
-
-
-**Backtesting of LGD forecasts**
-Backtesting is designed to compare realized outcomes against the model’s LGD forecasts. However, across the 2024Q2–2025Q1 OGM review periods, the number of resolved defaults in the applicable windows was too small to conduct meaningful tests. The backtesting windows showed only 8–9 resolved defaults in ABL and none in Non-ABL, well below the minimum threshold of 30 defaults required under the OGM plan. Consequently, all test results defaulted to “NA – Insufficient resolved default counts.” While this limits the ability to quantitatively validate realized versus forecast LGD, the accumulation of defaults in future cycles may allow more substantive testing. The current outcome is consistent with expectations given the low default environment.
-
-
+Overall, the sensitivity results were intuitive and reasonable, providing assurance that the model’s marginal responses align with risk drivers and expert expectations.
