@@ -1,11 +1,15 @@
-Hi Amit,
+The model developer listed the following key limitations in Section XXX of the Model Development Document (MDD). These items are also addressed in the OGM plan, primarily through the material override metric, rating distribution checks, and model coverage reviews.
 
-Thank you for your response and for sharing the guarantor “lift to recovery on leftover exposure” table. I had a few follow-ups based on our review discussion:
+Lack of data for quantitative/statistical modeling – Reliance on SME opinion due to insufficient defaults; monitored through the material override metric.
 
-The table indicates a 5% LGD even when no guarantee is present. Could you explain why the value is not zero in this case?
+Lack of data for statistical performance measures – Benchmarking and validation constrained by data; monitored through the material override metric.
 
-More broadly, could you provide a worked example to illustrate how the “lift to recovery on leftover exposure” is applied in practice? For example, how the lift interacts with the starting LGD, collateral recovery assumptions, and the definition of “leftover exposure.”
+Dependence on overrides and potential bias – Final rating may reflect user adjustment rather than model factors; monitored through the material override metric.
 
-Regarding your explanation that some G–K ratings are tied to non-ABL borrowing bases: based on the OGM reports, material overrides in non-ABL segments appear limited (generally only 1–2 per monitoring period). This does not seem to account for the full set of overrides. For instance, in the analysis Jiao shared, the overrides were labeled as ABL, and showed 26 G–K overrides in 2024Q2, 13 in 2024Q3, 11 in 2024Q4, and 14 in 2025Q1. Could you clarify this point?
+Expansion to Non-ABL Borrowing Base – Scorecard built for ABL may not fully capture Non-ABL risks; monitored through the material override metric for ABL and Non-ABL.
 
-We would like to incorporate your clarifications into the performance section of our report.
+Use of unsecured MOD1366 as benchmark – May limit LGD range for Non-ABL facilities; monitored through OGM reporting and material override metric.
+
+Limited Non-ABL sample (10%) – Parameters may not represent all scenarios; mitigation through sample construction, no specific OGM metric.
+
+Collateral coverage scope – Non-ABL analysis restricted to A/R and inventory valued by NBV; monitored through model coverage by ABL and Non-ABL.
