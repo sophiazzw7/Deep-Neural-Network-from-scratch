@@ -1,1 +1,3 @@
-The economy is slowing, with weaker growth, higher unemployment, and inflation that remains above target. These conditions may reduce collateral values and recovery rates, which could increase pressure on the model and contribute to more overrides.
+MRO reviewed MOD1497 based on documentation, data testing, and OGM performance results. The review found that input data were complete and stable, but model performance testing showed consecutive breaches in material override rates. The root cause analysis confirmed that overrides often reflected model design gaps in recognizing collateral and facility-specific factors. Other performance measures such as discriminatory power and level tests could not be assessed due to insufficient defaults.
+
+Given these issues, and noting that remediation through Archer finding FND-15446005 is already in place with redevelopment scheduled, MRO assesses MOD1497 to be Fit for Use with Caution.
