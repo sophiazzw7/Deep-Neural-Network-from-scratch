@@ -1,1 +1,9 @@
-The issue remains open. Remediation is still in progress under Archer finding FND-15446005. Multiple remediation plans have been raised, including RP-15446204 (ABL LGD Scorecard Refresh/Redevelopment), RP-15446220 (Scorecard Implementation), RP-15446244 (Sustainability Testing), RP-15446668 (Enhanced OGM Compensating Control – Interim Action), and RP-15476581 (MRO Validation). The key remediation plan (RP-15446204) targets redevelopment of the LGD scorecard, with implementation expected by December 2026.
+As we work toward closing the validation, I wanted to check with you on a few updates to the model risk tier table in the MDD:
+
+Coverage – Can we update this to reflect LOB’s expectation (around $50M)?
+
+Model Use – In SNOW it shows “pricing/valuation.” Would it make sense to align the MDD entry for consistency?
+
+Data Availability/Stability – I noticed this is marked “Low.” Was that mainly due to the limited PAG deals recently? If so, could we update the table in the MDD to reflect that context?
+
+If possible, it would be great to have these changes in place by 10/02, as we are aiming to close the validation then. Please let me know your thoughts.
