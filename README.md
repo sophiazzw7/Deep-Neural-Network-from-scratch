@@ -18,4 +18,10 @@ For macroeconomic inputs, the RQCRA quality control reports confirmed that scena
 
 PSI monitoring was also referenced in the model documentation as a control for input stability. However, because no PAG portfolio data have been available since 2022, no PSI results could be produced for review. This remains a limitation, but it does not affect the appropriateness of the reconciliations and macroeconomic scenario checks that were reviewed.
 
+
+
+=======
+
+MRO was unable to conduct independent testing since no PAG deals were available in recent OGM periods. Instead, MRO reviewed the developer’s evidence of data controls and input quality. Treasury DO reconciliation reports for May 2025 showed RED-C balances for charge-offs, recoveries, and net asset value reconciled to the general ledger, with small variances within tolerance and documented adjustments. For macroeconomic inputs, RQCRA provided quality control reports on baseline and pessimistic scenarios (March and June 2025), which included variance checks and plots for key variables such as unemployment, consumer credit, retail sales, and housing indices. Results were transparently reported and consistent with expected controls. PSI monitoring was noted in the documentation but not applicable given the absence of portfolio data. Overall, evidence indicates that reconciliation processes and macroeconomic scenario checks are functioning as designed, supporting the quality and appropriateness of available inputs, though the lack of PAG deal data remains a limitation.
+
 Based on the evidence provided, MRO concludes that while the absence of PAG portfolio data prevents direct testing, the available reconciliation and scenario control processes support the appropriateness of the inputs relied upon by the model.
