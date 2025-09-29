@@ -1,1 +1,14 @@
-The ongoing monitoring scenario analysis is not feasible at present due to the absence of PAG deal activity. However, scenario testing was performed during model development, and MRO summarizes those results below.
+Sensitivity of borrower attributes and macroeconomic variables was evaluated during development and reviewed in prior validation. No methodology changes have occurred since that time. Because no PAG deals have been observed in recent OGM periods, ongoing sensitivity testing could not be performed. MRO notes the prior sensitivity work remains the reference point.
+
+Prior validation included an independent sensitivity analysis to assess the impact of alternative macroeconomic specifications and model structures. The testing considered multiple candidate models with varying macroeconomic drivers (e.g., unemployment rate, unemployment claims, consumer credit, SP500) and also evaluated standalone stage-3 specifications without stage-1 or stage-2 inputs. Results indicated stable parameter signs and significance across specifications, with minimal incremental lift in model performance from alternative setups. MRM concluded that the final model design was reasonable, and that the inclusion of stage-1 and stage-2 processes provided only a small but consistent improvement in fitting statistics.
+
+Since no model changes have occurred since the prior validation and no new PAG deals have been observed, ongoing sensitivity testing could not be performed. MRO therefore references the prior validation’s analysis and notes no additional concerns at this time.
+
+
+Scenario testing was originally conducted during development and reviewed in prior validation. No methodology changes have occurred since that time. Because no PAG deals have been observed in recent OGM periods, ongoing scenario testing could not be performed. MRO therefore references the prior validation’s analysis as the basis for current review.
+
+Prior validation included stress testing of both default and paydown models under Moody’s Baseline (benign) and Stress (adverse) macroeconomic scenarios. The stress case assumed a sharp increase in unemployment (peaking near 7%) before gradually subsiding. Testing compared projected net charge-off (NCO) rates for static pools and vintages under both baseline and stress conditions.
+
+Results showed that model forecasts were directionally consistent, producing higher loss estimates under stress relative to baseline. The OPE segment exhibited somewhat greater sensitivity to adverse conditions than PS, consistent with expectations given borrower characteristics. While differences between baseline and stress outcomes were moderate, results demonstrated that the model responds appropriately to economic downturn assumptions.
+
+Since no model changes have occurred since the prior validation and no new PAG deals have been observed, ongoing scenario testing could not be performed. MRO therefore references the prior validation’s analysis and notes no additional concerns at this time.
