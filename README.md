@@ -1,27 +1,9 @@
-Data Quality Assessment
+Model Risk Tier Assessment and Components
 
-MRO was not able to conduct independent data quality testing on production data because there have been no Sheffield PAG deals in the 2022Q2, 2022Q4, 2023Q4, or 2024Q4 OGM periods. In place of production testing, MRO reviewed the data quality controls documented in the model development document and requested supporting evidence from the developer.
+As part of the annual validation, MRO requested the latest MCA form for AH4953. The prior MCA was stored on MIMS but could not be located in SNOW, and neither the developer nor governance team were able to provide a copy. MRO therefore requested that the developer re-submit the MCA.
 
-The model documentation specifies that OGM relies on upstream sources including the RED-C data mart and Moody’s macroeconomic scenarios, with data reconciliation and control checks performed on a recurring basis. Evidence provided by the developer confirmed that the Treasury DO team conducts monthly GL-Reconciliation of RED-C balances for charge-offs, recoveries, and net asset value, with results compared against the general ledger. The May 2025 reconciliation reports were shared, showing variance analyses across lines of business. All variances were small in dollar terms and within the tolerance thresholds defined in the reports, and manual adjustments were clearly documented.
+During this review, MRO also noted that the model documentation listed coverage as approximately $1B in PAG deals annually prior to 2019, while there have been no PAG deals since. Follow-up with the line of business confirmed current expectations of approximately $50M in annual PAG volumes. MRO highlighted the discrepancy and requested that the developer align the MCA and MDD to reflect the updated coverage.
 
-For macroeconomic inputs, the developer provided reports from the RQCRA production team covering the March and June 2025 baseline and pessimistic scenarios. The reports included variance checks on historical and forecasted macroeconomic variables, with results presented in tabular form and supported by graphical plots. The evidence showed that key variables such as unemployment rate, unemployment claims, consumer credit, retail sales, and housing indices were subject to quality review, with large variances identified and reported.
+The developer subsequently re-submitted the MCA and updated the MDD to ensure consistency across documents. The revised MDD now reflects the updated coverage, aligns the model use description to include pricing/valuation consistently, and clarifies that the data availability rating of “Low” was driven by limited PAG deal activity in recent years.
 
-Taken together, the reconciliation results and macroeconomic scenario checks demonstrate that data quality controls are operating as designed. While no PAG portfolio data were available for direct testing, the evidence reviewed indicates that key upstream processes and reconciliations are functioning with results within tolerance.
-
-Data Appropriateness
-
-Due to the absence of PAG deal activity in recent OGM periods, MRO was unable to assess the appropriateness of production inputs through independent testing. Instead, MRO reviewed the developer’s evidence of ongoing data control processes.
-
-The GL-Reconciliation materials for charge-offs, recoveries, and net asset value showed that reported balances from RED-C were consistently reconciled to the general ledger. Net variances were small, documented, and within defined tolerance thresholds. These results suggest that the financial data feeding the model remain appropriate for use.
-
-For macroeconomic inputs, the RQCRA quality control reports confirmed that scenario data are subject to structured variance checks against historical trends and forecast expectations. The baseline and pessimistic scenario reviews covered a wide set of variables relevant for credit risk modeling, with variance levels reported transparently. These processes support the appropriateness of macroeconomic drivers used in the model.
-
-PSI monitoring was also referenced in the model documentation as a control for input stability. However, because no PAG portfolio data have been available since 2022, no PSI results could be produced for review. This remains a limitation, but it does not affect the appropriateness of the reconciliations and macroeconomic scenario checks that were reviewed.
-
-
-
-=======
-
-MRO was unable to conduct independent testing since no PAG deals were available in recent OGM periods. Instead, MRO reviewed the developer’s evidence of data controls and input quality. Treasury DO reconciliation reports for May 2025 showed RED-C balances for charge-offs, recoveries, and net asset value reconciled to the general ledger, with small variances within tolerance and documented adjustments. For macroeconomic inputs, RQCRA provided quality control reports on baseline and pessimistic scenarios (March and June 2025), which included variance checks and plots for key variables such as unemployment, consumer credit, retail sales, and housing indices. Results were transparently reported and consistent with expected controls. PSI monitoring was noted in the documentation but not applicable given the absence of portfolio data. Overall, evidence indicates that reconciliation processes and macroeconomic scenario checks are functioning as designed, supporting the quality and appropriateness of available inputs, though the lack of PAG deal data remains a limitation.
-
-Based on the evidence provided, MRO concludes that while the absence of PAG portfolio data prevents direct testing, the available reconciliation and scenario control processes support the appropriateness of the inputs relied upon by the model.
+Based on this review, MRO concludes that the model risk tier assessment and supporting components are appropriately documented in the updated MCA and MDD, and that inconsistencies identified during the review have been addressed by the developer.
