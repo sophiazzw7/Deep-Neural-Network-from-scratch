@@ -1,7 +1,11 @@
-As part of the annual review, MRO requested the most recent MCA for AH4953. The developer confirmed that the prior MCA had been stored in MIMS but could not be located in SNOW, and no copy was available. MRO also confirmed with the governance team that the form could not be retrieved. As a result, MRO requested that the developer re-submit the MCA.
+Methodology
 
-During this process, MRO noted that the MDD continued to reference approximately $1B in annual PAG volumes prior to 2019, despite the absence of PAG deals since that time. Follow-up with the line of business indicated current expectations of approximately $50M in annual PAG volumes. MRO asked the developer to update the MCA to reflect this revised coverage and ensure consistency across documentation.
+The MDD describes the use of a discrete-time proportional odds hazard model estimated through logistic regression. Default and paydown are modeled separately for the Power Sports and Outdoor Power Equipment portfolios. Key variables include origination term length, loan-to-value ratio, product category, Vantage Score 4.0, and TransUnion Bankruptcy Score, with vintage indicators used to address data reliability in earlier periods. Alternative approaches such as Cox proportional hazards and roll-rate frameworks were reviewed but not adopted. The methodology section of the MDD is consistent with industry practice and clearly documents the estimation structure, inputs, and rationale.
 
-The developer subsequently re-submitted the MCA and provided an updated MDD. The revised documentation corrected the coverage entry, aligned the stated model use to consistently include pricing/valuation, and clarified that the “Low” data availability designation reflected limited PAG activity in recent years.
+Assumptions
 
-MRO concludes that the model risk tier assessment and component ratings are now appropriately documented in both the MCA and MDD. The discrepancies identified during review have been addressed through the updates completed by the developer.
+The MDD identifies key assumptions tied to the discrete-time hazard framework. These include the proportional odds specification, treatment of censoring, and reliance on origination and credit bureau variables as primary drivers. The documentation also notes that macroeconomic factors were tested but found to have limited incremental impact, and that PSI monitoring could not be performed given the absence of PAG deals. Assumptions are explicitly stated, and where limitations exist, compensating factors (such as vintage indicators) are noted.
+
+Performance Testing
+
+Performance testing was not performed on production data due to the absence of PAG deals in the 2022Q2, 2022Q4, 2023Q4, and 2024Q4 OGM periods. The MDD instead references development testing, including goodness-of-fit comparisons of predicted versus observed hazard rates for both default and paydown models. These results are presented graphically and show alignment between model predictions and historical data. MRO notes that ongoing backtesting, sensitivity testing, and PSI monitoring could not be conducted without PAG volume.
