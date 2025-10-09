@@ -1,36 +1,37 @@
-/* 1) See what unique_id really looks like */
-proc contents data=cubes.bdfs_am_final_summary_202412; run;
-proc sql outobs=20;
-  select unique_id, company_id, start_date, lob_indicator, sample_tp
-  from cubes.bdfs_am_final_summary_202412
-  order by company_id, start_date;
-quit;
-
-/* 2) Count how many start_dates per unique_id (if >1 → unique_id isn’t per-month) */
+/* TRUE duplicate check in the cube using GROUP BY */
 proc sql;
-  create table _uid_span as
-  select unique_id,
-         count(distinct start_date) as n_start_dates
+  create table cube_true_dupgroups as
+  select company_id, start_date, lob_indicator, sample_tp,
+         count(*) as n_rows
   from cubes.bdfs_am_final_summary_202412
-  group by unique_id
-  having calculated n_start_dates > 1;
+  group by company_id, start_date, lob_indicator, sample_tp
+  having calculated n_rows > 1;
 quit;
 
-title "unique_id that covers multiple start_dates (not per-month)";
-proc print data=_uid_span(obs=20); run;
+/* How many duplicate key-groups? */
+proc sql; select count(*) as n_dup_key_groups from cube_true_dupgroups; quit;
 
-/* 3) The only duplicate test that matters for the cube: business key */
-proc sort data=cubes.bdfs_am_final_summary_202412
-          out=_cube_dedup
-          dupout=_cube_dups
-          nodupkey;
-  by company_id start_date lob_indicator sample_tp;  /* ETL’s key */
-run;
+/* Show sample duplicate groups + their rows */
+proc sql;
+  /* list first few groups */
+  select * from cube_true_dupgroups(obs=10);
+quit;
 
-title "TRUE duplicates on (company_id, start_date, lob_indicator, sample_tp)";
-proc sql; select count(*) as true_dup_rows from _cube_dups; quit;
+proc sql;
+  /* pull the actual duplicate rows for those groups */
+  create table cube_true_dups as
+  select a.*
+  from cubes.bdfs_am_final_summary_202412 a
+  inner join cube_true_dupgroups g
+    on  a.company_id   = g.company_id
+    and a.start_date   = g.start_date
+    and a.lob_indicator= g.lob_indicator
+    and a.sample_tp    = g.sample_tp
+  order by a.company_id, a.start_date, a.lob_indicator, a.sample_tp;
+quit;
 
-proc print data=_cube_dups(obs=20);
+title "Actual duplicate rows on (company_id, start_date, lob_indicator, sample_tp)";
+proc print data=cube_true_dups(obs=30);
   var company_id start_date lob_indicator sample_tp score_value weight BAD_AT_12MO;
   format start_date date9.;
 run;
