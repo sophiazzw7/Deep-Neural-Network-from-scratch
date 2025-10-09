@@ -1,51 +1,117 @@
-/* Parameters */
-%let rpt_prd_date_id = 20241231;
-%let eop12 = %sysfunc(intnx(month,%sysfunc(inputn(&rpt_prd_date_id,yymmdd8.)),-12,end),date9.);  /* 31DEC2023 */
+Short answer: **don’t rely on `unique_id` for dupes until you prove it’s 1–1 with the business key the ETL uses.**
+In this pipeline, the *business* dedupe/join key is:
 
-/* Cube slices (unchanged) */
-data _cube_current _cube_intime;
+**`(company_id, start_date, lob_indicator, sample_tp)`**
+
+Use that for duplicate checks. `unique_id` may be:
+
+* built differently in different stages (e.g., `company_id|rpt_prd_date_id` in flat),
+* missing `lob_indicator` / `sample_tp` (so one `unique_id` could map to multiple cube rows), or
+* a surrogate/row key (always unique → useless for dupes).
+
+Below is a tiny SAS block to **prove** whether `unique_id` is safe to use in the cube. If it’s not strictly 1–1 with the business key, don’t use it for dupes.
+
+---
+
+### 1) Validate how `unique_id` behaves in the cube
+
+```sas
+/* Build the canonical business key string used by the ETL merges */
+data _cube_keys;
   set cubes.bdfs_am_final_summary_202412;
-  if sample_tp='CURRENT' and start_date <= "&eop12"d then output _cube_current;
-  else if sample_tp='INTIME' then output _cube_intime;
+  length bizkey $120;
+  bizkey = cats(strip(company_id),'|',put(start_date,yymmddn8.),'|',strip(lob_indicator),'|',strip(sample_tp));
 run;
 
-/* f_app_score_flat: build start_date = EOM(score_date) with fallback to eff_from_dt */
+/* A) Does one unique_id point to multiple business keys? (bad for duping) */
+proc sql;
+  create table _uid_to_many_biz as
+  select unique_id, count(distinct bizkey) as n_bizkeys
+  from _cube_keys
+  group by unique_id
+  having calculated n_bizkeys > 1;
+quit;
+
+/* B) Does one business key have multiple unique_id? (also bad) */
+proc sql;
+  create table _biz_to_many_uid as
+  select bizkey, count(distinct unique_id) as n_uids
+  from _cube_keys
+  group by bizkey
+  having calculated n_uids > 1;
+quit;
+
+title "unique_id → multiple business keys (should be 0 rows if unique_id is safe)";
+proc print data=_uid_to_many_biz (obs=20); run;
+
+title "business key → multiple unique_id (should be 0 rows if unique_id is safe)";
+proc print data=_biz_to_many_uid (obs=20); run;
+```
+
+**Interpretation**
+
+* If both tables come back **empty**, `unique_id` is 1–1 with the business key → you *may* use `unique_id` for dup checks.
+* If **any rows appear**, `unique_id` is not 1–1 → **use the business key** for dupes.
+
+---
+
+### 2) Duplicate checks (recommended way = business key)
+
+```sas
+/* Canonical duplicate check in the cube on ETL business key */
+proc sort data=cubes.bdfs_am_final_summary_202412
+          out=_cube_dedup
+          dupout=_cube_dups
+          nodupkey;
+  by company_id start_date lob_indicator sample_tp;
+run;
+
+title "Duplicates on ETL business key (company_id, start_date, lob_indicator, sample_tp)";
+proc sql; select count(*) as dup_rows from _cube_dups; quit;
+
+proc print data=_cube_dups (obs=20);
+  var company_id start_date lob_indicator sample_tp score_value weight;
+  format start_date date9.;
+run;
+```
+
+*(If and only if the test above proves `unique_id` is 1–1, you could alternatively do `by unique_id;`—but the business key remains the ground truth.)*
+
+---
+
+### 3) For `f_app_score_flat`
+
+* In the **flat**, developers typically set `unique_id = company_id || '|' || rpt_prd_date_id`.
+* For your sanity check slice, we rebuild **`start_date = EOM(score_date)`** and use the **natural key `(company_id, start_date)`** to check dupes (since flat might lack the exact cube `unique_id` or `rpt_prd_date_id`):
+
+```sas
+/* Rebuild start_date and check dupes in the flat (CURRENT, <= eop12) */
+%let rpt_prd_date_id = 20241231;
+%let eop12n = %sysfunc(intnx(month,%sysfunc(inputn(&rpt_prd_date_id,yymmdd8.)),-12,end));
+
 data _flat_expected;
   set model.f_app_score_flat;
   length start_date 8; format start_date date9.;
-  /* derive EOM from score_date; if missing, fallback to eff_from_dt */
-  start_date = ifn( not missing(score_date)
-                   , intnx('month', score_date, 0, 'end')
-                   , eff_from_dt );
-  where sample_tp='CURRENT' and start_date <= "&eop12"d;
-  keep company_id start_date score_date eff_from_dt score_value weight sample_tp;
+  start_date = coalesce(intnx('month', score_date, 0, 'end'), eff_from_dt);
+  if sample_tp='CURRENT' and start_date <= &eop12n;
 run;
-
-/* Keys & overlap (character company_id) */
-data _keys_cube(keep=key) _keys_flat(keep=key);
-  length key $64;
-  set _cube_current(in=a) _flat_expected(in=b);
-  if a then key = cats(strip(company_id),'|',put(start_date,yymmddn8.));
-  else if b then key = cats(strip(company_id),'|',put(start_date,yymmddn8.));
-  if a then output _keys_cube;
-  if b then output _keys_flat;
-run;
-
-proc sql;
-  title "Overlap (company_id, start_date): cube CURRENT vs f_app EXPECTED";
-  select 'cube_n' as metric length=16, count(*) as value from _keys_cube
-  union all select 'flat_n', count(*) from _keys_flat
-  union all select 'matched_keys', count(*) 
-  from (select key from _keys_cube intersect select key from _keys_flat);
-quit;
-
-/* Duplicates */
-proc sort data=_cube_current out=_cc_dedup dupout=_cc_dups nodupkey;
-  by company_id start_date lob_indicator sample_tp;
-run;
-proc sql; title "Cube CURRENT dups"; select count(*) as dup_rows from _cc_dups; quit;
 
 proc sort data=_flat_expected out=_fe_dedup dupout=_fe_dups nodupkey;
   by company_id start_date;
 run;
-proc sql; title "f_app EXPECTED dups"; select count(*) as dup_rows from _fe_dups; quit;
+
+title "Duplicates in f_app_score_flat on (company_id, start_date)";
+proc sql; select count(*) as dup_rows from _fe_dups; quit;
+
+proc print data=_fe_dups (obs=20);
+  var company_id start_date score_date eff_from_dt score_value weight;
+  format start_date date9.;
+run;
+```
+
+---
+
+## Bottom line
+
+* **Use the ETL business key** `(company_id, start_date, lob_indicator, sample_tp)` for the cube.
+* Only use `unique_id` for deduping **if** you verify it’s a strict 1–1 with that business key (the quick test above tells you).
