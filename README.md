@@ -1,1 +1,1 @@
-Given the recent OGM performance breaches observed in several loan-purpose segments, the overall model rating remains Fit for Use with Caution.
+Considering the risks of setting a monitoring baseline on potentially drifted performance, why was the average of the last four OGM quarters (2023Q2-2024Q1) chosen as the baseline instead of the model's initial implementation period performance on the Truist portfolio, which better represents expected performance before drift?
