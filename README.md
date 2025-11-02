@@ -1,61 +1,172 @@
-Subject: Request for Model Code and Clarifications – Quantitative Model & OGM
-Hi [Developer’s Name],
-Hope you’re doing well. As part of our ongoing validation review, we noted that the quantitative model code (e.g., Monte Carlo simulation, baseline logic, and distribution-fitting) is not currently included in the SAS folder.
-If possible, could you please share the code first, since reviewing it directly would help streamline our follow-up questions and avoid delays in clarification?
-Attached are the detailed questions covering both the quantitative model and the OGM implementation.
+/* ------------------------------------------------------------------ */
+/* Assumes the developer's libname and date macros are already set:   */
+/* libname ops "/sasdata/mrmg1/users/g07267/MOD13638/Input";          */
+/* %let min_posting_date = '01JAN2005'd;                               */
+/* %let max_posting_date = '31DEC2024'd;                               */
+/* ------------------------------------------------------------------ */
 
-Quantitative Model Questions
-1. Quantitative model codes
-* Could you share the quantitative model codes e.g. data prep specific to LDA, distribution fitting, the Monte Carlo (MC) simulation, etc.?
-* Please confirm where and how the baseline percentile is defined within the code.
+%let BEFORE_DS = ops.operational_risk_loss_forecast;  /* raw Archer extract */
+%let AFTER_DS  = ops.cleaned_severity_data;           /* developer’s event-level output */
 
-2. Distribution Fitting
-* Could you provide the code used to fit the loss frequency and severity distributions and assess the goodness of fit(e.g., Q-Q plots, KS test, AIC comparison)?
-* Could you provide the code where the alternative distributions are tested?
+/* ------------------------ 0) ATTRIBUTES ---------------------------- */
+title "BEFORE: Variable Attributes (PROC CONTENTS)";
+proc contents data=&BEFORE_DS varnum; run;
 
-3. Parameter Confidence Intervals and Stability
-* Have you computed confidence intervals (CIs) for the fitted parameters?
-* Have you conducted any parameter stability tests, e.g. the distribution of the parameter?
+title "AFTER: Variable Attributes (PROC CONTENTS)";
+proc contents data=&AFTER_DS varnum; run;
+title;
 
-4. Sensitivity Analysis
-* Have you conducted a sensitivity test to assess e.g. how model output (total loss) changes if fitted parameters vary by ±5%?
-* If not, could you estimate how such parameter shifts would affect the aggregate forecast (to gauge model sensitivity to misfit)?
+/* Optional reporting formats (display only; does not alter stored values) */
+proc datasets nolist;
+  modify &BEFORE_DS;
+    format 'Posting Date'n date9. 'GL Amount'n comma24.2;
+  modify &AFTER_DS;
+    format Posting_Date date9. gross_loss comma24.2 net_loss comma24.2;
+quit;
 
-5. Stress Percentile 
-* How was the stress percentile determined based on the baseline percentile? Was there a documented methodology or decision rule used to select the stress percentile?
-* Who explicitly approved this choice, and was it reviewed or signed off by any governance body?
-* Were any manual treatments or adjustments applied to the baseline percentile (e.g., outlier exclusion, data smoothing)? How do you handle cased where there is one extreme value and there rest 8 quarters have small loss value?
+/* ---------------- 1) BASIC DESCRIPTIVES (NUMERIC) ------------------ */
+/* BEFORE: GL Amount */
+title "BEFORE: Descriptives for 'GL Amount'n";
+proc means data=&BEFORE_DS n nmiss mean std min p1 p5 p50 p95 max maxdec=2;
+  var 'GL Amount'n;
+run;
+/* BEFORE: date min/max for 'Posting Date'n */
+title "BEFORE: Date Range for 'Posting Date'n";
+proc sql;
+  select min('Posting Date'n) format=date9. as min_date,
+         max('Posting Date'n) format=date9. as max_date
+  from &BEFORE_DS;
+quit;
 
-6. Temporal Consistency of Inputs 
-* Have you checked whether the input distributions remain consistent over time?
-* Have you considered whether differences across time periods , for example, stressed economic conditions or structural shifts such as pre- and post-merger periods, would still be appropriately represented by the same fitted distribution?
-7. Model risk tier
-Could you please confirm the current model coverage used to determine the risk tier, for example, specify the approximate exposure or balance sheet amount represented by the model, or provide the rationale for why it is categorized as “High” in ServiceNow?
-Additionally, in the MDD risk tier support table, please update Model Reliance to reflect “High”, since the model is actively used for capital and loss estimation.
-Could you help us understand why the model tier was overridden to 2 in SNOW? Was it based on provisos model’s tier?
+/* AFTER: gross_loss / net_loss */
+title "AFTER: Descriptives for gross_loss and net_loss";
+proc means data=&AFTER_DS n nmiss mean std min p1 p5 p50 p95 max maxdec=2;
+  var gross_loss net_loss;
+run;
+/* AFTER: date min/max for Posting_Date */
+title "AFTER: Date Range for Posting_Date";
+proc sql;
+  select min(Posting_Date) format=date9. as min_date,
+         max(Posting_Date) format=date9. as max_date
+  from &AFTER_DS;
+quit;
+title;
 
+/* --------------------- 2) MISSINGNESS ------------------------------ */
+proc format;
+  value missnum . = 'MISSING' other='NOT MISSING';
+  value $misschr ' ' = 'MISSING' other='NOT MISSING';
+run;
 
-OGM-Related Questions
-1. Metrics and Sufficiency
-* Both OGM metrics KS and DDT are both based on the Kolmogorov–Smirnov framework and will most likely move in the same direction when distributions change.
-* We would suggest adding an additional stability metric, such as a confidence-interval overlap test, that compares 95% confidence intervals of mean and dispersion parameters between development and OGM datasets?
+/* BEFORE: numeric missingness */
+title "BEFORE: Missingness - Numeric Variables";
+proc means data=&BEFORE_DS n nmiss;
+  var _numeric_;
+run;
+/* BEFORE: character missingness (frequency with MISSING option) */
+title "BEFORE: Missingness - Character Variables";
+proc freq data=&BEFORE_DS;
+  tables _character_ / missing;
+run;
 
-2. KS Threshold Rationale
-* The current KS threshold approach (“mean ± 4σ from bootstrap KS”) may lack a clear statistical grounding. Since the KS statistic approximately follows a normal distribution, would it be more appropriate to use ±2σ (corresponding to ~95% confidence) instead of ±4σ (~99.99%) as the decision boundary? 
+/* AFTER: numeric missingness */
+title "AFTER: Missingness - Numeric Variables";
+proc means data=&AFTER_DS n nmiss;
+  var _numeric_;
+run;
+/* AFTER: character missingness */
+title "AFTER: Missingness - Character Variables";
+proc freq data=&AFTER_DS;
+  tables _character_ / missing;
+run;
+title;
 
+/* ------------------- 3) DUPLICATION CHECKS ------------------------ */
+/* Duplicate check key = 'Internal Events'n (matches developer code) */
+title "BEFORE: Duplicate Check by 'Internal Events'n";
+proc sort data=&BEFORE_DS out=_before_nodup dupout=_before_dups nodupkey;
+  by 'Internal Events'n;
+run;
+proc sql;
+  select (select count(*) from &BEFORE_DS)      as total_rows,
+         (select count(*) from _before_nodup)   as unique_ids,
+         (select count(*) from _before_dups)    as duplicate_rows;
+quit;
 
-3. DDT Thresholds
-* The documentation explains the Development Data Divergence Test (DDT) conceptually, but no quantitative thresholds are shown.
+/* AFTER: there should be one row per event id */
+title "AFTER: Duplicate Check by 'Internal Events'n";
+proc sort data=&AFTER_DS out=_after_nodup dupout=_after_dups nodupkey;
+  by 'Internal Events'n;
+run;
+proc sql;
+  select (select count(*) from &AFTER_DS)      as total_rows,
+         (select count(*) from _after_nodup)   as unique_ids,
+         (select count(*) from _after_dups)    as duplicate_rows;
+quit;
+title;
 
+/* --------------- 4) RANGE REASONABLENESS CHECKS ------------------- */
+/* BEFORE: flag out-of-range dates and negative GL Amounts */
+data _rng_before;
+  set &BEFORE_DS;
+  length range_flag $200;
+  range_flag = '';
+  if 'Posting Date'n < &min_posting_date or 'Posting Date'n > &max_posting_date
+     then range_flag = catx('|', range_flag, 'DATE_OUT_OF_RANGE');
+  if 'GL Amount'n < 0 then
+     range_flag = catx('|', range_flag, 'NEG_GL_AMOUNT');
+  if not missing(range_flag);
+run;
 
-4. Bootstrap Setup and Implementation
-* For the 1,000 bootstrap samples, should each replicate have N equal to the OGM sample size, to ensure the test statistic reflects the actual sampling variability in each OGM period?
-* When calculating KS for each replicate, can you confirm whether the comparison is made between the theoretical CDF and the bootstrap sample CDF?
-* In other words, is this metric asking “ would it be possible to draw the OGM data directly from the model’s fitted CDF”?
+title "BEFORE: Range Flags (Posting Date, GL Amount)";
+proc freq data=_rng_before;
+  tables range_flag / nocum;
+run;
 
-5. Multiple Test Clarification
-* Given there are six KS tests (frequency and severity across ET2, ET3, ET7), how are results aggregated at the model level?
+/* AFTER: flag out-of-range Posting_Date and negative net_loss/gross_loss */
+data _rng_after;
+  set &AFTER_DS;
+  length range_flag $200;
+  range_flag = '';
+  if Posting_Date < &min_posting_date or Posting_Date > &max_posting_date
+     then range_flag = catx('|', range_flag, 'DATE_OUT_OF_RANGE');
+  if net_loss < 0 then range_flag = catx('|', range_flag, 'NEG_NET_LOSS');
+  if gross_loss < 0 then range_flag = catx('|', range_flag, 'NEG_GROSS_LOSS');
+  if not missing(range_flag);
+run;
 
+title "AFTER: Range Flags (Posting_Date, net_loss, gross_loss)";
+proc freq data=_rng_after;
+  tables range_flag / nocum;
+run;
+title;
 
-Thank you very much for taking the time to review these. Please feel free to send the code first, and we can follow up on the specific questions as needed once we’ve had a chance to review it.
-Best regards, Phoebe Chen Model Risk Oversight
+/* --------------- 5) SIMPLE VALUE LISTING (CATEGORICALS) ----------- */
+/* BEFORE: list values and counts for main categoricals used by dev */
+title "BEFORE: Value Listing - Key Categorical Variables";
+proc freq data=&BEFORE_DS;
+  tables 'Basel Event Type Level 1'n
+         'GL Status'n
+         'Type of Impact'n
+         'Event Record Type'n / missing;
+run;
+
+/* AFTER: corresponding variables present in event-level output */
+title "AFTER: Value Listing - Key Categorical Variables";
+proc freq data=&AFTER_DS;
+  tables 'Basel Event Type Level 1'n / missing;
+run;
+title;
+
+/* ------------------ 6) ONE-PAGE QC ROLLUP ------------------------- */
+title "QC ROLLUP: Before vs After";
+proc sql;
+  select
+    (select count(*) from &BEFORE_DS)      as before_rows,
+    (select count(*) from _before_dups)    as before_dup_rows,
+    (select count(*) from _rng_before)     as before_range_flags,
+    (select count(*) from &AFTER_DS)       as after_rows,
+    (select count(*) from _after_dups)     as after_dup_rows,
+    (select count(*) from _rng_after)      as after_range_flags;
+quit;
+title;
