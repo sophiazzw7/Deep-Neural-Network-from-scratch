@@ -1,42 +1,31 @@
-/* Check if any event’s GL lines sum to zero or flip sign */
-proc sql;
-create table event_sign_check as
-select 'Internal Events'n,
-sum('GL Amount'n) as total_amt,
-min('GL Amount'n) as min_line,
-max('GL Amount'n) as max_line
-from ops.operational_risk_loss_forecast
-group by 'Internal Events'n
-having (total_amt = 0 or min_line < 0 and max_line > 0);
-quit;
+/* 1) Inspect types if needed */
+proc contents data=ops.operational_risk_loss_forecast varnum; run;
 
-
-proc freq data=ops.operational_risk_loss_forecast;
-  tables 'Event Record Type'n * 'Type of Impact'n / missing norow nocol nopercent;
-run;
-
-data date_diff_check;
+/* 2) Create numeric version(s) of any money fields that are character */
+data work.orlf_num;
   set ops.operational_risk_loss_forecast;
-  diff_days = 'Posting Date'n - 'Event Start Date'n;
-  if diff_days < 0 or diff_days > 3650; /* >10 years or negative */
+
+  /* Recovery Amount: character -> numeric */
+  length recovery_amount_num 8;
+  length _raw $200;
+
+  _raw = strip('Recovery Amount'n);
+
+  /* Detect parentheses = negative */
+  length _neg 3;
+  _neg = (index(_raw,'(') > 0);
+
+  /* Remove $, commas, spaces, and parentheses */
+  _raw = compress(_raw, ' $,()');
+
+  /* Convert to numeric; if blank, leave as missing . */
+  if not missing(_raw) then recovery_amount_num = input(_raw, best32.);
+  if _neg and not missing(recovery_amount_num) then recovery_amount_num = -recovery_amount_num;
+
+  drop _raw _neg;
 run;
 
-proc means data=ops.operational_risk_loss_forecast n min mean max;
-  var 'GL Amount'n 'Recovery Amount'n 'Gross Loss Amount'n;
-run;
-
-proc sort data=ops.operational_risk_loss_forecast out=_dupchk dupout=_true_dups nodupkey;
-  by 'Internal Events'n 'GL Tracking ID'n 'GL Amount'n 'Posting Date'n;
-run;
-
-proc sql; select count(*) as n_true_dups from _true_dups; quit;
-
-proc sql;
-  select count(*) as n_negative_events
-  from work.cleaned_severity_data
-  where net_loss < 0;
-quit;
-
-proc freq data=ops.operational_risk_loss_forecast;
-  tables 'Basel Event Type Level 1'n * 'Basel Event Type Level 2'n / missing;
+/* 3) Now run PROC MEANS on numeric fields */
+proc means data=work.orlf_num n nmiss min p1 p5 p25 median p75 p95 p99 max mean std;
+  var 'GL Amount'n recovery_amount_num 'Gross Loss Amount'n;
 run;
