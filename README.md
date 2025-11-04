@@ -1,1 +1,1 @@
-Hey Rashmi, Good morning! Quick follow-up on the code of the model from my email (the distribution fitting, MCMC, and alt distributions part). When do you think I can get that? Need it to kick off the next phase of work. Thanks!
+Hi Rashmi, Quick check-in on the model code package (distribution fitting, MCMC, etc.). I know you were aiming to send it EOD yesterday. Were you able to finalize it? I
