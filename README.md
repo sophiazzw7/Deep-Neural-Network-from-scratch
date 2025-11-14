@@ -1,92 +1,156 @@
-/* Reset output so we actually see results */
-ods listing; ods results=on; options notes;
+/*===============================================================
+  BOOTSTRAP STABILITY for Negative Binomial (intercept-only)
+  - METHOD=NP  : Nonparametric bootstrap (resample original data)
+  - METHOD=PAR : Parametric bootstrap (simulate from fitted NB)
+  Outputs:
+    - NB_Boot_Estimates : per-replicate parameter estimates
+    - NB_Boot_CIs       : bootstrap percentile CIs
+    - NB_Boot_Summary   : baseline estimate + SE + CI + RCIW
+===============================================================*/
+%macro nb_bootstrap_stability(ds=, var=frequency, B=1000, seed=20241113, method=NP);
 
-/* 1) Fit NB and capture estimates + SEs */
-ods output ParameterEstimates=nb_parms;
-proc countreg data=frequency_et2;
-  model frequency = / dist=NEGBIN;
-run; quit;
+  %local _method;
+  %let _method=%upcase(&method);
 
-/* Show what we actually got back */
-title "COUNTREG ParameterEstimates (first 10 rows)";
-proc print data=nb_parms(obs=10); run; title;
+  /*---- 0) Baseline NB fit to get point estimates ----*/
+  ods output ParameterEstimates=nb_parms FitStatistics=nb_fit;
+  proc countreg data=&ds;
+    model &var = / dist=NEGBIN;
+  run; quit;
 
-/* 2) Make a one-row table with b0, seb0, alpha, sealpha (robust selectors) */
-proc sql;
-  create table nb_coefs as
-  select
-    max(case when upcase(parameter)='INTERCEPT' then estimate end) as b0,
-    max(case when upcase(parameter)='INTERCEPT' then stderr   end) as seb0,
-    /* alpha row name can be ALPHA or _ALPHA depending on SAS */
-    max(case when upcase(parameter) like '%ALPHA%' then estimate end) as alpha,
-    max(case when upcase(parameter) like '%ALPHA%' then stderr   end) as sealpha
-  from nb_parms;
-quit;
+  /* Pull Intercept and Alpha */
+  proc sql noprint;
+    select estimate, stderr into :b0, :seb0
+    from nb_parms where upcase(parameter)='INTERCEPT';
 
-title "Extracted NB Coefficients";
-proc print data=nb_coefs; run; title;
+    select estimate, stderr into :alpha, :sealpha
+    from nb_parms where upcase(parameter) like '%ALPHA%';
 
-/* 3) Compute point estimates + 95% Wald CIs in a DATA step (never STOP; always print) */
-data NB_Wald_CIs;
-  length Param $14 ErrorNote $60;
-  set nb_coefs;
+    select count(*) into :n from &ds;
+  quit;
 
-  /* Flag any missing pieces but DON'T stop the step */
-  ErrorNote = "";
-  if nmiss(b0, seb0) then ErrorNote = catx("; ", ErrorNote, "Missing INTERCEPT/SE");
-  if nmiss(alpha, sealpha) then ErrorNote = catx("; ", ErrorNote, "Missing ALPHA/SE");
+  %let mu_hat = %sysfunc(exp(&b0));
+  %let r_hat  = %sysevalf(1/&alpha);
+  %let p_hat  = %sysevalf(&r_hat/(&r_hat + &mu_hat));
 
-  z = 1.96;
+  %put NOTE: Baseline NB -> mu=&mu_hat r=&r_hat p=&p_hat (alpha=&alpha)  n=&n;
 
-  /* Safeguards */
-  if missing(b0) then b0 = .;
-  if missing(seb0) then seb0 = .;
-  if missing(alpha) then alpha = .;
-  if missing(sealpha) then sealpha = .;
+  /*---- 1) Build bootstrap sample set ----*/
+  %if &__method = %str() %then %let __method=&_method;
+  %if &__method = NP %then %do;  /* Nonparametric bootstrap: resample original */
+    proc surveyselect data=&ds
+      out=boot_all
+      method=urs samprate=1 outhits reps=&B seed=&seed;
+      id &var;
+    run;
+    proc sort data=boot_all; by replicate; run;
+    data boot_all; set boot_all(rename=(&var=y)); keep replicate y; run;
+  %end;
+  %else %if &__method = PAR %then %do;  /* Parametric bootstrap: simulate NB */
+    data boot_all;
+      call streaminit(&seed);
+      do replicate=1 to &B;
+        do i=1 to &n;
+          y = rand('NEGBINOMIAL', &p_hat, &r_hat);
+          output;
+        end;
+      end;
+      drop i;
+    run;
+  %end;
+  %else %do;
+    %put ERROR: METHOD=&method not recognized. Use METHOD=NP or METHOD=PAR.;
+    %return;
+  %end;
 
-  /* Point estimates (may be . if inputs missing) */
-  mu_hat = exp(b0);
-  r_hat  = (alpha>0) ? 1/alpha : .;
-  p_hat  = (mu_hat>=0 and r_hat>0) ? r_hat/(r_hat + mu_hat) : .;
+  /*---- 2) Refit NB by replicate ----*/
+  ods exclude all;
+  proc countreg data=boot_all;
+    by replicate;
+    model y = / dist=NEGBIN;
+    ods output ParameterEstimates=_parms_;
+  run; quit;
+  ods select all;
 
-  /* Intercept CI -> mu CI */
-  b0L = b0 - z*seb0;  b0U = b0 + z*seb0;
-  muL = exp(b0L);     muU = exp(b0U);
+  /* Keep only Intercept and Alpha rows; pivot to wide per replicate */
+  proc sort data=_parms_; by replicate parameter; run;
+  data _parms_keep; set _parms_;
+    where upcase(parameter)='INTERCEPT' or upcase(parameter) like '%ALPHA%';
+    length par $9;
+    par = upcase(parameter);
+    keep replicate par estimate;
+  run;
 
-  /* Alpha CI -> r CI (guard alpha > 0 before invert) */
-  aL  = alpha - z*sealpha;
-  aU  = alpha + z*sealpha;
-  if missing(aL) then aL = .;
-  if missing(aU) then aU = .;
-  if not missing(aL) and aL <= 0 then aL = 1e-6;   /* guard only if we have a value */
-  if not missing(aU) and aU <= 0 then aU = 1e-6;
+  proc transpose data=_parms_keep out=_parms_wide prefix=EST_;
+    by replicate;
+    id par;
+    var estimate;
+  run;
 
-  rL  = (aU>0) ? 1/aU : .;
-  rU  = (aL>0) ? 1/aL : .;
+  /* Some replicates may fail to converge; drop those with missing alpha or intercept */
+  data NB_Boot_Estimates;
+    set _parms_wide;
+    if missing(EST_INTERCEPT) or (missing(EST__ALPHA) and missing(EST_ALPHA)) then delete;
+    /* Normalize alpha column name */
+    alpha = coalesce(EST__ALPHA, EST_ALPHA);
+    b0    = EST_INTERCEPT;
 
-  /* p CI via conservative endpoints */
-  pL  = (rL>0 and muU>=0) ? rL/(rL + muU) : .;
-  pU  = (rU>0 and muL>=0) ? rU/(rU + muL) : .;
+    /* Derived parameters */
+    mu = exp(b0);
+    r  = 1/alpha;
+    p  = r/(r+mu);
 
-  /* Emit 4 tidy rows */
-  Param='mu (mean)';     Estimate=mu_hat;  LCL=muL;  UCL=muU;  output;
-  Param='alpha';         Estimate=alpha;   LCL=aL;   UCL=aU;   output;
-  Param='r = 1/alpha';   Estimate=r_hat;   LCL=rL;   UCL=rU;   output;
-  Param='p';             Estimate=p_hat;   LCL=pL;   UCL=pU;   output;
+    keep replicate b0 alpha mu r p;
+  run;
 
-  keep Param Estimate LCL UCL ErrorNote;
-run;
+  /*---- 3) Percentile CIs & SEs from bootstrap ----*/
+  proc means data=NB_Boot_Estimates noprint;
+    var mu r p alpha b0;
+    output out=_boot_se mean= / autoname;
+  run;
 
-/* If nothing prints now, we know the fit didn't return usable rows */
-title "Negative Binomial Wald Confidence Intervals";
-proc print data=NB_Wald_CIs noobs label;
-  label Estimate='Point' LCL='95% LCL' UCL='95% UCL' ErrorNote='Notes';
-run; title;
+  proc univariate data=NB_Boot_Estimates noprint;
+    var mu r p alpha b0;
+    output out=NB_Boot_CIs pctlpre=mu_ r_ p_ alpha_ b0_ pctlpts=2.5 97.5;
+  run;
 
-/* Bonus: explicit row counts so EG doesn't just show a red X */
-proc sql;
-  select
-    (select count(*) from nb_parms)   as rows_nb_parms,
-    (select count(*) from nb_coefs)   as rows_nb_coefs,
-    (select count(*) from NB_Wald_CIs) as rows_nb_wald_cis;
-quit;
+  /* Assemble summary with baseline point estimates and bootstrap dispersion */
+  data NB_Boot_Summary;
+    length Param $12;
+    set NB_Boot_CIs;
+    /* Pull SEs */
+    if _n_=1 then set _boot_se(rename=(
+      mu_Mean   = mu_bar
+      r_Mean    = r_bar
+      p_Mean    = p_bar
+      alpha_Mean= alpha_bar
+      b0_Mean   = b0_bar
+    ));
+    /* Baseline point estimates */
+    mu_hat   = &mu_hat; r_hat=&r_hat; p_hat=&p_hat; alpha_hat=&alpha; b0_hat=&b0;
+
+    /* Relative CI width helper macro-like logic via data step */
+    Param='mu (mean)';  Estimate=mu_hat;  LCL=mu_2_5;   UCL=mu_97_5;   RCIW=(UCL-LCL)/max(abs(Estimate),1e-12); output;
+    Param='alpha';      Estimate=alpha_hat;LCL=alpha_2_5;UCL=alpha_97_5;RCIW=(UCL-LCL)/max(abs(Estimate),1e-12); output;
+    Param='r=1/alpha';  Estimate=r_hat;   LCL=r_2_5;    UCL=r_97_5;    RCIW=(UCL-LCL)/max(abs(Estimate),1e-12); output;
+    Param='p';          Estimate=p_hat;   LCL=p_2_5;    UCL=p_97_5;    RCIW=(UCL-LCL)/max(abs(Estimate),1e-12); output;
+    Param='b0 (log mu)';Estimate=b0_hat;  LCL=b0_2_5;   UCL=b0_97_5;   RCIW=(UCL-LCL)/max(abs(Estimate),1e-12); output;
+
+    drop mu_: r_: p_: alpha_: b0_: mu_bar r_bar p_bar alpha_bar b0_bar
+         mu_hat r_hat p_hat alpha_hat b0_hat;
+  run;
+
+  title "Bootstrap Stability — &__method method (&B reps) for &ds (&var)";
+  proc print data=NB_Boot_Summary noobs label;
+    label Estimate='Point' LCL='Boot 2.5%' UCL='Boot 97.5%' RCIW='Rel. CI Width';
+  run;
+  title;
+
+%mend;
+
+/* ==== EXAMPLES ==== */
+/* Nonparametric bootstrap (resample original) */
+%nb_bootstrap_stability(ds=work.frequency_et2, var=frequency, B=1000, seed=20241113, method=NP);
+
+/* Parametric bootstrap (simulate from fitted NB) */
+/* %nb_bootstrap_stability(ds=work.frequency_et2, var=frequency, B=1000, seed=20241113, method=PAR); */
