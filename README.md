@@ -1,67 +1,76 @@
-/* 1) Fit NB and capture estimates + SEs */
-ods output ParameterEstimates=nb_parms;
-proc countreg data=frequency_et2;
-  model frequency = / dist=NEGBIN;
-run; quit;
+/* Reuse fitted params */
+%put NOTE: b0=&b0  alpha=&alpha  -> mu=&mu_hat r=&r_hat p=&p_hat;
 
-/* 2) Make a one-row table with b0, seb0, alpha, sealpha */
-proc sql;
-  create table nb_coefs as
-  select
-    max(case when upcase(parameter)='INTERCEPT' then estimate end) as b0,
-    max(case when upcase(parameter)='INTERCEPT' then stderr   end) as seb0,
-    max(case when upcase(parameter) like '%ALPHA%' then estimate end) as alpha,
-    max(case when upcase(parameter) like '%ALPHA%' then stderr   end) as sealpha
-  from nb_parms;
-quit;
+/* Count of obs (n) and dataset name to sample from */
+%let ds_in = frequency_et2;
+proc sql noprint; select count(*) into :n from &ds_in; quit;
 
-/* Sanity check: ensure we have values */
-proc print data=nb_parms(obs=10); title "COUNTREG ParameterEstimates"; run;
-proc print data=nb_coefs; title "Extracted NB Coefficients"; run;
+%macro nb_boot(B=1000, seed=20241113);
+  /* Container for bootstrap estimates */
+  data NB_BOOT; length iter 8 mu r p alpha b0 8.; stop; run;
 
-/* 3) Compute point estimates + 95% Wald CIs in data step (no macros) */
-data NB_Wald_CIs;
-  length Param $12;
-  set nb_coefs;
-  if nmiss(b0,seb0,alpha,sealpha)>0 then do;
-    putlog "ERROR: Missing NB parameters or SEs. Check nb_parms.";
-    stop;
-  end;
+  %do iter=1 %to &B;
+    /* Simulate counts from fitted NB (same n as data) */
+    data boot;
+      call streaminit(&seed + &iter);
+      do i=1 to &n;
+        y = rand('NEGBINOMIAL', &p_hat, &r_hat);
+        output;
+      end;
+    run;
 
-  z = 1.96;
+    /* Refit NB to the bootstrap sample */
+    ods exclude all;
+    proc countreg data=boot;
+      model y = / dist=NEGBIN;
+      ods output ParameterEstimates=_parms_;
+    quit;
+    ods select all;
 
-  /* Point estimates */
-  mu_hat = exp(b0);
-  r_hat  = 1/alpha;
-  p_hat  = r_hat/(r_hat + mu_hat);
+    /* Pull params; if fit fails, skip iteration */
+    %local b0_b a_b;
+    %let b0_b=.; %let a_b=.;
 
-  /* Intercept CI -> mu CI */
-  b0L = b0 - z*seb0;  b0U = b0 + z*seb0;
-  muL = exp(b0L);     muU = exp(b0U);
+    proc sql noprint;
+      select estimate into :b0_b from _parms_ where upcase(parameter)='INTERCEPT';
+      select estimate into :a_b  from _parms_ where upcase(parameter) like '%ALPHA%';
+    quit;
 
-  /* Alpha CI -> r CI (guard alpha > 0) */
-  aL  = alpha - z*sealpha;
-  aU  = alpha + z*sealpha;
-  if aL <= 0 then aL = 1e-6;     /* numeric guard */
-  if aU <= 0 then aU = 1e-6;
+    %if %sysevalf(%superq(b0_b)=,boolean) or %sysevalf(%superq(a_b)=,boolean) %then %do; %end;
+    %else %do;
+      %let mu_b = %sysfunc(exp(&b0_b));
+      %let r_b  = %sysevalf(1/&a_b);
+      %let p_b  = %sysevalf(&r_b/(&r_b + &mu_b));
+      data NB_BOOT; set NB_BOOT end=eof;
+        output;
+      run;
+      data NB_BOOT; set NB_BOOT end=eof;
+        if _n_=1 then do; iter=&iter; mu=&mu_b; r=&r_b; p=&p_b; alpha=&a_b; b0=&b0_b; output; end;
+      run;
+    %end;
+  %end;
 
-  rL  = 1/aU;                    /* monotone transform of endpoints */
-  rU  = 1/aL;
+  /* Percentile CIs (2.5%, 97.5%) */
+  proc univariate data=NB_BOOT noprint;
+    var mu r p alpha b0;
+    output out=NB_Boot_CIs pctlpre=mu_ r_ p_ alpha_ b0_ pctlpts=2.5 97.5;
+  run;
 
-  /* p CI via conservative endpoints (mu and r move adversely) */
-  pL  = rL/(rL + muU);
-  pU  = rU/(rU + muL);
+  /* Assemble a neat table with point estimates + bootstrap CIs */
+  data NB_Boot_Summary;
+    length Param $12;
+    set NB_Boot_CIs;
+    Param='mu (mean)';  Estimate=&mu_hat;  LCL=mu_2_5;   UCL=mu_97_5;   output;
+    Param='alpha';      Estimate=&alpha;   LCL=alpha_2_5;UCL=alpha_97_5;output;
+    Param='r=1/alpha';  Estimate=&r_hat;   LCL=r_2_5;    UCL=r_97_5;    output;
+    Param='p';          Estimate=&p_hat;   LCL=p_2_5;    UCL=p_97_5;    output;
+  run;
 
-  /* Assemble tidy output (4 rows) */
-  Param='mu (mean)';  Estimate=mu_hat;  LCL=muL;  UCL=muU;  output;
-  Param='alpha';      Estimate=alpha;   LCL=aL;   UCL=aU;   output;
-  Param='r=1/alpha';  Estimate=r_hat;   LCL=rL;   UCL=rU;   output;
-  Param='p';          Estimate=p_hat;   LCL=pL;   UCL=pU;   output;
+%mend;
 
-  keep Param Estimate LCL UCL;
+%nb_boot(B=1000);
+
+/* Show bootstrap CIs */
+proc print data=NB_Boot_Summary noobs label;
+  label Estimate='Point' LCL='Boot 2.5%' UCL='Boot 97.5%';
 run;
-
-title "Negative Binomial Wald Confidence Intervals";
-proc print data=NB_Wald_CIs noobs label;
-  label Estimate='Point' LCL='95% LCL' UCL='95% UCL';
-run; title;
