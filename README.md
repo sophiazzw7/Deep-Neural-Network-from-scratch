@@ -1,4 +1,19 @@
-/* Reuse fitted params */
+/* Fit (as you already do) */
+proc countreg data=frequency_et2;
+  model frequency = / dist=NEGBIN;
+  ods output ParameterEstimates=nb_parms;
+quit;
+
+/* Pull estimates + SEs */
+proc sql noprint;
+  select estimate, stderr into :b0, :seb0  from nb_parms where upcase(parameter)='INTERCEPT';
+  select estimate, stderr into :alpha, :sealpha from nb_parms where upcase(parameter) like '%ALPHA%';
+quit;
+
+/* Point estimates */
+%let mu_hat = %sysfunc(exp(&b0));          /* mean */
+%let r_hat  = %sysevalf(1/&alpha);         /* dispersion (number of successes) */
+%let p_hat  = %sysevalf(&r_hat/(&r_hat+&mu_hat));/* Reuse fitted params */
 %put NOTE: b0=&b0  alpha=&alpha  -> mu=&mu_hat r=&r_hat p=&p_hat;
 
 /* Count of obs (n) and dataset name to sample from */
