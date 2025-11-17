@@ -1,3 +1,53 @@
+
+
+Got it — here is a **revised version** that aligns *very closely* with your **mid-year self-assessment** AND your **manager’s feedback**, matching the tone, structure, and level of detail that both you and your manager used.
+It keeps things **simple, professional, and human**, without sounding like AI.
+
+---
+
+# ⭐ **SECTION 1 — Results**
+
+**Summarize your accomplishments and impact**
+
+This year, I stayed on track with my performance goals and continued to support reliable model validations, issue management, and control execution. I followed updated MRO procedures, kept my assigned issues and controls current in Archer, and made sure remediation steps and evidence were clear and complete. I raised testing questions early, especially when I saw gaps in assumptions or unclear logic, and worked directly with developers and governance partners to resolve them.
+
+I contributed to multiple validations, including CCAR, operational risk, and loss forecasting models. My independent testing and documentation helped improve model effectiveness assessments and supported audit readiness. These efforts strengthened issue health, improved transparency in our reviews, and reinforced sound risk practices within my areas of responsibility.
+
+---
+
+# ⭐ **SECTION 2 — Behaviors**
+
+**Evaluate how you demonstrated Truist values**
+
+I consistently demonstrated Truist’s values in my work and interactions. I communicated openly with teammates, developers, and governance partners, and I followed through on remediation and testing tasks with care and accountability. I escalated concerns as needed and worked with others to find timely solutions.
+
+I supported One Team behaviors by onboarding and mentoring a new team member and by helping colleagues troubleshoot Python code or validation tools when they needed support. Sharing scripts and technical tips helped the team work more efficiently. I also welcomed feedback and used it to strengthen my testing and documentation. These actions contributed to a constructive, collaborative environment and supported the team’s overall success.
+
+---
+
+# ⭐ **SECTION 3 — Risk Management Effectiveness**
+
+**Assess awareness, identification, escalation, and mitigation**
+
+I demonstrated strong risk awareness throughout the year by staying current on required training and following applicable policies in my day-to-day work. During validations, I identified issues early—such as missing assumptions, unclear methodology steps, and incomplete testing—and communicated them clearly to stakeholders.
+
+I escalated concerns when needed to ensure timely resolution, especially when items had impact on model effectiveness or documentation quality. I helped strengthen mitigation by reviewing remediation plans and evidence, confirming control activities were executed as intended, and ensuring my IVR documentation was complete and audit-ready. These practices supported consistent and effective risk management across my assigned models.
+
+---
+
+# ⭐ **SECTION 4 — Growth & Development**
+
+**Summarize growth and identify future development goals**
+
+Over the past year, I focused on growing both technically and professionally. I sought out opportunities to support Python-based testing work, which helped me expand my technical skills and contribute more efficiently to validations. I supported teammates by troubleshooting code, sharing reusable scripts, and helping streamline our testing steps. I also mentored a new team member, helping them learn our standards, tools, and processes.
+
+Looking ahead, I plan to continue building my Python and model analysis skills and expand into machine-learning validation work. I also want to strengthen my business understanding of the models I review and improve how I communicate technical findings to non-technical partners. These goals will help me continue delivering clear, high-quality validation work and support broader risk awareness across the team.
+
+---
+
+If you want, I can produce even *shorter* versions, or adjust tone to exactly match your manager’s writing style line-by-line.
+
+
 Yes, that’s exactly the right idea – what you’re describing is a **parametric bootstrap on the quantiles**:
 
 * For each replication, simulate a full sample with the **same n as the original data** from the fitted model.
