@@ -1,181 +1,144 @@
-/*-----------------------------------------------------------
-  0. Set up data for ET2 severity (gross_loss >= 10000)
------------------------------------------------------------*/
+
 libname lee "/sasdata/sasdata15/rqcral/Users/g17183";
 
+/* Filter to ET2 - External Fraud and gross_loss >= 10000 */
 data severity_et2_10k;
     set lee.severity;
-    if Basel_Event_Type_Level_1 = "ET2 - External Fraud" and gross_loss >= 10000;
-    format date_month_year monyy7.;
-    date_month_year = mdy(month(data_date), 1, year(data_date));
+    if upcase(strip('Basel Event Type Level 1'n)) = "ET2 - EXTERNAL FRAUD"
+       and gross_loss >= 10000;
 run;
 
-/*-----------------------------------------------------------
-  1. Fit mixture model (developer’s model) – optional
-     This is here just to reproduce their fit; AD test uses
-     the macro values defined below.
------------------------------------------------------------*/
-ods graphics on;
-proc fmm data=severity_et2_10k tech=newrap maxit=5000 gconv=0;
-    model gross_loss = / dist=TruncExpo(10000,.);
-    model            / dist=LogNormal;
-run; quit;
-ods graphics off;
+/* Sanity check */
+proc sql;
+    select count(*) as n_obs,
+           min(gross_loss) as min_loss,
+           max(gross_loss) as max_loss
+    from severity_et2_10k;
+quit;
 
-/*-----------------------------------------------------------
-  2. Parameters from the FMM output (copy from developer)
-     Update these if the FMM fit is rerun and changes.
------------------------------------------------------------*/
+/* Left truncation threshold */
+%let L_trunc = 10000;
 
-/* Truncated exponential component */
-%let intercept_from_FMM_exponential = 8.8993;
-%let sigma_for_rand_exponential =
-    %sysevalf(%sysfunc(exp(&intercept_from_FMM_exponential)));  /* scale parameter */
+/* Component 1: Truncated Exponential */
+%let intercept_truncexp = 8.8993;
+%let sigma_truncexp     = %sysevalf(%sysfunc(exp(&intercept_truncexp)));
 
-/* Lognormal component */
-%let intercept_from_FMM_lognormal = 11.0232;
-%let scale_from_FMM_lognormal     = 0.6533;   /* variance on log scale */
-
-%let theta_for_rand_lognormal  = &intercept_from_FMM_lognormal;   /* meanlog */
-%let lambda_for_rand_lognormal =
-    %sysevalf(%sysfunc(sqrt(&scale_from_FMM_lognormal)));         /* sdlog */
+/* Component 2: Lognormal */
+%let intercept_lognorm = 11.0232;    /* meanlog */
+%let scale_lognorm     = 0.6533;     /* variance of log */
+%let sdlog_lognorm     = %sysevalf(%sysfunc(sqrt(&scale_lognorm)));
 
 /* Mixture probabilities */
-%let mixing_probability_model1 = 0.7606;   /* TruncExpo weight */
-%let mixing_probability_model2 = 0.2394;   /* Lognormal weight */
+%let mix_p1 = 0.7606;    /* TruncExpo weight */
+%let mix_p2 = 0.2394;    /* Lognormal weight */
 
-/*-----------------------------------------------------------
-  3. Anderson–Darling test for the truncated mixture
------------------------------------------------------------*/
-
-%let L_trunc = 10000;  /* left truncation threshold */
-
-/* Cleanup old work tables, if any */
-proc datasets lib=work nolist;
-    delete AD_Severity_Result AD_Severity_Bootstrap;
-quit;
-
-proc iml;
-
-L      = &L_trunc;
-p1     = &mixing_probability_model1;
-p2     = &mixing_probability_model2;
-sigmaE = &sigma_for_rand_exponential;
-thetaL = &theta_for_rand_lognormal;
-sigmaL = &lambda_for_rand_lognormal;
-
-/* Mixture CDF with left truncation at L */
-start F_mix(x);
-    n = nrow(x);
-    F = j(n,1,.);
-
-    /* Truncation adjustments */
-    F0E_L = cdf("EXPONENTIAL", L, sigmaE);
-    F0L_L = cdf("LOGNORMAL",   L, thetaL, sigmaL);
-
-    do i = 1 to n;
-        xi = x[i];
-
-        F0E   = cdf("EXPONENTIAL", xi, sigmaE);
-        FexpT = (F0E - F0E_L) / (1 - F0E_L);
-
-        F0L   = cdf("LOGNORMAL", xi, thetaL, sigmaL);
-        FlogT = (F0L - F0L_L) / (1 - F0L_L);
-
-        Fi = p1*FexpT + p2*FlogT;
-
-        if Fi < 1e-12 then Fi = 1e-12;
-        if Fi > 1-1e-12 then Fi = 1-1e-12;
-
-        F[i] = Fi;
-    end;
-
-    return(F);
-finish;
-
-/* Anderson–Darling statistic for the mixture */
-start AD_mix(x);
-    call sort(x, 1);
-    n  = nrow(x);
-    F  = F_mix(x);
-
-    idx = T(1:n);
-    A2 = -n - (1/n) * sum( (2*idx-1)#( log(F) + log(1 - F[n+1-idx]) ) );
-    return(A2);
-finish;
-
-/* Read observed severity data */
-use severity_et2_10k;
-    read all var {gross_loss} into y;
-close;
-
-/* Observed AD statistic */
-A2_obs = AD_mix(y);
-
-/*-----------------------------------------------------------
-  4. Parametric bootstrap from the same truncated mixture
------------------------------------------------------------*/
-n     = nrow(y);
-nBoot = 10000;
-call randseed(12345);
-
-A2_boot = j(nBoot,1,.);
-
-do b = 1 to nBoot;
-    yb = j(n,1,.);
-
-    do i = 1 to n;
-        u = rand("UNIFORM");
-
-        if u < p1 then do;   /* truncated exponential */
-            z = L - 1;
-            do while (z < L);
-                z = rand("EXPONENTIAL", sigmaE);
-            end;
-        end;
-        else do;             /* truncated lognormal */
-            z = L - 1;
-            do while (z < L);
-                z = rand("LOGNORMAL", thetaL, sigmaL);
-            end;
-        end;
-
-        yb[i] = z;
-    end;
-
-    A2_boot[b] = AD_mix(yb);
-end;
-
-/* Upper-tail bootstrap p-value */
-pval = (1 + sum(A2_boot >= A2_obs)) / (nBoot + 1);
-
-/*-----------------------------------------------------------
-  5. Output AD results
------------------------------------------------------------*/
-results = A2_obs || pval || p1 || p2 || nBoot;
-
-create AD_Severity_Result from results
-    [colname={"A2_obs" "pval" "pi_exp" "pi_logn" "B"}];
-append from results;
-close AD_Severity_Result;
-
-create AD_Severity_Bootstrap from A2_boot[colname={"A2_boot"}];
-append from A2_boot;
-close AD_Severity_Bootstrap;
-
-quit;
-
-/*-----------------------------------------------------------
-  6. Print summary and bootstrap distribution
------------------------------------------------------------*/
-proc print data=AD_Severity_Result noobs label;
-    label A2_obs = "AD Statistic (Observed)"
-          pval   = "Bootstrap p-value"
-          pi_exp = "Mixture weight: TruncExpo"
-          pi_logn= "Mixture weight: Lognormal"
-          B      = "Bootstrap reps";
+/* Quantiles of the actual ET2 severity data */
+proc univariate data=severity_et2_10k noprint;
+    var gross_loss;
+    output out=obs_q
+        pctlpts = 50 75 90 95 99
+        pctlpre = Q_;
 run;
 
-proc means data=AD_Severity_Bootstrap min p25 p50 p75 max;
-    var A2_boot;
+/* obs_q will have variables: Q_50 Q_75 Q_90 Q_95 Q_99 */
+proc print data=obs_q; run;
+
+/* Number of simulations */
+%let nSim = 5000;
+
+/* Sample size = number of observed ET2 losses */
+proc sql noprint;
+    select count(*) into :N_obs trimmed
+    from severity_et2_10k;
+quit;
+
+/* Simulate nSim datasets of size N_obs from the truncated mixture */
+data sim_sev;
+    call streaminit(12345);
+    do sim_id = 1 to &nSim;
+        do i = 1 to &N_obs;
+            u = rand("UNIFORM");
+            /* Component 1: truncated exponential */
+            if u < &mix_p1 then do;
+                z = &L_trunc - 1;
+                do while (z < &L_trunc);
+                    z = rand("EXPONENTIAL", &sigma_truncexp);
+                end;
+            end;
+            /* Component 2: truncated lognormal */
+            else do;
+                z = &L_trunc - 1;
+                do while (z < &L_trunc);
+                    z = rand("LOGNORMAL", &intercept_lognorm, &sdlog_lognorm);
+                end;
+            end;
+            gross_loss_sim = z;
+            output;
+        end;
+    end;
+    drop i u z;
 run;
+
+/* Quantiles per simulation */
+proc sort data=sim_sev; by sim_id; run;
+
+proc univariate data=sim_sev noprint;
+    by sim_id;
+    var gross_loss_sim;
+    output out=sim_q
+        pctlpts = 50 75 90 95 99
+        pctlpre = Q_;
+run;
+
+/* sim_q has one row per sim_id, with Q_50 Q_75 Q_90 Q_95 Q_99 */
+
+/* 50th percentile (median) bands */
+proc univariate data=sim_q noprint;
+    var Q_50;
+    output out=b_Q50
+        pctlpts = 2.5 50 97.5
+        pctlname = P2 P50 P97;
+run;
+
+/* 75th percentile bands */
+proc univariate data=sim_q noprint;
+    var Q_75;
+    output out=b_Q75
+        pctlpts = 2.5 50 97.5
+        pctlname = P2 P50 P97;
+run;
+
+/* 90th percentile bands */
+proc univariate data=sim_q noprint;
+    var Q_90;
+    output out=b_Q90
+        pctlpts = 2.5 50 97.5
+        pctlname = P2 P50 P97;
+run;
+
+/* 95th percentile bands */
+proc univariate data=sim_q noprint;
+    var Q_95;
+    output out=b_Q95
+        pctlpts = 2.5 50 97.5
+        pctlname = P2 P50 P97;
+run;
+
+/* 99th percentile bands */
+proc univariate data=sim_q noprint;
+    var Q_99;
+    output out=b_Q99
+        pctlpts = 2.5 50 97.5
+        pctlname = P2 P50 P97;
+run;
+
+/* Combine bands into one row */
+data sim_bands;
+    merge b_Q50(rename=(P2=P2_Q50 P50=P50_Q50 P97=P97_Q50))
+          b_Q75(rename=(P2=P2_Q75 P50=P50_Q75 P97=P97_Q75))
+          b_Q90(rename=(P2=P2_Q90 P50=P50_Q90 P97=P97_Q90))
+          b_Q95(rename=(P2=P2_Q95 P50=P50_Q95 P97=P97_Q95))
+          b_Q99(rename=(P2=P2_Q99 P50=P50_Q99 P97=P97_Q99));
+run;
+
+proc print data=sim_bands; run;
