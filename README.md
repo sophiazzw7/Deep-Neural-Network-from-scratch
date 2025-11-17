@@ -1,35 +1,99 @@
-/* How many successful bootstrap refits? */
-proc sql;
-  select count(*) as n_boot from NB_BOOT;
+/* Fit NB first (as you already do) */
+proc countreg data=ops.edpm_dataset;
+    model frequency = / dist=NEGBIN;
+    ods output ParameterEstimates = nb_parms;
 quit;
 
-/* Look at a few bootstrap parameter draws */
-proc print data=NB_BOOT(obs=10); run;
+proc sql noprint;
+    select estimate into :b0 trimmed
+    from nb_parms
+    where upcase(Parameter) = 'INTERCEPT';
 
-/* Look at the raw percentile table */
-proc print data=NB_Boot_CIs; run;
-
-/* If NB_Boot_Summary exists, print it; otherwise create it now: */
-%macro show_summary;
-  %if %sysfunc(exist(NB_Boot_Summary)) %then %do;
-    proc print data=NB_Boot_Summary noobs; run;
-  %end;
-  %else %do;
-    data NB_Boot_Summary;
-      length Param $12;
-      set NB_Boot_CIs;
-      Param='mu (mean)';  Estimate=&mu_hat;  LCL=mu_2_5;    UCL=mu_97_5;    output;
-      Param='alpha';      Estimate=&alpha;   LCL=alpha_2_5; UCL=alpha_97_5; output;
-      Param='r=1/alpha';  Estimate=&r_hat;   LCL=r_2_5;     UCL=r_97_5;     output;
-      Param='p';          Estimate=&p_hat;   LCL=p_2_5;     UCL=p_97_5;     output;
-      keep Param Estimate LCL UCL;
-    run;
-
-    proc print data=NB_Boot_Summary noobs; run;
-  %end;
-%mend;
-
-%show_summary;
-proc sql;
-  select count(*) as n_boot from NB_BOOT;
+    select estimate into :alpha trimmed
+    from nb_parms
+    where upcase(Parameter) like '%ALPHA%';
 quit;
+
+/* MLE-based NB parameters */
+%let mu_hat = %sysfunc(exp(&b0));            /* mean */
+%let r_hat  = %sysevalf(1/(&alpha));         /* dispersion (number of successes) */
+%let p_hat  = %sysevalf(&r_hat / (&r_hat + &mu_hat));   /* success prob */
+
+proc iml;
+
+start AD_NB(x, p, r);
+    /* Anderson–Darling statistic for general CDF F */
+    call sort(x, 1);
+    n  = nrow(x);
+    F  = j(n,1,.);
+
+    do i = 1 to n;
+        F[i] = cdf("NEGBINOMIAL", x[i], p, r);
+
+        /* Clamp away from 0 and 1 to avoid log(0) */
+        if F[i] < 1e-12 then F[i] = 1e-12;
+        if F[i] > 1-1e-12 then F[i] = 1-1e-12;
+    end;
+
+    idx = T(1:n);
+    A2  = -n - (1/n) * sum( (2*idx-1)#( log(F) + log(1 - F[n+1-idx]) ) );
+    return( A2 );
+finish;
+
+/* Read your counts */
+use ops.edpm_dataset;
+    read all var {frequency} into y;
+close;
+
+n      = nrow(y);
+p      = &p_hat;
+r      = &r_hat;
+mu     = &mu_hat;
+
+/* Observed statistic */
+A2_obs = AD_NB(y, p, r);
+
+/* Parametric bootstrap */
+nBoot  = 10000;                 /* increase for stability */
+call randseed(12345);
+
+A2_boot = j(nBoot,1,.);
+
+do b = 1 to nBoot;
+    /* generate a NB sample of size n */
+    yb = j(n,1,.);
+    call randgen(yb, "NEGBINOMIAL", p, r);
+    A2_boot[b] = AD_NB(yb, p, r);
+end;
+
+/* Bootstrap p-value (upper tail) */
+pval = (1 + sum(A2_boot >= A2_obs)) / (nBoot + 1);
+
+/* One-row summary dataset */
+results = A2_obs || pval || p || r || mu || nBoot;
+create AD_NB_Result from results
+    [colname={"A2_obs" "pval" "p_hat" "r_hat" "mu_hat" "B"}];
+append from results;
+close AD_NB_Result;
+
+/* Optional: save the bootstrap distribution for diagnostics */
+create AD_NB_Bootstrap from A2_boot[colname={"A2_boot"}];
+append from A2_boot;
+close AD_NB_Bootstrap;
+
+quit;
+
+/* Pretty print the summary */
+proc print data=AD_NB_Result label noobs;
+    label A2_obs = "AD Statistic (Observed)"
+          pval   = "Bootstrap p-value"
+          p_hat  = "NB p (success prob)"
+          r_hat  = "NB r (dispersion)"
+          mu_hat = "Mean (mu)"
+          B      = "Bootstrap reps";
+run;
+
+/* Optional: check bootstrap distribution to see if p-value makes sense */
+proc means data=AD_NB_Bootstrap min p25 p50 p75 max;
+    var A2_boot;
+run;
