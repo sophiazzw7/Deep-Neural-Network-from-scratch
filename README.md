@@ -1,20 +1,17 @@
+Subject: Follow-up Items on Frequency/Severity Fit and OGM Plan
 
-Quantitative distribution fit
-1. As part of MRO’s independent review, we also ran an Anderson–Darling (AD) test on the fitted Negative Binomial frequency model. The AD test is more sensitive to tail differences than KS, and the bootstrap p-value was essentially zero, which suggested there may be some tail mismatch in the observed quarterly counts. To cross-check the result, we performed a simulation-based quantile comparison. Using your estimated NB parameters and the same sample size as ET2, we generated 10,000 simulated datasets and created 95% envelopes for P50, P75, P90, P95, and P99. In the output (attached), most of the observed ET2 quantiles fall outside the simulation bands. We wanted to get your thoughts on this.
+Hi Cheng and Rashmi,
 
-2. We also performed a simulation-based quantile comparison on the severity mixture models. The goal was to evaluate whether the fitted truncated-mixture distributions reproduce the empirical severity quantiles under repeated sampling.
-Using your fitted model parameters (exponential/lognormal components and mixture weights), we generated 10,000 simulated severity datasets, each with the same sample size as the corresponding event type. For each run, we computed P50, P75, P90, P95, and P99, and compared the empirical quantiles to the 95% simulation envelopes.
-* For ET2, the empirical Q50, Q90–Q95 are below the lower envelope, while the empirical Q75, Q99 is above the upper envelope.
-* For ET7, the empirical Q90-Q95 is below the envelope, and the upper tail Q9 again exceeds the simulated band.
-We wanted to check with you on this.
+Hope you’re both doing well. As part of MRO’s independent review, we’ve summarized a few follow-up questions regarding the frequency/severity model fit and the OGM plan. The detailed list is attached.
 
+At a high level:
+• For the frequency model, our AD test and simulation-based quantile check showed some tail differences, and we’d appreciate your perspective.
+• For the severity mixture models, our simulation-based quantile comparison showed some deviations at both the mid-tail and upper-tail, and we’d like to confirm whether this behavior is expected.
+• For the OGM plan, we had several clarifications and suggestions related to SME documentation, metric definitions, threshold calibration, and escalation steps.
 
-For OGM plan:
-1. The MDD states that SMEs will review multipliers, but did not mention what specific evidence of SME challenge and approval (meeting minutes, signoff emails, or approval records) will be provided. 2. Both KS and DDT tests measure the same distributional difference using the Kolmogorov–Smirnov statistic, making DDT redundant and offering no additional diagnostic value beyond the KS test.
-We suggest retain KS as the main stability metric and redefine DDT to alternative metrics  (e.g., Anderson–Darling test to capture tail drift) to provide complementary insight and early warning.
-3. Please add a CI metric to monitor parameter stability and model reliability over time. It checks  Whether the model’s predictive uncertainty (width of CI) is stable. Widening CIs suggest growing variability or loss of precision.Suppose KS = 0.08 (well within threshold), but the bootstrap CI for λ (frequency) widened from (5.1–5.3) to (4.5–5.8). That means parameter uncertainty increased even though the shape still fits. This could indicate instability or data sparsity, prompting additional data review or cautionary flag.
-4. The current OGM plan defines the KS threshold as the mean ± 4 standard deviations from the bootstrap KS distribution. Statistically, a 4σ deviation corresponds to an event probability of roughly 0.006% under a normal assumption. meaning such a breach would occur only about once in 16,000 cases. This makes the threshold excessively conservative and unlikely to trigger even when meaningful distributional drift exists. we would suggest tighten the KS threshold (e.g., to ±2σ or the 95th percentile of the bootstrap KS) so that the test is sensitive enough to detect genuine parameter or tail shifts. In addition, we suggest define a clear action path when a potential breach is observed, for example, conduct a quick diagnostic to assess whether the drift is material and whether it occurs uniformly across the tail and center of the distribution before deciding on recalibration.
-5. As discussed with Cheng, The KS threshold MCMC process should be clarified.
-6. The escalation plan does not specify required timelines for key actions such as completing the root cause analysis, establishing compensating controls, or submitting a model change request. Although the plan references “Compensating Control OGM,” it does not define the specific compensating measures to be applied,In addition, the plan does not identify required deliverables or evidence that must be produced and retained for each escalation step (e.g., RCA documentation, compensating measure and rationale, communication records, stakeholder approvals).
-7. Are there any model application boundaries(e.g., minimum data volume)?
-8. Could you update the model execution process to include more details about what the user need to input and the quantitative part of model output in excel? We wanted to make sure the operating procedure is appropriately documented so that individual with similar background can run the model properly, from data pulling to model output reporting. 
+Whenever you have time, could you please take a look and let us know your thoughts?
+
+Thank you both for your support.
+
+Best regards,
+Phoebe
