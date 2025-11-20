@@ -1,54 +1,55 @@
-/*---------------------------------------------------------
-* 1. Merge actual quantiles and simulation bands
-*--------------------------------------------------------*/
-data quant_ci_check;
-    merge obs_q  /* actual: Q_50 Q_75 Q_90 Q_95 Q_99 */
-          sim_bands;  /* bands: Q50_L Q50_U ... Q99_L Q99_U */
-    /* no BY since each has 1 row */
-run;
+/* Compute historical maximum loss */
+proc sql noprint;
+    select max(gross_loss) into :hist_max trimmed
+    from severity_et7_10k;   /* <-- change dataset here for ET2 */
+quit;
+/*----------------------------------------------------------
+   Simulate bootstrap datasets with horizon-adjusted tail
+-----------------------------------------------------------*/
 
-/*---------------------------------------------------------
-* 2. Apply one-sided upper test with 5% tolerance
-*    - Fail only if Actual > (1+tol)*Upper
-*    - Q99 is diagnostic only (no pass flag)
-*--------------------------------------------------------*/
-%let tol = 0.05;   /* 5% tolerance */
+%let nSim = 10000;    /* number of bootstrap runs */
 
-data quant_ci_result;
-    set quant_ci_check;
+/* N_obs = size of observed dataset */
+proc sql noprint;
+    select count(*) into :N_obs trimmed
+    from severity_et7_10k;   /* <-- update for ET2/ET7 */
+quit;
 
-    /* Midpoints & relative deviations (optional – for reporting) */
-    Q50_mid = (Q50_L + Q50_U)/2;
-    Q75_mid = (Q75_L + Q75_U)/2;
-    Q90_mid = (Q90_L + Q90_U)/2;
-    Q95_mid = (Q95_L + Q95_U)/2;
-    Q99_mid = (Q99_L + Q99_U)/2;
+data sim_sev;
+    call streaminit(12345);
+    do sim_id = 1 to &nSim;
+        do i = 1 to &N_obs;
 
-    Q50_rel_dev = (Q_50 - Q50_mid) / Q50_mid;
-    Q75_rel_dev = (Q_75 - Q75_mid) / Q75_mid;
-    Q90_rel_dev = (Q_90 - Q90_mid) / Q90_mid;
-    Q95_rel_dev = (Q_95 - Q95_mid) / Q95_mid;
-    Q99_rel_dev = (Q_99 - Q99_mid) / Q99_mid;
+            u = rand("UNIFORM");
 
-    /* One-sided upper tests with tolerance for 50–95 */
-    Q50_pass = (Q_50 <= (1+&tol.)*Q50_U);
-    Q75_pass = (Q_75 <= (1+&tol.)*Q75_U);
-    Q90_pass = (Q_90 <= (1+&tol.)*Q90_U);
-    Q95_pass = (Q_95 <= (1+&tol.)*Q95_U);
+            /* Component 1: truncated exponential */
+            if u < &mix_p1 then do;
+                z = &L_trunc - 1;
+                do while (z < &L_trunc);
+                    z = rand("EXPONENTIAL", &sigma_truncexp);
+                end;
+            end;
 
-    /* Q99 is diagnostic only – no pass/fail flag.
-       If you still want to see whether it exceeds the band+tol: */
-    Q99_exceeds = (Q_99 > (1+&tol.)*Q99_U);
+            /* Component 2: truncated lognormal */
+            else do;
+                z = &L_trunc - 1;
+                do while (z < &L_trunc);
+                    z = rand("LOGNORMAL", &intercept_lognorm, &sdlog_lognorm);
+                end;
+            end;
 
-    /* Overall flag for the formal test (Q50–Q95 only) */
-    overall_pass = (Q50_pass and Q75_pass and Q90_pass and Q95_pass);
-run;
+            /*-------------------------------------------
+                Horizon-adjustment: CAP the tail
+                If simulated loss > historical maximum,
+                set z = hist_max.
+            --------------------------------------------*/
+            if z > &hist_max then z = &hist_max;
 
-proc print data=quant_ci_result;
-    var Q_50 Q50_L Q50_U Q50_pass
-        Q_75 Q75_L Q75_U Q75_pass
-        Q_90 Q90_L Q90_U Q90_pass
-        Q_95 Q95_L Q95_U Q95_pass
-        Q_99 Q99_L Q99_U Q99_exceeds
-        overall_pass;
+            /* Output simulated loss */
+            gross_loss_sim = z;
+            output;
+        end;
+    end;
+
+    drop i u z;
 run;
