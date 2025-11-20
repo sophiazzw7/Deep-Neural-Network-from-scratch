@@ -1,93 +1,54 @@
-proc iml;
-    /*-----------------------------
-      1. Read raw ET2 frequencies
-    ------------------------------*/
-    use freq_et2;
-        read all var {frequency} into x;
-    close freq_et2;
+/*---------------------------------------------------------
+* 1. Merge actual quantiles and simulation bands
+*--------------------------------------------------------*/
+data quant_ci_check;
+    merge obs_q  /* actual: Q_50 Q_75 Q_90 Q_95 Q_99 */
+          sim_bands;  /* bands: Q50_L Q50_U ... Q99_L Q99_U */
+    /* no BY since each has 1 row */
+run;
 
-    r_hat = &r_hat;
-    p_hat = &p_hat;
+/*---------------------------------------------------------
+* 2. Apply one-sided upper test with 5% tolerance
+*    - Fail only if Actual > (1+tol)*Upper
+*    - Q99 is diagnostic only (no pass flag)
+*--------------------------------------------------------*/
+%let tol = 0.05;   /* 5% tolerance */
 
-    call randseed(12345);
+data quant_ci_result;
+    set quant_ci_check;
 
-    /*-----------------------------
-      2. Helper: group frequencies
-         into coarse bins and use
-         bin midpoints
-         (same spirit as chi-square)
-         Bins:
-         0–120   ->  60
-         121–160 -> 140
-         161–220 -> 190
-         221–350 -> 285
-         351–600 -> 475
-         601–900 -> 750
-         901+    -> 1300
-    ------------------------------*/
-    start GroupFreq(x);
-        n = nrow(x);
-        g = j(n,1,.);
-        do i = 1 to n;
-            xi = x[i];
-            if      0   <= xi <= 120  then g[i] =  60;
-            else if 121 <= xi <= 160  then g[i] = 140;
-            else if 161 <= xi <= 220  then g[i] = 190;
-            else if 221 <= xi <= 350  then g[i] = 285;
-            else if 351 <= xi <= 600  then g[i] = 475;
-            else if 601 <= xi <= 900  then g[i] = 750;
-            else if 901 <= xi         then g[i] = 1300;
-        end;
-        return(g);
-    finish;
+    /* Midpoints & relative deviations (optional – for reporting) */
+    Q50_mid = (Q50_L + Q50_U)/2;
+    Q75_mid = (Q75_L + Q75_U)/2;
+    Q90_mid = (Q90_L + Q90_U)/2;
+    Q95_mid = (Q95_L + Q95_U)/2;
+    Q99_mid = (Q99_L + Q99_U)/2;
 
-    /*-----------------------------
-      3. CvM with mid-CDF for NB
-    ------------------------------*/
-    start CvM_mid_stat(x, p_hat, r_hat);
-        n = nrow(x);
-        call sort(x,1);
-        W2 = 0;
-        do i = 1 to n;
-            xi  = x[i];
-            Flo  = cdf("NEGBINOMIAL", xi-1, p_hat, r_hat);
-            Fhi  = cdf("NEGBINOMIAL", xi,   p_hat, r_hat);
-            Fmid = 0.5*(Flo + Fhi);
-            ui   = (2*i-1)/(2*n);
-            W2   = W2 + (Fmid - ui)**2;
-        end;
-        W2 = W2 + 1/(12*n);
-        return( W2 );
-    finish;
+    Q50_rel_dev = (Q_50 - Q50_mid) / Q50_mid;
+    Q75_rel_dev = (Q_75 - Q75_mid) / Q75_mid;
+    Q90_rel_dev = (Q_90 - Q90_mid) / Q90_mid;
+    Q95_rel_dev = (Q_95 - Q95_mid) / Q95_mid;
+    Q99_rel_dev = (Q_99 - Q99_mid) / Q99_mid;
 
-    /*-----------------------------
-      4. Observed grouped CvM
-    ------------------------------*/
-    xg = GroupFreq(x);                 /* group real data        */
-    W0 = CvM_mid_stat(xg, p_hat, r_hat);
+    /* One-sided upper tests with tolerance for 50–95 */
+    Q50_pass = (Q_50 <= (1+&tol.)*Q50_U);
+    Q75_pass = (Q_75 <= (1+&tol.)*Q75_U);
+    Q90_pass = (Q_90 <= (1+&tol.)*Q90_U);
+    Q95_pass = (Q_95 <= (1+&tol.)*Q95_U);
 
-    /*-----------------------------
-      5. Parametric bootstrap
-         under NB(r_hat, p_hat),
-         grouped the same way
-    ------------------------------*/
-    n   = nrow(x);
-    B   = 1000;
-    Wbt = j(B,1,.);
+    /* Q99 is diagnostic only – no pass/fail flag.
+       If you still want to see whether it exceeds the band+tol: */
+    Q99_exceeds = (Q_99 > (1+&tol.)*Q99_U);
 
-    do b = 1 to B;
-        xSim = j(n,1,.);
-        call randgen(xSim, "NEGBINOMIAL", p_hat, r_hat);
-        xSimG = GroupFreq(xSim);
-        Wbt[b] = CvM_mid_stat(xSimG, p_hat, r_hat);
-    end;
+    /* Overall flag for the formal test (Q50–Q95 only) */
+    overall_pass = (Q50_pass and Q75_pass and Q90_pass and Q95_pass);
+run;
 
-    pval = mean(Wbt >= W0);
-
-    print W0  label="Grouped CvM_mid (ET2)"
-          pval label="Bootstrap p-value";
-
-    create cvm_group_boot_et2 var {"W0" "pval"};
-        append;
-    close cvm_group_boot_et2;
-quit;
+proc print data=quant_ci_result;
+    var Q_50 Q50_L Q50_U Q50_pass
+        Q_75 Q75_L Q75_U Q75_pass
+        Q_90 Q90_L Q90_U Q90_pass
+        Q_95 Q95_L Q95_U Q95_pass
+        Q_99 Q99_L Q99_U Q99_exceeds
+        overall_pass;
+run;
