@@ -1,4 +1,19 @@
-Hi Cheng, thank you. 
-Just to clarify, the simulation-based quantile comparison we ran was not intended as a parameter-uncertainty bootstrap. We used it as a posterior predictive diagnostic, meaning we simulated repeated datasets from the fitted model and checked whether the observed quantiles look typical under that model. This is the same idea as posterior predictive checks commonly used in the model-assessment literature (e.g., Gelman et al., 1996), where the goal is to evaluate how well a fitted model reproduces key empirical features of the data under repeated sampling.
+/* Compute mean and sd for simulated Q50 */
+proc means data=sim_q noprint;
+    var Q_50;
+    output out=CI_Q50_mean
+        mean = mean_Q50
+        std  = sd_Q50;
+run;
 
-The AD goodness‐of‐fit test using 10,000 bootstrap replications yielded an observed statistic of 7.79 with a bootstrap p-value of approximately 0.0002.
+/* Create the Normal-approximation 95% CI */
+data Q50_Normal_CI;
+    set CI_Q50_mean;
+    Lower_CI = mean_Q50 - 1.96 * sd_Q50;
+    Upper_CI = mean_Q50 + 1.96 * sd_Q50;
+run;
+
+/* Print the CI */
+proc print data=Q50_Normal_CI noobs;
+    var mean_Q50 sd_Q50 Lower_CI Upper_CI;
+    format mean_Q50 sd_Q50 Lower_CI_
