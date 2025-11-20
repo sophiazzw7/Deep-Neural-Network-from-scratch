@@ -1,45 +1,35 @@
-data freq_w_cdf;
-    set freq_et2;
-    /* Compute Theoretical CDF: F(x_i) using estimated parameters */
-    /* CDF('NEGBINOMIAL', x, p, r) returns Prob(X <= x) */
-    F_theo = cdf('NEGBINOMIAL', frequency, &p_hat, &r_hat);
+/*-----------------------------------------------------------
+  STEP 0: Subset ET2 frequency data
+------------------------------------------------------------*/
+data freq_et2;
+    set ops.ef_dataset;
+    if strip('Basel Event Type Level 1'n)
+       = "ET2 - External Fraud";
 run;
 
-/* 3. SORT DATA (Crucial Step for CvM) */
-/* The formula requires data to be ordered: x_(1) <= x_(2) ... */
-proc sort data=freq_w_cdf;
-    by frequency;
+/*-----------------------------------------------------------
+  STEP 1: Fit Negative Binomial model via COUNTREG
+------------------------------------------------------------*/
+proc countreg data=freq_et2;
+    model frequency = / dist=NEGBIN;
+    ods output ParameterEstimates = nb_parms_et2;
 run;
 
-/* --------------------------------------------------------- */
-/* 4. COMPUTE CVM STATISTIC (W^2)                            */
-/* --------------------------------------------------------- */
-data cvm_result;
-    set freq_w_cdf end=last;
-    
-    /* Rank i is simply the current row number (_N_) */
-    rank_i = _N_;
-    N = &N_obs;
-    
-    /* Calculate the "Empirical Height" at midpoint: (i - 0.5) / N */
-    emp_cdf_mid = (rank_i - 0.5) / N;
-    
-    /* Squared difference term */
-    sq_diff = (F_theo - emp_cdf_mid)**2;
-    
-    /* Accumulate the Sum */
-    retain sum_sq 0;
-    sum_sq = sum_sq + sq_diff;
-    
-    /* On the last row, apply the final correction: 1/(12N) */
-    if last then do;
-        CvM_Stat = sum_sq + (1 / (12 * N));
-        put "Calculated Cramér–von Mises Statistic (W^2): " CvM_Stat;
-        output;
-    end;
-    
-    keep CvM_Stat;
-run;
+/* Extract intercept and alpha */
+proc sql noprint;
+    select estimate into :b0  trimmed
+    from nb_parms_et2
+    where upcase(parameter) = 'INTERCEPT';
 
-/* View Result */
-proc print data=cvm_result; run;
+    select estimate into :alpha trimmed
+    from nb_parms_et2
+    where upcase(parameter) like '%ALPHA%';
+
+    select count(*) into :N_et2 trimmed
+    from freq_et2;
+quit;
+
+/* Convert to NB(p,r) */
+%let mu_hat = %sysevalf(exp(&b0));           
+%let r_hat  = %sysevalf(1/&alpha);           
+%let p_hat  = %sysevalf(&r_hat / (&r_hat + &mu_hat)); 
