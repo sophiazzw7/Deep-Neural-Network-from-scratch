@@ -1,5 +1,5 @@
 /*------------------------------------------------------------
-  0. Setup & ET7 severity data
+  0. Prep ET7 severity data (>= 10k)
 ------------------------------------------------------------*/
 libname ops "/sasdata/mrmg2/users/G07267/MOD13638_2025/Output";
 
@@ -9,173 +9,159 @@ data severity_et7_10k;
        and gross_loss >= 10000;
 run;
 
-/* Lower truncation level */
 %let L_trunc = 10000;
 
 /*------------------------------------------------------------
-  1. Mixture parameters (from model documentation)
-     - Component 1: truncated exponential
-     - Component 2: truncated lognormal
+  1. Mixture parameters from model doc
 ------------------------------------------------------------*/
-%let intercept_truncexp = 9.4179;      /* log-mean for exp scale, given by dev */
+%let intercept_truncexp = 9.4179;
 %let sigma_truncexp     = %sysevalf(%sysfunc(exp(&intercept_truncexp.)));
 
-%let intercept_lognorm  = 11.6984;     /* mu for underlying lognormal */
-%let scale_lognorm      = 1.6015;      /* variance on log scale */
+%let intercept_lognorm  = 11.6984;
+%let scale_lognorm      = 1.6015;
 %let sdlog_lognorm      = %sysevalf(%sysfunc(sqrt(&scale_lognorm.)));
 
-%let mix_p1 = 0.7036;                  /* weight for exp component */
-%let mix_p2 = 0.2964;                  /* weight for lognormal component */
+%let mix_p1 = 0.7036;
+%let mix_p2 = 0.2964;
 
 /* Sample size */
 proc sql noprint;
-    select count(*) into :N_obs trimmed from severity_et7_10k;
+    select count(*) into :N_obs trimmed
+    from severity_et7_10k;
 quit;
 %put NOTE: N_obs=&N_obs.;
 
 /*------------------------------------------------------------
-  2. Helper: mixture CDF for a value x >= L_trunc
-     (truncated exponential + truncated lognormal)
+  2. Get empirical quantiles to define bins
+     Bins: [L_trunc,Q50), [Q50,Q75), [Q75,Q90),
+           [Q90,Q95), [Q95, +inf)
 ------------------------------------------------------------*/
-/* We’ll compute it directly in data steps via the same formula
-   to avoid macro-function complications. */
-
-/*------------------------------------------------------------
-  3. KS statistic for actual ET7 data
-------------------------------------------------------------*/
-proc sort data=severity_et7_10k; 
-    by gross_loss; 
+proc univariate data=severity_et7_10k noprint;
+    var gross_loss;
+    output out=et7_q pctlpts=50 75 90 95 pctlpre=Q;
 run;
 
-data ks_actual;
+data _null_;
+    set et7_q;
+    call symputx('Q50', Q50);
+    call symputx('Q75', Q75);
+    call symputx('Q90', Q90);
+    call symputx('Q95', Q95);
+run;
+
+%put NOTE: Q50=&Q50. Q75=&Q75. Q90=&Q90. Q95=&Q95.;
+
+/*------------------------------------------------------------
+  3. Function: mixture CDF at a value x (>= L_trunc)
+------------------------------------------------------------*/
+%macro mix_cdf(x);
+    /* Truncated exponential above L_trunc */
+    %if &x. < &L_trunc. %then 0;
+    %else %do;
+        /* Exponential part */
+        %let Fexp = cdf('EXPONENTIAL', %sysevalf(&x.-&L_trunc.), &sigma_truncexp.);
+
+        /* Lognormal part truncated at L_trunc */
+        %let FL  = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
+        %let F0  = cdf('LOGNORMAL', &x.,        &intercept_lognorm., &sdlog_lognorm.);
+
+        %if &FL. >= 0.999999 %then %let Flog = 0;
+        %else %let Flog = %sysevalf((&F0.-&FL.)/(1-&FL.));
+
+        %sysevalf(&mix_p1.*&Fexp. + &mix_p2.*&Flog.)
+    %end;
+%mend;
+
+/*------------------------------------------------------------
+  4. Compute model probabilities for the 5 bins
+------------------------------------------------------------*/
+/* Bin boundaries (lower inclusive, upper exclusive except last) */
+data bin_probs;
+    length bin 8;
+    F_L = .; F_U = .; P_model = .;
+
+    /* Bin 1: [L_trunc, Q50) */
+    bin = 1;
+    F_L = %mix_cdf(&L_trunc.);
+    F_U = %mix_cdf(&Q50.);
+    P_model = F_U - F_L;
+    output;
+
+    /* Bin 2: [Q50, Q75) */
+    bin = 2;
+    F_L = %mix_cdf(&Q50.);
+    F_U = %mix_cdf(&Q75.);
+    P_model = F_U - F_L;
+    output;
+
+    /* Bin 3: [Q75, Q90) */
+    bin = 3;
+    F_L = %mix_cdf(&Q75.);
+    F_U = %mix_cdf(&Q90.);
+    P_model = F_U - F_L;
+    output;
+
+    /* Bin 4: [Q90, Q95) */
+    bin = 4;
+    F_L = %mix_cdf(&Q90.);
+    F_U = %mix_cdf(&Q95.);
+    P_model = F_U - F_L;
+    output;
+
+    /* Bin 5: [Q95, +inf) */
+    bin = 5;
+    F_L = %mix_cdf(&Q95.);
+    F_U = 1;
+    P_model = F_U - F_L;
+    output;
+run;
+
+/* Expected counts per bin */
+data bin_probs;
+    set bin_probs;
+    E_count = &N_obs. * P_model;
+run;
+
+/*------------------------------------------------------------
+  5. Observed counts per bin
+------------------------------------------------------------*/
+data severity_bins;
     set severity_et7_10k;
-    by gross_loss;
-    retain n;
-    if _N_ = 1 then n = 0;
-    n + 1;
-
-    /* Empirical CDF */
-    F_emp = n / &N_obs.;
-
-    /* Mixture model CDF evaluated at gross_loss */
-    if gross_loss < &L_trunc. then do;
-        F_exp_trunc  = 0;
-        F_logn_trunc = 0;
-    end;
-    else do;
-        /* Truncated exponential above L_trunc is L + Exp(sigma) */
-        F_exp_trunc = cdf('EXPONENTIAL', gross_loss - &L_trunc., &sigma_truncexp.);
-
-        /* Truncated lognormal at L_trunc */
-        FL  = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0  = cdf('LOGNORMAL', gross_loss, &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn_trunc = 0;
-        else F_logn_trunc = (F0 - FL) / (1 - FL);
-    end;
-
-    F_model = &mix_p1. * F_exp_trunc + &mix_p2. * F_logn_trunc;
-
-    KS_abs = abs(F_emp - F_model);
+    length bin 8;
+    if gross_loss <  &Q50. then bin = 1;
+    else if gross_loss < &Q75. then bin = 2;
+    else if gross_loss < &Q90. then bin = 3;
+    else if gross_loss < &Q95. then bin = 4;
+    else bin = 5;
 run;
 
-proc sql noprint;
-    select max(KS_abs) into :KS_real from ks_actual;
-quit;
-%put NOTE: Real KS statistic for ET7 severity = &KS_real.;
-
-/*------------------------------------------------------------
-  4. Parametric bootstrap: simulate from mixture model
-------------------------------------------------------------*/
-%let nSim = 10000;
-
-data sim_sev;
-    call streaminit(12345);
-
-    do sim_id = 1 to &nSim.;
-        do i = 1 to &N_obs.;
-            u = rand("UNIFORM");
-
-            /* Component 1: truncated exponential (via rejection) */
-            if u < &mix_p1. then do;
-                z = &L_trunc. - 1;
-                do while (z < &L_trunc.);
-                    z = rand("EXPONENTIAL", &sigma_truncexp.);
-                end;
-            end;
-
-            /* Component 2: truncated lognormal (via rejection) */
-            else do;
-                z = &L_trunc. - 1;
-                do while (z < &L_trunc.);
-                    z = rand("LOGNORMAL", &intercept_lognorm., &sdlog_lognorm.);
-                end;
-            end;
-
-            gross_loss_sim = z;
-            output;
-        end;
-    end;
-
-    drop i u z;
-run;
-
-/*------------------------------------------------------------
-  5. KS statistic for each bootstrap sample
-------------------------------------------------------------*/
-proc sort data=sim_sev;
-    by sim_id gross_loss_sim;
-run;
-
-data ks_boot_raw;
-    set sim_sev;
-    by sim_id gross_loss_sim;
-
-    retain n;
-    if first.sim_id then n = 0;
-    n + 1;
-
-    /* Empirical CDF in this bootstrap sample */
-    F_emp = n / &N_obs.;
-
-    /* Mixture model CDF at gross_loss_sim */
-    if gross_loss_sim < &L_trunc. then do;
-        F_exp_trunc  = 0;
-        F_logn_trunc = 0;
-    end;
-    else do;
-        F_exp_trunc = cdf('EXPONENTIAL', gross_loss_sim - &L_trunc., &sigma_truncexp.);
-
-        FL  = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0  = cdf('LOGNORMAL', gross_loss_sim, &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn_trunc = 0;
-        else F_logn_trunc = (F0 - FL) / (1 - FL);
-    end;
-
-    F_model = &mix_p1. * F_exp_trunc + &mix_p2. * F_logn_trunc;
-
-    KS_abs = abs(F_emp - F_model);
-run;
-
-/* Collapse to one KS statistic per sim_id */
 proc sql;
-    create table ks_boot as
-    select sim_id,
-           max(KS_abs) as KS_boot
-    from ks_boot_raw
-    group by sim_id;
+    create table bin_obs as
+    select bin, count(*) as O_count
+    from severity_bins
+    group by bin;
 quit;
 
 /*------------------------------------------------------------
-  6. Bootstrap summary & p-value
+  6. Merge and compute Binned Relative Error metrics
 ------------------------------------------------------------*/
-proc means data=ks_boot n mean std p5 p50 p95;
-    var KS_boot;
+data bin_fit;
+    merge bin_probs bin_obs;
+    by bin;
+    if E_count > 0 then RelErr = (O_count - E_count) / E_count;
+    AbsRelErr = abs(RelErr);
 run;
 
-proc sql noprint;
-    select (sum(KS_boot >= &KS_real.) + 1) / (count(*) + 1)
-    into :p_boot
-    from ks_boot;
-quit;
+proc means data=bin_fit n mean max;
+    var AbsRelErr;
+    output out=bre_stats
+        mean = BRE_mean
+        max  = BRE_max;
+run;
 
-%put NOTE: Bootstrap KS p-value for ET7 severity = &p_boot.;
+proc print data=bin_fit;
+    var bin O_count E_count RelErr AbsRelErr;
+run;
+
+proc print data=bre_stats;
+run;
