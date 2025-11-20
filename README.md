@@ -1,40 +1,39 @@
-/*==========================================================
-   DENSITY RATIO PLOT FOR ET2 FREQUENCY — SAS CODE
-==========================================================*/
-
-/* Step 1: Compute observed probabilities for each distinct x */
+/*-----------------------------------------------------------
+  STEP 1: Count observed frequencies for each x
+-----------------------------------------------------------*/
 proc sql;
     create table freq_counts as
     select frequency as x,
-           count(*) as n_x
+           count(*)   as n_x
     from freq_et2
     group by frequency
-    order by frequency;
+    order by x;
 quit;
 
-data freq_counts;
-    set freq_counts;
-    n_total = &N_et2;
-    p_obs = n_x / n_total;
-run;
-
-/* Step 2: Compute NB expected pmf for each x */
-data freq_ratio;
+/*-----------------------------------------------------------
+  STEP 2: Compute expected NB counts and root differences
+-----------------------------------------------------------*/
+data rootogram_data;
     set freq_counts;
 
-    /* NB PMF syntax: pdf("NEGBINOMIAL", x, p_hat, r_hat) */
-    p_exp = pdf("NEGBINOMIAL", x, &p_hat, &r_hat);
+    n_total = &N_et2;   /* total number of quarters for ET2 */
 
-    /* Density Ratio R(x) */
-    ratio = p_obs / p_exp;
+    /* NB pmf: pdf("NEGBINOMIAL", x, p_hat, r_hat) */
+    exp_cnt   = n_total * pdf("NEGBINOMIAL", x, &p_hat, &r_hat);
+
+    root_obs  = sqrt(n_x);
+    root_exp  = sqrt(exp_cnt);
+
+    /* hanging rootogram: difference from expected root-count */
+    diff = root_obs - root_exp;
 run;
-
-/* Step 3: Plot Ratio vs Frequency */
-proc sgplot data=freq_ratio;
-    title "ET2 Negative Binomial – Density Ratio Plot (Observed / Expected)";
-    scatter x=x y=ratio / markerattrs=(symbol=circlefilled size=7);
-    series x=x y=ratio / lineattrs=(pattern=solid);
-    refline 1 / axis=y lineattrs=(color=red thickness=2); /* perfect-fit line */
-    yaxis label="Observed / Expected (Density Ratio)" min=0;
+/*-----------------------------------------------------------
+  STEP 3: Hanging Rootogram – sqrt(Obs) - sqrt(Exp)
+-----------------------------------------------------------*/
+proc sgplot data=rootogram_data;
+    title "ET2 Negative Binomial – Hanging Rootogram";
+    vbarparm category=x response=diff / barwidth=0.8;
+    refline 0 / axis=y lineattrs=(thickness=2);
+    yaxis label="sqrt(Observed Count) - sqrt(Expected Count)";
     xaxis label="Frequency Value";
 run;
