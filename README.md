@@ -1,40 +1,24 @@
 proc iml;
-    /* Read data */
-    use freq_et2_bins;
+    use freq_et2;
         read all var {frequency} into x;
-    close freq_et2_bins;
+    close freq_et2;
 
     n      = nrow(x);
-    r_hat  = &r_hat;          /* size from your earlier code        */
-    p_hat  = &p_hat;          /* success prob from your earlier code*/
+    r_hat  = &r_hat;
+    p_hat  = &p_hat;
 
-    /* Bin boundaries */
-    bin_lo = {0,   121, 161, 221, 351, 601, 901};
-    bin_hi = {120, 160, 220, 350, 600, 900, 0};
-    bin_hi[7] = max(x);       /* last bin goes to max observed freq */
+    call sort(x, 1);         /* sort ascending */
 
-    nbins = nrow(bin_lo);
-    exp   = j(nbins, 1, .);
+    W2 = 0;
+    do i = 1 to n;
+        xi = x[i];
+        F_lo  = cdf("NEGBINOMIAL", xi-1, p_hat, r_hat);
+        F_hi  = cdf("NEGBINOMIAL", xi,   p_hat, r_hat);
+        Fmid  = 0.5*(F_lo + F_hi);
 
-    do i = 1 to nbins;
-        lo = bin_lo[i];
-        hi = bin_hi[i];
-
-        /* CDF syntax: CDF('NEGBINOMIAL', m, p, n)
-           m = count, p = p_hat, n = r_hat (size) */
-
-        if lo = 0 then
-            prob = cdf("NEGBINOMIAL", hi, p_hat, r_hat);
-        else
-            prob = cdf("NEGBINOMIAL", hi, p_hat, r_hat)
-                 - cdf("NEGBINOMIAL", lo-1, p_hat, r_hat);
-
-        exp[i] = n * prob;
+        ui = (2*i-1)/(2*n);
+        W2 = W2 + (Fmid - ui)**2;
     end;
-
-    /* Build output (bin, exp) for merge with obs */
-    out = (T(1:nbins)) || exp;
-    create exp_bins from out[colname={"bin" "exp"}];
-        append from out;
-    close exp_bins;
+    W2 = W2 + 1/(12*n);
+    print W2[label="CvM_mid"];
 quit;
