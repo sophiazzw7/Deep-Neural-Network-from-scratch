@@ -1,55 +1,46 @@
-/* Compute historical maximum loss */
-proc sql noprint;
-    select max(gross_loss) into :hist_max trimmed
-    from severity_et7_10k;   /* <-- change dataset here for ET2 */
-quit;
-/*----------------------------------------------------------
-   Simulate bootstrap datasets with horizon-adjusted tail
------------------------------------------------------------*/
+/* Compute the KS statistic for actual data */
+proc sort data=severity_et2_10k; by gross_loss; run;
 
-%let nSim = 10000;    /* number of bootstrap runs */
-
-/* N_obs = size of observed dataset */
-proc sql noprint;
-    select count(*) into :N_obs trimmed
-    from severity_et7_10k;   /* <-- update for ET2/ET7 */
-quit;
-
-data sim_sev;
-    call streaminit(12345);
-    do sim_id = 1 to &nSim;
-        do i = 1 to &N_obs;
-
-            u = rand("UNIFORM");
-
-            /* Component 1: truncated exponential */
-            if u < &mix_p1 then do;
-                z = &L_trunc - 1;
-                do while (z < &L_trunc);
-                    z = rand("EXPONENTIAL", &sigma_truncexp);
-                end;
-            end;
-
-            /* Component 2: truncated lognormal */
-            else do;
-                z = &L_trunc - 1;
-                do while (z < &L_trunc);
-                    z = rand("LOGNORMAL", &intercept_lognorm, &sdlog_lognorm);
-                end;
-            end;
-
-            /*-------------------------------------------
-                Horizon-adjustment: CAP the tail
-                If simulated loss > historical maximum,
-                set z = hist_max.
-            --------------------------------------------*/
-            if z > &hist_max then z = &hist_max;
-
-            /* Output simulated loss */
-            gross_loss_sim = z;
-            output;
-        end;
-    end;
-
-    drop i u z;
+data actual_cdf;
+    set severity_et2_10k;
+    by gross_loss;
+    n + 1;
+    cdf_emp = n / _N_;
+    cdf_model = <PUT_YOUR_MODEL_CDF_FORMULA_HERE>;
+    ks_abs = abs(cdf_emp - cdf_model);
 run;
+
+proc sql noprint;
+    select max(ks_abs) into :KS_real from actual_cdf;
+quit;
+%put NOTE: Real KS = &KS_real;
+/* KS statistic for each bootstrap replication */
+proc sort data=sim_sev; by sim_id gross_loss_sim; run;
+
+data ks_boot_raw;
+    set sim_sev;
+    by sim_id gross_loss_sim;
+
+    retain n_total;
+    if first.sim_id then n_total=0;
+    n_total+1;
+
+    cdf_emp = _N_ / n_total;
+    cdf_model = <MODEL_CDF(gross_loss_sim)>;
+
+    ks_abs = abs(cdf_emp - cdf_model);
+run;
+
+proc sql;
+    create table ks_boot as
+    select sim_id, max(ks_abs) as KS_boot
+    from ks_boot_raw
+    group by sim_id;
+quit;
+proc sql noprint;
+    select sum(KS_boot >= &KS_real) / count(*)
+    into :pvalue
+    from ks_boot;
+quit;
+
+%put NOTE: Bootstrap KS p-value = &pvalue;
