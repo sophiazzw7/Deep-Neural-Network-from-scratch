@@ -1,91 +1,150 @@
-/*-----------------------------------------------------------
-  1. Get sample size of ET7 data
------------------------------------------------------------*/
-proc sql noprint;
-    select count(*) into :N_obs trimmed
-    from severity_et7_10k;
-quit;
-%put NOTE: N_obs = &N_obs.;
+Yes, we can reuse the same “parametric bootstrap quantile test” idea you had for severity, but now for the **ET2 frequency negative binomial**.
 
-/*-----------------------------------------------------------
-  2. Simulate from the fitted mixture (model sample)
-     - only RAND(), no CDF calls
------------------------------------------------------------*/
-%let N_model = 20000;   /* model sample size for CDF approx */
+Below is **full SAS code** you can paste **after** the block where you’ve already fit the NB and created:
 
-data sim_model;
+* `freq_et2` (only `frequency`)
+* macro vars: `mu_hat`, `r_hat`, `p_hat`, `N_et2` (from your screenshot)
+
+---
+
+### 🔹 1. Empirical quantiles of ET2 frequency
+
+```sas
+/* STEP A: Empirical quantiles from observed ET2 frequency */
+proc univariate data=freq_et2 noprint;
+    var frequency;
+    output out=obs_q
+        pctlpts = 50 75 90 95 99
+        pctlpre = Q_;
+run;
+
+/* (Optional) check observed quantiles */
+proc print data=obs_q;
+    title "Observed ET2 Frequency Quantiles";
+run;
+```
+
+---
+
+### 🔹 2. Simulate from fitted NB and compute quantiles per simulation
+
+```sas
+/* STEP B: Parametric bootstrap from fitted NB(freq) */
+
+%let nSim = 10000;   /* number of bootstrap simulations */
+
+/* Simulate N_et2 counts from NB(mu_hat, r_hat) in each simulation */
+data sim_freq;
     call streaminit(12345);
-    do k = 1 to &N_model.;
-        u = rand("UNIFORM");
-
-        if u < &mix_p1. then do;
-            /* truncated exponential above L_trunc */
-            z = &L_trunc. + rand("EXPONENTIAL", &sigma_truncexp.);
+    do sim_id = 1 to &nSim.;
+        do i = 1 to &N_et2.;
+            /* RAND('NEGBINOMIAL', p, r) : r = size, p = success prob */
+            freq_sim = rand("NEGBINOMIAL", &p_hat., &r_hat.);
+            output;
         end;
-        else do;
-            /* truncated lognormal via rejection sampling */
-            z = &L_trunc. - 1;
-            do while (z < &L_trunc.);
-                z = rand("LOGNORMAL", &intercept_lognorm., &sdlog_lognorm.);
-            end;
-        end;
-
-        gross_loss_sim = z;
-        output;
     end;
-    keep gross_loss_sim;
+    drop i;
 run;
 
-/*-----------------------------------------------------------
-  3. For each observed loss x, approximate F_model(x)
-     as P_model(X <= x) using the simulated sample
------------------------------------------------------------*/
-proc sort data=severity_et7_10k;
-    by gross_loss;
+/* For each simulation, get sample quantiles of freq_sim */
+proc sort data=sim_freq;
+    by sim_id;
 run;
 
-proc sort data=sim_model;
-    by gross_loss_sim;
+proc univariate data=sim_freq noprint;
+    by sim_id;
+    var freq_sim;
+    output out=sim_q
+        pctlpts = 50 75 90 95 99
+        pctlpre = Q_;
+run;
+```
+
+---
+
+### 🔹 3. Get 2.5%–97.5% bands for each quantile across simulations
+
+```sas
+/* STEP C: For each quantile (50,75,90,95,99), get 2.5 and 97.5 percentiles
+           across the nSim simulations (bootstrap CI bands) */
+
+proc univariate data=sim_q noprint;
+    var Q_50;
+    output out=b_Q50
+        pctlpts = 2.5 50 97.5
+        pctlpre = B50_
+        pctlname = P2 P50 P97;
 run;
 
-proc sql;
-    create table cvm_data as
-    select a.gross_loss,
-           /* empirical CDF under the model via simulation */
-           (select count(*) from sim_model b
-             where b.gross_loss_sim <= a.gross_loss)
-           / &N_model. as F_model
-    from severity_et7_10k as a
-    order by a.gross_loss;
-quit;
-
-/*-----------------------------------------------------------
-  4. Compute CvM statistic:
-     CvM = 1/(12n) + Σ_i [F_model(x_i) - (2i-1)/(2n)]^2
------------------------------------------------------------*/
-data cvm_terms;
-    set cvm_data;
-    retain i;
-    if _N_ = 1 then i = 0;
-    i + 1;
-
-    n = &N_obs.;
-    F_emp_mid = (2*i - 1) / (2*n);
-    diff  = F_model - F_emp_mid;
-    diff2 = diff*diff;
+proc univariate data=sim_q noprint;
+    var Q_75;
+    output out=b_Q75
+        pctlpts = 2.5 50 97.5
+        pctlpre = B75_
+        pctlname = P2 P50 P97;
 run;
 
-proc means data=cvm_terms noprint;
-    var diff2;
-    output out=cvm_sum sum = sum_diff2;
+proc univariate data=sim_q noprint;
+    var Q_90;
+    output out=b_Q90
+        pctlpts = 2.5 50 97.5
+        pctlpre = B90_
+        pctlname = P2 P50 P97;
 run;
 
-data cvm_stat_et7;
-    set cvm_sum;
-    N_obs = &N_obs.;
-    CvM   = (1/(12*N_obs)) + sum_diff2;
+proc univariate data=sim_q noprint;
+    var Q_95;
+    output out=b_Q95
+        pctlpts = 2.5 50 97.5
+        pctlpre = B95_
+        pctlname = P2 P50 P97;
 run;
 
-proc print data=cvm_stat_et7;
-    title "Simulation-based Cramer–von Mises Statistic for ET7 Severity Mixture";
+proc univariate data=sim_q noprint;
+    var Q_99;
+    output out=b_Q99
+        pctlpts = 2.5 50 97.5
+        pctlpre = B99_
+        pctlname = P2 P50 P97;
 run;
+
+/* Merge all bands into one row */
+data sim_bands;
+    merge b_Q50 b_Q75 b_Q90 b_Q95 b_Q99;
+run;
+```
+
+---
+
+### 🔹 4. Final “quantile test” table: actual vs bootstrap bands
+
+```sas
+/* STEP D: Combine observed quantiles with bootstrap bands */
+data quantile_test_et2;
+    if _N_ = 1 then set obs_q;
+    set sim_bands;
+run;
+
+proc print data=quantile_test_et2 noobs;
+    title "ET2 Frequency – Quantile Test via NB Parametric Bootstrap";
+    var Q_50  B50_P2  B50_P97
+        Q_75  B75_P2  B75_P97
+        Q_90  B90_P2  B90_P97
+        Q_95  B95_P2  B95_P97
+        Q_99  B99_P2  B99_P97;
+run;
+```
+
+---
+
+This gives you a **single table** with:
+
+* Empirical ET2 frequency quantiles (`Q_50`, `Q_75`, `Q_90`, `Q_95`, `Q_99`)
+* The **2.5% and 97.5% model-based bands** for each quantile (`Bxx_P2`, `Bxx_P97`)
+
+Then you can:
+
+* Check if each `Q_xx` lies inside its `[P2, P97]` band
+* Be more forgiving for Q90–Q99 (just interpret as diagnostic / instability, not hard fail)
+
+If you want, next I can add **pass/fail flags** with the forgiving rules we discussed (strict for 50–75, one-sided for 90–95, diagnostic only for 99).
