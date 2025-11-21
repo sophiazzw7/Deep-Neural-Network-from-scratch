@@ -1,150 +1,158 @@
-Yes, we can reuse the same “parametric bootstrap quantile test” idea you had for severity, but now for the **ET2 frequency negative binomial**.
+Yes, we can do a **Kuiper test** using only simulation + data steps, no IML and no CDF calls, so you won’t get the integration errors.
 
-Below is **full SAS code** you can paste **after** the block where you’ve already fit the NB and created:
+I’ll give you **two-sample Kuiper** code: it compares
 
-* `freq_et2` (only `frequency`)
-* macro vars: `mu_hat`, `r_hat`, `p_hat`, `N_et2` (from your screenshot)
+* sample 1 = **actual ET7 losses**
+* sample 2 = **simulated ET7 losses from your fitted mixture**
+
+This is equivalent (in practice) to a GOF test of “does the fitted model generate data like what we observed?”.
 
 ---
 
-### 🔹 1. Empirical quantiles of ET2 frequency
+## 1. Assume you already have ET7 data + mixture params
+
+You already had this in your ET7 programs:
 
 ```sas
-/* STEP A: Empirical quantiles from observed ET2 frequency */
-proc univariate data=freq_et2 noprint;
-    var frequency;
-    output out=obs_q
-        pctlpts = 50 75 90 95 99
-        pctlpre = Q_;
+libname ops "/sasdata/mrmg2/users/G07267/MOD13638_2025/Output";
+
+data severity_et7_10k;
+    set ops.cleaned_severity_data;
+    if strip('Basel Event Type Level 1'n) =
+       "ET7 - Execution Delivery and Process Management"
+       and gross_loss >= 10000;
 run;
 
-/* (Optional) check observed quantiles */
-proc print data=obs_q;
-    title "Observed ET2 Frequency Quantiles";
-run;
+/* mixture parameters (use your actual values) */
+%let L_trunc           = 10000;
+%let intercept_truncexp = 9.4179;
+%let sigma_truncexp     = %sysevalf(%sysfunc(exp(&intercept_truncexp.)));
+
+%let intercept_lognorm  = 11.6984;
+%let scale_lognorm      = 1.6015;
+%let sdlog_lognorm      = %sysevalf(%sysfunc(sqrt(&scale_lognorm.)));
+
+%let mix_p1 = 0.7036;
+%let mix_p2 = 0.2964;
 ```
 
 ---
 
-### 🔹 2. Simulate from fitted NB and compute quantiles per simulation
+## 2. Simulate from your fitted severity mixture (model sample)
 
 ```sas
-/* STEP B: Parametric bootstrap from fitted NB(freq) */
+%let N_model = 20000;   /* size of simulated sample */
 
-%let nSim = 10000;   /* number of bootstrap simulations */
-
-/* Simulate N_et2 counts from NB(mu_hat, r_hat) in each simulation */
-data sim_freq;
+data sim_et7;
     call streaminit(12345);
-    do sim_id = 1 to &nSim.;
-        do i = 1 to &N_et2.;
-            /* RAND('NEGBINOMIAL', p, r) : r = size, p = success prob */
-            freq_sim = rand("NEGBINOMIAL", &p_hat., &r_hat.);
-            output;
+    do k = 1 to &N_model.;
+        u = rand("UNIFORM");
+
+        if u < &mix_p1. then do;
+            /* truncated exponential above L_trunc */
+            z = &L_trunc. + rand("EXPONENTIAL", &sigma_truncexp.);
         end;
+        else do;
+            /* truncated lognormal via rejection sampling */
+            z = &L_trunc. - 1;
+            do while (z < &L_trunc.);
+                z = rand("LOGNORMAL", &intercept_lognorm., &sdlog_lognorm.);
+            end;
+        end;
+
+        gross_loss_sim = z;
+        output;
     end;
-    drop i;
-run;
-
-/* For each simulation, get sample quantiles of freq_sim */
-proc sort data=sim_freq;
-    by sim_id;
-run;
-
-proc univariate data=sim_freq noprint;
-    by sim_id;
-    var freq_sim;
-    output out=sim_q
-        pctlpts = 50 75 90 95 99
-        pctlpre = Q_;
+    keep gross_loss_sim;
 run;
 ```
 
 ---
 
-### 🔹 3. Get 2.5%–97.5% bands for each quantile across simulations
+## 3. Build combined dataset and compute empirical CDFs
+
+We’ll do a **two-sample Kuiper**:
+
+* combine the two samples,
+* walk through sorted values,
+* track cumulative proportions for DATA vs MODEL,
+* compute `D+`, `D-`, and `V = D+ + D-`.
 
 ```sas
-/* STEP C: For each quantile (50,75,90,95,99), get 2.5 and 97.5 percentiles
-           across the nSim simulations (bootstrap CI bands) */
+/* sample sizes */
+proc sql noprint;
+    select count(*) into :nData   from severity_et7_10k;
+    select count(*) into :nModel  from sim_et7;
+quit;
 
-proc univariate data=sim_q noprint;
-    var Q_50;
-    output out=b_Q50
-        pctlpts = 2.5 50 97.5
-        pctlpre = B50_
-        pctlname = P2 P50 P97;
+/* combine observed + simulated */
+data combined_et7;
+    set severity_et7_10k(in=inData  rename=(gross_loss=x))
+        sim_et7          (in=inModel rename=(gross_loss_sim=x));
+    length sample $6;
+    if inData  then sample = "DATA";
+    else            sample = "MODEL";
 run;
 
-proc univariate data=sim_q noprint;
-    var Q_75;
-    output out=b_Q75
-        pctlpts = 2.5 50 97.5
-        pctlpre = B75_
-        pctlname = P2 P50 P97;
+/* sort by loss value */
+proc sort data=combined_et7;
+    by x;
 run;
 
-proc univariate data=sim_q noprint;
-    var Q_90;
-    output out=b_Q90
-        pctlpts = 2.5 50 97.5
-        pctlpre = B90_
-        pctlname = P2 P50 P97;
-run;
+/* walk through sorted values and compute CDFs for each sample */
+data kuiper_terms_et7;
+    set combined_et7;
+    retain cData cModel 0;
+    if sample = "DATA"  then cData  + 1;
+    else                     cModel + 1;
 
-proc univariate data=sim_q noprint;
-    var Q_95;
-    output out=b_Q95
-        pctlpts = 2.5 50 97.5
-        pctlpre = B95_
-        pctlname = P2 P50 P97;
-run;
-
-proc univariate data=sim_q noprint;
-    var Q_99;
-    output out=b_Q99
-        pctlpts = 2.5 50 97.5
-        pctlpre = B99_
-        pctlname = P2 P50 P97;
-run;
-
-/* Merge all bands into one row */
-data sim_bands;
-    merge b_Q50 b_Q75 b_Q90 b_Q95 b_Q99;
+    FData  = cData  / &nData.;
+    FModel = cModel / &nModel.;
+    diff   = FData - FModel;
 run;
 ```
 
 ---
 
-### 🔹 4. Final “quantile test” table: actual vs bootstrap bands
+## 4. Compute Kuiper statistic (V = D^+ + D^-)
 
 ```sas
-/* STEP D: Combine observed quantiles with bootstrap bands */
-data quantile_test_et2;
-    if _N_ = 1 then set obs_q;
-    set sim_bands;
+proc means data=kuiper_terms_et7 noprint;
+    var diff;
+    output out=kuiper_raw_et7
+        max = Dplus
+        min = Dmin_raw;
 run;
 
-proc print data=quantile_test_et2 noobs;
-    title "ET2 Frequency – Quantile Test via NB Parametric Bootstrap";
-    var Q_50  B50_P2  B50_P97
-        Q_75  B75_P2  B75_P97
-        Q_90  B90_P2  B90_P97
-        Q_95  B95_P2  B95_P97
-        Q_99  B99_P2  B99_P97;
+data kuiper_et7;
+    set kuiper_raw_et7;
+    Dminus = -Dmin_raw;                 /* we stored min(diff), so flip sign */
+    V      = Dplus + Dminus;            /* Kuiper statistic */
+
+    /* optional: scaled Kuiper statistic (like KS scaling) */
+    Neff   = (&nData. * &nModel.) / (&nData. + &nModel.);
+    V_star = (sqrt(Neff) + 0.155 + 0.24/sqrt(Neff)) * V;
+run;
+
+proc print data=kuiper_et7;
+    title "Two-sample Kuiper Statistic for ET7 Severity (DATA vs MODEL)";
 run;
 ```
 
 ---
 
-This gives you a **single table** with:
+### How to read the output
 
-* Empirical ET2 frequency quantiles (`Q_50`, `Q_75`, `Q_90`, `Q_95`, `Q_99`)
-* The **2.5% and 97.5% model-based bands** for each quantile (`Bxx_P2`, `Bxx_P97`)
+You’ll get something like:
 
-Then you can:
+| Dplus | Dmin_raw | Dminus | V | V_star |
+| ----- | -------- | ------ | - | ------ |
 
-* Check if each `Q_xx` lies inside its `[P2, P97]` band
-* Be more forgiving for Q90–Q99 (just interpret as diagnostic / instability, not hard fail)
+* `V` is your **Kuiper statistic** (0 = perfect match; larger = worse).
+* `V_star` is a scaled version you can compare across ET2/ET7, etc.
+* There’s no canned p-value in SAS for Kuiper, but you can **treat it like KS**: small V / V_star and visually good QQ/PP plots → acceptable.
 
-If you want, next I can add **pass/fail flags** with the forgiving rules we discussed (strict for 50–75, one-sided for 90–95, diagnostic only for 99).
+If you want, I can also:
+
+* Give a **bootstrap p-value** for this Kuiper statistic (simulate many model samples and recompute), or
+* Adapt the same code for ET2 or for your frequency NB model.
