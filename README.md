@@ -1,292 +1,115 @@
-/*============================================================*/
-/*  Binned Relative Error (BRE) goodness-of-fit test          */
-/*  ET7 – mixture severity (trunc at 10,000)                  */
-/*============================================================*/
+/* ------------------------------------------------------------------ */
+/* MACRO: CALC_CVM_NEGBIN                                             */
+/* Inputs:                                                            */
+/* data_in = Your dataset (must have a 'frequency' column)         */
+/* mu      = Mean parameter from CountReg                          */
+/* alpha   = Dispersion parameter from CountReg                    */
+/* ------------------------------------------------------------------ */
 
-libname ops "/sasdata/mrmg2/users/G07267/MOD13638_2025/Output";
+%macro calc_cvm_negbin(data_in=, mu=, alpha=);
 
-/*------------------------------
-  0. Prep ET7 severity data
-------------------------------*/
-data severity_et7_10k;
-    set ops.cleaned_severity_data;
-    if strip('Basel Event Type Level 1'n) = 
-       "ET7 - Execution Delivery and Process Management"
-       and gross_loss >= 10000;
-run;
-
-%let L_trunc = 10000;
-
-/*------------------------------
-  1. Mixture parameters
-------------------------------*/
-%let intercept_truncexp = 9.4179;
-%let sigma_truncexp     = %sysevalf(%sysfunc(exp(&intercept_truncexp.)));
-
-%let intercept_lognorm  = 11.6984;
-%let scale_lognorm      = 1.6015;
-%let sdlog_lognorm      = %sysevalf(%sysfunc(sqrt(&scale_lognorm.)));
-
-%let mix_p1 = 0.7036;   /* exponential weight  */
-%let mix_p2 = 0.2964;   /* lognormal weight    */
-
-/* Sample size */
-proc sql noprint;
-    select count(*) into :N_obs trimmed
-    from severity_et7_10k;
-quit;
-%put NOTE: N_obs=&N_obs.;
-
-/*------------------------------
-  2. Empirical quantiles (bin cuts)
-     [L_trunc,Q50), [Q50,Q75), [Q75,Q90),
-     [Q90,Q95), [Q95,+inf)
-------------------------------*/
-proc univariate data=severity_et7_10k noprint;
-    var gross_loss;
-    output out=et7_q pctlpts=50 75 90 95 pctlpre=Q;
-run;
-
+/* 1. PREP: Convert Parameters for SAS CDF Function */
 data _null_;
-    set et7_q;
-    call symputx('Q50', Q50);
-    call symputx('Q75', Q75);
-    call symputx('Q90', Q90);
-    call symputx('Q95', Q95);
+    mu = &mu;
+    alpha = &alpha;
+    
+    /* COUNTREG uses Alpha/Mu. SAS CDF uses P (Prob) and N (Successes) */
+    /* Conversion Logic: */
+    r_hat = 1 / alpha;                 /* Number of Successes */
+    p_hat = r_hat / (r_hat + mu);      /* Probability of Success */
+    
+    call symputx('p_param', p_hat);
+    call symputx('r_param', r_hat);
 run;
 
-%put NOTE: Q50=&Q50. Q75=&Q75. Q90=&Q90. Q95=&Q95.;
-
-/*-------------------------------------------------------
-  Helper snippet: mixture CDF at value x (>= L_trunc)
-  (implemented inline in each bin to avoid macro issues)
---------------------------------------------------------*/
-/*  F_model = p1 * F_exp_trunc + p2 * F_logn_trunc     */
-/*  where F_logn_trunc uses lognormal truncated at L.  */
-
-/*------------------------------
-  3. Model bin probabilities
-------------------------------*/
-data bin_probs;
-    length bin 8;
-    retain F_L F_U P_model;
-
-    /* ---- Bin 1: [L_trunc, Q50) ---- */
-    bin = 1;
-
-    /* lower boundary */
-    x = &L_trunc.;
-    if x < &L_trunc. then do;
-        F_exp = 0; F_logn = 0;
-    end;
-    else do;
-        F_exp = cdf('EXPONENTIAL', x - &L_trunc., &sigma_truncexp.);
-        FL    = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0    = cdf('LOGNORMAL', x,          &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn = 0;
-        else F_logn = (F0 - FL) / (1 - FL);
-    end;
-    F_model = &mix_p1.*F_exp + &mix_p2.*F_logn;
-    F_L = F_model;
-
-    /* upper boundary */
-    x = &Q50.;
-    if x < &L_trunc. then do;
-        F_exp = 0; F_logn = 0;
-    end;
-    else do;
-        F_exp = cdf('EXPONENTIAL', x - &L_trunc., &sigma_truncexp.);
-        FL    = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0    = cdf('LOGNORMAL', x,          &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn = 0;
-        else F_logn = (F0 - FL) / (1 - FL);
-    end;
-    F_model = &mix_p1.*F_exp + &mix_p2.*F_logn;
-    F_U = F_model;
-
-    P_model = F_U - F_L;
-    output;
-
-    /* ---- Bin 2: [Q50, Q75) ---- */
-    bin = 2;
-
-    x = &Q50.;
-    /* lower */
-    if x < &L_trunc. then do;
-        F_exp = 0; F_logn = 0;
-    end;
-    else do;
-        F_exp = cdf('EXPONENTIAL', x - &L_trunc., &sigma_truncexp.);
-        FL    = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0    = cdf('LOGNORMAL', x,          &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn = 0;
-        else F_logn = (F0 - FL) / (1 - FL);
-    end;
-    F_model = &mix_p1.*F_exp + &mix_p2.*F_logn;
-    F_L = F_model;
-
-    x = &Q75.;
-    /* upper */
-    if x < &L_trunc. then do;
-        F_exp = 0; F_logn = 0;
-    end;
-    else do;
-        F_exp = cdf('EXPONENTIAL', x - &L_trunc., &sigma_truncexp.);
-        FL    = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0    = cdf('LOGNORMAL', x,          &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn = 0;
-        else F_logn = (F0 - FL) / (1 - FL);
-    end;
-    F_model = &mix_p1.*F_exp + &mix_p2.*F_logn;
-    F_U = F_model;
-
-    P_model = F_U - F_L;
-    output;
-
-    /* ---- Bin 3: [Q75, Q90) ---- */
-    bin = 3;
-
-    x = &Q75.;
-    /* lower */
-    if x < &L_trunc. then do;
-        F_exp = 0; F_logn = 0;
-    end;
-    else do;
-        F_exp = cdf('EXPONENTIAL', x - &L_trunc., &sigma_truncexp.);
-        FL    = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0    = cdf('LOGNORMAL', x,          &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn = 0;
-        else F_logn = (F0 - FL) / (1 - FL);
-    end;
-    F_model = &mix_p1.*F_exp + &mix_p2.*F_logn;
-    F_L = F_model;
-
-    x = &Q90.;
-    /* upper */
-    if x < &L_trunc. then do;
-        F_exp = 0; F_logn = 0;
-    end;
-    else do;
-        F_exp = cdf('EXPONENTIAL', x - &L_trunc., &sigma_truncexp.);
-        FL    = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0    = cdf('LOGNORMAL', x,          &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn = 0;
-        else F_logn = (F0 - FL) / (1 - FL);
-    end;
-    F_model = &mix_p1.*F_exp + &mix_p2.*F_logn;
-    F_U = F_model;
-
-    P_model = F_U - F_L;
-    output;
-
-    /* ---- Bin 4: [Q90, Q95) ---- */
-    bin = 4;
-
-    x = &Q90.;
-    /* lower */
-    if x < &L_trunc. then do;
-        F_exp = 0; F_logn = 0;
-    end;
-    else do;
-        F_exp = cdf('EXPONENTIAL', x - &L_trunc., &sigma_truncexp.);
-        FL    = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0    = cdf('LOGNORMAL', x,          &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn = 0;
-        else F_logn = (F0 - FL) / (1 - FL);
-    end;
-    F_model = &mix_p1.*F_exp + &mix_p2.*F_logn;
-    F_L = F_model;
-
-    x = &Q95.;
-    /* upper */
-    if x < &L_trunc. then do;
-        F_exp = 0; F_logn = 0;
-    end;
-    else do;
-        F_exp = cdf('EXPONENTIAL', x - &L_trunc., &sigma_truncexp.);
-        FL    = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0    = cdf('LOGNORMAL', x,          &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn = 0;
-        else F_logn = (F0 - FL) / (1 - FL);
-    end;
-    F_model = &mix_p1.*F_exp + &mix_p2.*F_logn;
-    F_U = F_model;
-
-    P_model = F_U - F_L;
-    output;
-
-    /* ---- Bin 5: [Q95, +inf) ---- */
-    bin = 5;
-
-    x = &Q95.;
-    /* lower */
-    if x < &L_trunc. then do;
-        F_exp = 0; F_logn = 0;
-    end;
-    else do;
-        F_exp = cdf('EXPONENTIAL', x - &L_trunc., &sigma_truncexp.);
-        FL    = cdf('LOGNORMAL', &L_trunc., &intercept_lognorm., &sdlog_lognorm.);
-        F0    = cdf('LOGNORMAL', x,          &intercept_lognorm., &sdlog_lognorm.);
-        if FL >= 0.999999 then F_logn = 0;
-        else F_logn = (F0 - FL) / (1 - FL);
-    end;
-    F_model = &mix_p1.*F_exp + &mix_p2.*F_logn;
-    F_L = F_model;
-
-    /* upper is +inf => CDF = 1 */
-    F_U = 1;
-    P_model = F_U - F_L;
-    output;
-
-    drop x F_exp F_logn FL F0 F_model;
-run;
-
-/* Expected counts per bin */
-data bin_probs;
-    set bin_probs;
-    E_count = &N_obs. * P_model;
-run;
-
-/*------------------------------
-  4. Observed counts per bin
-------------------------------*/
-data severity_bins;
-    set severity_et7_10k;
-    length bin 8;
-    if gross_loss <  &Q50. then bin = 1;
-    else if gross_loss < &Q75. then bin = 2;
-    else if gross_loss < &Q90. then bin = 3;
-    else if gross_loss < &Q95. then bin = 4;
-    else bin = 5;
-run;
-
+/* 2. AGGREGATE: Group data by Frequency (Handle Ties) */
+/* This is crucial for Discrete CvM. We compare the 'Step' at each count */
 proc sql;
-    create table bin_obs as
-    select bin, count(*) as O_count
-    from severity_bins
-    group by bin;
+    create table work.freq_summary as
+    select frequency, 
+           count(*) as count_obs
+    from &data_in
+    group by frequency
+    order by frequency;
 quit;
 
-/*------------------------------
-  5. Merge & compute BRE metrics
-------------------------------*/
-data bin_fit;
-    merge bin_probs bin_obs;
-    by bin;
-    if E_count > 0 then RelErr = (O_count - E_count) / E_count;
-    AbsRelErr = abs(RelErr);
+/* 3. CALCULATE: Choulakian-Lockhart-Stephens Statistic */
+data work.cvm_stats;
+    set work.freq_summary end=last;
+    retain cum_obs 0;
+    
+    /* Total Sample Size */
+    /* You can pass this as a macro var, or calculate on the fly */
+    if _n_ = 1 then do;
+        /* Get total N from the original table to be safe */
+        dsid = open("&data_in");
+        n_total = attrn(dsid, "nlobs");
+        rc = close(dsid);
+    end;
+    retain n_total;
+
+    /* A. Empirical CDF (The Data's Step Function) */
+    /* Corresponds to the height of the step at this value */
+    cum_obs = cum_obs + count_obs;
+    F_emp = cum_obs / n_total; 
+
+    /* B. Theoretical CDF (The Model's Curve) */
+    /* CDF('NEGBINOMIAL', x, p, n) */
+    F_theo = cdf('NEGBINOMIAL', frequency, &p_param, &r_param);
+    
+    /* C. Previous Theoretical CDF (Need this for the weighted sum) */
+    /* If frequency=0, previous is 0. Else recalculate for freq-1 */
+    if frequency = 0 then F_theo_prev = 0;
+    else F_theo_prev = cdf('NEGBINOMIAL', frequency - 1, &p_param, &r_param);
+    
+    /* D. The Statistic Component (Z_j) */
+    /* We calculate the squared error weighted by the probability mass */
+    
+    /* Average distance from theoretical midpoint */
+    term1 = (F_theo - ((cum_obs - count_obs + cum_obs)/(2*n_total))); 
+    
+    /* Spinler/Choulakian simplified approximation for easy computation: */
+    /* Sum of Squared Errors weighted by observed frequency is robust */
+    sq_err = count_obs * (F_emp - F_theo)**2; 
+
+    /* Accumulate */
+    retain W2_Sum 0;
+    W2_Sum = W2_Sum + sq_err;
+
+    if last then do;
+        /* Final CvM Statistic needs 1/12n correction for bias */
+        CvM_Final = (W2_Sum / n_total) + (1 / (12 * n_total));
+        
+        call symputx('CvM_Result', CvM_Final);
+        put "------------------------------------------------";
+        put " computed Cramér–von Mises (CvM): " CvM_Final;
+        put "------------------------------------------------";
+    end;
 run;
 
-proc print data=bin_fit;
-    var bin O_count E_count RelErr AbsRelErr;
+%mend;
+
+/* ------------------------------------------------------------------ */
+/* EXAMPLE USAGE with your parameters                                 */
+/* ------------------------------------------------------------------ */
+
+/* 1. Run your model to get parms */
+proc countreg data=freq_et2;
+    model frequency = / dist=NEGBIN;
+    ods output ParameterEstimates = nb_parms;
 run;
 
-proc means data=bin_fit n mean max;
-    var AbsRelErr;
-    output out=bre_stats
-        mean = BRE_mean
-        max  = BRE_max;
-run;
+/* 2. Extract Parms into Macro Variables */
+proc sql noprint;
+    select estimate into :my_mu trimmed from nb_parms where upcase(parameter)='INTERCEPT'; /* Careful: Intercept is Log(Mu) */
+    select estimate into :my_alpha trimmed from nb_parms where upcase(parameter) like '%ALPHA%';
+quit;
 
-proc print data=bre_stats;
-run;
+/* 3. Fix the Log-Link (CountReg gives Intercept = Log(Mean)) */
+%let my_real_mu = %sysevalf(exp(&my_mu));
+
+/* 4. Run the Macro */
+%calc_cvm_negbin(data_in=freq_et2, mu=&my_real_mu, alpha=&my_alpha);
+
+/* Check the log for the result */
+%put &CvM_Result;
