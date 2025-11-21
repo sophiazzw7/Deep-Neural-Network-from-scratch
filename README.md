@@ -1,115 +1,96 @@
-/* ------------------------------------------------------------------ */
-/* MACRO: CALC_CVM_NEGBIN                                             */
-/* Inputs:                                                            */
-/* data_in = Your dataset (must have a 'frequency' column)         */
-/* mu      = Mean parameter from CountReg                          */
-/* alpha   = Dispersion parameter from CountReg                    */
-/* ------------------------------------------------------------------ */
+/* 1. SETUP: Define Parameters exactly as in your screenshots */
+%let L_trunc = 10000;
 
-%macro calc_cvm_negbin(data_in=, mu=, alpha=);
+/* Component 1: Exponential Parameters */
+%let intercept_truncexp = 9.4179;
+%let sigma_truncexp = %sysevalf(%sysfunc(exp(&intercept_truncexp)));
 
-/* 1. PREP: Convert Parameters for SAS CDF Function */
-data _null_;
-    mu = &mu;
-    alpha = &alpha;
+/* Component 2: Lognormal Parameters */
+%let intercept_lognorm = 11.6984; 
+%let scale_lognorm = 1.6015;
+%let sdlog_lognorm = %sysevalf(%sysfunc(sqrt(&scale_lognorm)));
+
+/* Mixing Weights */
+%let mix_p1 = 0.7036; /* Weight for Exponential Component */
+%let mix_p2 = 0.2964; /* Weight for Lognormal Component */
+
+/* 2. CALCULATE THEORETICAL CDF (The Hard Part) */
+data severity_cdf_calc;
+    set severity_et7_10k; /* Your dataset name from IMG_3275 */
     
-    /* COUNTREG uses Alpha/Mu. SAS CDF uses P (Prob) and N (Successes) */
-    /* Conversion Logic: */
-    r_hat = 1 / alpha;                 /* Number of Successes */
-    p_hat = r_hat / (r_hat + mu);      /* Probability of Success */
+    /* Only look at data above truncation (Safety check) */
+    if gross_loss > &L_trunc;
+
+    /* --- COMPONENT 1: EXPONENTIAL --- */
+    /* Base CDF at x */
+    cdf_exp_x = cdf('EXPONENTIAL', gross_loss, &sigma_truncexp);
+    /* Base CDF at Truncation Point (10k) */
+    cdf_exp_L = cdf('EXPONENTIAL', &L_trunc, &sigma_truncexp);
     
-    call symputx('p_param', p_hat);
-    call symputx('r_param', r_hat);
+    /* Truncated CDF Formula: (F(x) - F(L)) / (1 - F(L)) */
+    if (1 - cdf_exp_L) > 0 then 
+        F_trunc_exp = (cdf_exp_x - cdf_exp_L) / (1 - cdf_exp_L);
+    else F_trunc_exp = 0; /* Should not happen if sigma is reasonable */
+
+    /* --- COMPONENT 2: LOGNORMAL --- */
+    /* Base CDF at x */
+    cdf_logn_x = cdf('LOGNORMAL', gross_loss, &intercept_lognorm, &sdlog_lognorm);
+    /* Base CDF at Truncation Point (10k) */
+    cdf_logn_L = cdf('LOGNORMAL', &L_trunc, &intercept_lognorm, &sdlog_lognorm);
+    
+    /* Truncated CDF Formula */
+    if (1 - cdf_logn_L) > 0 then
+        F_trunc_logn = (cdf_logn_x - cdf_logn_L) / (1 - cdf_logn_L);
+    else F_trunc_logn = 0;
+
+    /* --- COMBINE: MIXTURE CDF --- */
+    /* F_final = w1*F1 + w2*F2 */
+    F_Model = (&mix_p1 * F_trunc_exp) + (&mix_p2 * F_trunc_logn);
+    
+    keep gross_loss F_Model;
 run;
 
-/* 2. AGGREGATE: Group data by Frequency (Handle Ties) */
-/* This is crucial for Discrete CvM. We compare the 'Step' at each count */
-proc sql;
-    create table work.freq_summary as
-    select frequency, 
-           count(*) as count_obs
-    from &data_in
-    group by frequency
-    order by frequency;
-quit;
+/* 3. SORT DATA (Required for CvM Formula) */
+proc sort data=severity_cdf_calc;
+    by gross_loss;
+run;
 
-/* 3. CALCULATE: Choulakian-Lockhart-Stephens Statistic */
-data work.cvm_stats;
-    set work.freq_summary end=last;
-    retain cum_obs 0;
+/* 4. COMPUTE CONTINUOUS CVM STATISTIC */
+/* Note: Using the Continuous formula (Stephens) because Severity is continuous */
+data cvm_final;
+    set severity_cdf_calc end=last;
     
-    /* Total Sample Size */
-    /* You can pass this as a macro var, or calculate on the fly */
-    if _n_ = 1 then do;
-        /* Get total N from the original table to be safe */
-        dsid = open("&data_in");
-        n_total = attrn(dsid, "nlobs");
+    /* Get Rank i */
+    rank_i = _N_;
+    
+    /* Get Total N (on first pass) */
+    if _N_ = 1 then do;
+        dsid = open("severity_cdf_calc");
+        N_total = attrn(dsid, "nlobs");
         rc = close(dsid);
     end;
-    retain n_total;
-
-    /* A. Empirical CDF (The Data's Step Function) */
-    /* Corresponds to the height of the step at this value */
-    cum_obs = cum_obs + count_obs;
-    F_emp = cum_obs / n_total; 
-
-    /* B. Theoretical CDF (The Model's Curve) */
-    /* CDF('NEGBINOMIAL', x, p, n) */
-    F_theo = cdf('NEGBINOMIAL', frequency, &p_param, &r_param);
+    retain N_total;
     
-    /* C. Previous Theoretical CDF (Need this for the weighted sum) */
-    /* If frequency=0, previous is 0. Else recalculate for freq-1 */
-    if frequency = 0 then F_theo_prev = 0;
-    else F_theo_prev = cdf('NEGBINOMIAL', frequency - 1, &p_param, &r_param);
+    /* --- THE CVM FORMULA --- */
+    /* Term = ( F(xi) - (2i-1)/2n )^2 */
+    term = (F_Model - ( (2*rank_i - 1) / (2*N_total) ))**2;
     
-    /* D. The Statistic Component (Z_j) */
-    /* We calculate the squared error weighted by the probability mass */
+    /* Accumulate Sum */
+    retain Sum_Sq 0;
+    Sum_Sq = Sum_Sq + term;
     
-    /* Average distance from theoretical midpoint */
-    term1 = (F_theo - ((cum_obs - count_obs + cum_obs)/(2*n_total))); 
-    
-    /* Spinler/Choulakian simplified approximation for easy computation: */
-    /* Sum of Squared Errors weighted by observed frequency is robust */
-    sq_err = count_obs * (F_emp - F_theo)**2; 
-
-    /* Accumulate */
-    retain W2_Sum 0;
-    W2_Sum = W2_Sum + sq_err;
-
     if last then do;
-        /* Final CvM Statistic needs 1/12n correction for bias */
-        CvM_Final = (W2_Sum / n_total) + (1 / (12 * n_total));
+        /* Final Calculation: 1/(12n) + Sum */
+        W2_Stat = (1 / (12 * N_total)) + Sum_Sq;
         
-        call symputx('CvM_Result', CvM_Final);
-        put "------------------------------------------------";
-        put " computed Cramér–von Mises (CvM): " CvM_Final;
-        put "------------------------------------------------";
+        put "-----------------------------------------------";
+        put " Cramér–von Mises Statistic (Severity): " W2_Stat;
+        put "-----------------------------------------------";
+        call symputx('CvM_Severity', W2_Stat);
     end;
 run;
 
-%mend;
-
-/* ------------------------------------------------------------------ */
-/* EXAMPLE USAGE with your parameters                                 */
-/* ------------------------------------------------------------------ */
-
-/* 1. Run your model to get parms */
-proc countreg data=freq_et2;
-    model frequency = / dist=NEGBIN;
-    ods output ParameterEstimates = nb_parms;
+/* Check Result */
+proc print data=cvm_final(obs=1); 
+    var W2_Stat; 
 run;
-
-/* 2. Extract Parms into Macro Variables */
-proc sql noprint;
-    select estimate into :my_mu trimmed from nb_parms where upcase(parameter)='INTERCEPT'; /* Careful: Intercept is Log(Mu) */
-    select estimate into :my_alpha trimmed from nb_parms where upcase(parameter) like '%ALPHA%';
-quit;
-
-/* 3. Fix the Log-Link (CountReg gives Intercept = Log(Mean)) */
-%let my_real_mu = %sysevalf(exp(&my_mu));
-
-/* 4. Run the Macro */
-%calc_cvm_negbin(data_in=freq_et2, mu=&my_real_mu, alpha=&my_alpha);
-
-/* Check the log for the result */
-%put &CvM_Result;
