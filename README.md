@@ -1,12 +1,10 @@
 /*===========================================================
-  Simple CvM for ET7 severity mixture
-  - Uses truncated exponential @ L and plain lognormal
-  - No tricky truncation of the lognormal tail
+  ET7 severity mixture – simulation-based CvM statistic
+  (no CDF calls, no integration)
 ===========================================================*/
-
 libname ops "/sasdata/mrmg2/users/G07267/MOD13638_2025/Output";
 
-/* 1. ET7 data, gross_loss >= 10,000 */
+/* 1. ET7 data, truncation at 10,000 */
 data severity_et7_10k;
     set ops.cleaned_severity_data;
     if strip('Basel Event Type Level 1'n) =
@@ -14,9 +12,8 @@ data severity_et7_10k;
        and gross_loss >= 10000;
 run;
 
-%let L_trunc = 10000;
-
-/* 2. Mixture parameters (same as before) */
+/* 2. Mixture parameters (same as your quantile test) */
+%let L_trunc           = 10000;
 %let intercept_truncexp = 9.4179;
 %let sigma_truncexp     = %sysevalf(%sysfunc(exp(&intercept_truncexp.)));
 
@@ -27,58 +24,95 @@ run;
 %let mix_p1 = 0.7036;   /* exponential weight  */
 %let mix_p2 = 0.2964;   /* lognormal weight    */
 
-/* 3. Sample size */
+/* 3. Sample size of ET7 data */
 proc sql noprint;
     select count(*) into :N_obs trimmed
     from severity_et7_10k;
 quit;
 %put NOTE: N_obs=&N_obs.;
 
-/* 4. Sort data for CvM calculation */
+/*===========================================================
+  4. Simulate from fitted mixture (model sample)
+     - no CDF, only RAND()
+===========================================================*/
+%let N_sim = 20000;   /* can increase if you want smoother CDF */
+
+data sim_et7;
+    call streaminit(12345);
+    do k = 1 to &N_sim.;
+        u = rand("UNIFORM");
+
+        if u < &mix_p1. then do;
+            /* truncated exponential above L_trunc */
+            /* draw Exp and shift above L_trunc    */
+            z = &L_trunc. + rand("EXPONENTIAL", &sigma_truncexp.);
+        end;
+        else do;
+            /* truncated lognormal via rejection   */
+            z = &L_trunc. - 1;
+            do while (z < &L_trunc.);
+                z = rand("LOGNORMAL", &intercept_lognorm., &sdlog_lognorm.);
+            end;
+        end;
+
+        gross_loss_sim = z;
+        output;
+    end;
+    keep gross_loss_sim;
+run;
+
+/*===========================================================
+  5. For each observed ET7 loss x_i, compute model CDF
+     F_model(x_i) ≈ proportion of simulated values <= x_i
+===========================================================*/
+
 proc sort data=severity_et7_10k;
     by gross_loss;
 run;
 
-/* 5. Compute CvM terms: sum_i (F(x_i) - (2i-1)/(2n))^2 */
-data cvm_terms_simple;
-    set severity_et7_10k;
-    by gross_loss;
+proc sort data=sim_et7;
+    by gross_loss_sim;
+run;
 
+/* Use correlated subquery to get F_model(x_i) */
+proc sql;
+    create table cvm_data as
+    select a.gross_loss,
+           /* empirical CDF under model */
+           (select count(*) from sim_et7 b
+             where b.gross_loss_sim <= a.gross_loss) / &N_sim. as F_model
+    from severity_et7_10k as a
+    order by a.gross_loss;
+quit;
+
+/*===========================================================
+  6. Compute CvM statistic:
+     CvM = 1/(12n) + Σ_i [F_model(x_i) - (2i-1)/(2n)]^2
+===========================================================*/
+
+data cvm_terms;
+    set cvm_data;
     retain i;
     if _N_ = 1 then i = 0;
     i + 1;
 
-    x = gross_loss;
-
-    /* --- simple mixture CDF --- */
-    /* truncated exponential above L */
-    if x < &L_trunc. then F_exp = 0;
-    else F_exp = cdf('EXPONENTIAL', x - &L_trunc., &sigma_truncexp.);
-
-    /* plain lognormal (no extra truncation logic) */
-    F_logn = cdf('LOGNORMAL', x, &intercept_lognorm., &sdlog_lognorm.);
-
-    F_model = &mix_p1. * F_exp + &mix_p2. * F_logn;
-
-    /* empirical mid-ranks (2i−1)/(2n) */
-    F_emp_mid = (2*i - 1) / (2*&N_obs.);
-
+    n = &N_obs.;
+    F_emp_mid = (2*i - 1) / (2*n);
     diff  = F_model - F_emp_mid;
     diff2 = diff*diff;
 run;
 
-/* 6. Sum and compute CvM = 1/(12n) + Σ diff^2 */
-proc means data=cvm_terms_simple noprint;
+proc means data=cvm_terms noprint;
     var diff2;
-    output out=cvm_sum_simple sum = sum_diff2;
+    output out=cvm_sum sum=sum_diff2;
 run;
 
-data cvm_stat_simple;
-    set cvm_sum_simple;
+data cvm_stat;
+    set cvm_sum;
     N   = &N_obs.;
-    CvM_simple = (1/(12*N)) + sum_diff2;
+    CvM = (1/(12*N)) + sum_diff2;
 run;
 
-proc print data=cvm_stat_simple;
-    title "Simple Cramer-von Mises Statistic for ET7 Severity Mixture";
+proc print data=cvm_stat;
+    title "Simulation-based Cramer–von Mises Statistic for ET7 Severity Mixture";
 run;
