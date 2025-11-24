@@ -1,3 +1,1 @@
-Please clarify that the sensitivity is done via shocking the data—i.e., adjusting frequency counts and loss amounts by ±5%, ±10%, and ±20% and then refitting the distributions.
-
-Also, please clarify why sensitivity is evaluated on parameter CI containment rather than on model outputs
+Hi [Name], I hope you’re doing well. I just noticed this morning that I no longer have access to the model inventory system and I’m not sure what happened. Would you mind letting me know who I should contact to look into it?
