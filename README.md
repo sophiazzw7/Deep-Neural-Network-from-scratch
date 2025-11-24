@@ -1,11 +1,3 @@
-The QQ plots for both the frequency and severity models show that the fitted curve sits consistently above the empirical points at the tail. Please provide a brief explanation for the observed tail pattern in MDD.  
-Please document the tail deviation as a model limitation with a mitigation plan.
+Please clarify that the sensitivity is done via shocking the data—i.e., adjusting frequency counts and loss amounts by ±5%, ±10%, and ±20% and then refitting the distributions.
 
-
-Please include the definition of impermissible values in MDD.
-Please include data linage work expected completion timeline in MDD.
-Please provide quantitative testing why LDA is deemed unsuitable below the 1000 event threshold.
-
-Please clarify the definition of tail used in sensitivity test(“tail increase by 10%”).
-
-MRO notes that all frequency parameters still show CI overlap even under a 20% tail increase, and one-third of severity parameters overlap under the same stress. This indicates that the CI-overlap threshold is too loose and does not function well as an early-warning indicator of tail shifts. MRO recommends tightening the threshold or redesigning the metric to better capture meaningful changes in tail behavior.
+Also, please clarify why sensitivity is evaluated on parameter CI containment rather than on model outputs
