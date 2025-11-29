@@ -1,44 +1,64 @@
-/* 1. Create a clean parameter ID for each type of parameter */
-data boot_param_all_long;
-    set boot_param_all;
-    length ParmID $40;
+%macro boot_et2(B=500);
 
-    /* You may need to adjust Model/Distribution names
-       — check PROC CONTENTS of boot_param_all to confirm. */
+/* clear previous stacks */
+proc datasets lib=work nolist; delete boot_all; quit;
 
-    /* Exponential component */
-    if Distribution = "Exponential" and Parameter = "Intercept" then
-        ParmID = "Expo_Intercept";
+%do b = 1 %to &B.;
 
-    /* Lognormal component */
-    else if Distribution = "LogNormal" and Parameter = "Intercept" then
-        ParmID = "Lognorm_Intercept";
-    else if Distribution = "LogNormal" and Parameter = "Scale" then
-        ParmID = "Lognorm_Scale";
+    /* 1. Resample ET2 severity */
+    proc surveyselect data=severity_et2_10k
+        out=boot_sample method=urs samprate=1 outhits seed=&b;
+    run;
 
-    /* Mixing probabilities – often come from ProbModel */
-    else if Model = "ProbModel" and index(Parameter,"Logit") > 0 then do;
-        if Component = 1 then ParmID = "Mix_LogitProb1";
-        else if Component = 2 then ParmID = "Mix_LogitProb2";
+    /* 2. Re-fit EXACT same model as developer */
+    proc fmm data=boot_sample;
+        model gross_loss = / dist=TruncExpo(&L_trunc.);
+        model gross_loss = / dist=LogNormal;
+        probmodel;
+        ods output ParameterEstimates=boot_parm_&b;
+    run;
+
+    /* 3. Add replicate ID */
+    data boot_parm_&b;
+        set boot_parm_&b;
+        replicate = &b;
+    run;
+
+    /* 4. stack */
+    proc append base=boot_all data=boot_parm_&b force; run;
+
+%end;
+
+%mend;
+
+%boot_et2(B=500);
+
+/* Standardize parameter names */
+data boot_all_clean;
+    set boot_all;
+    length ParmID $32;
+
+    if Distribution="TruncExpo" and Parameter="Intercept" then ParmID="Expo_Intercept";
+    else if Distribution="LogNormal" and Parameter="Intercept" then ParmID="Lognorm_Intercept";
+    else if Distribution="LogNormal" and Parameter="Scale" then ParmID="Lognorm_Scale";
+    else if Model="ProbModel" and index(Parameter,"Logit")>0 then do;
+        if Component=1 then ParmID="Mix_Logit_1";
+        else if Component=2 then ParmID="Mix_Logit_2";
     end;
 
-    /* keep only rows we’ve labeled */
     if ParmID ne "";
 run;
 
-/* 2. Get bootstrap percentile CIs for each ParmID */
-proc sort data=boot_param_all_long;
-    by ParmID;
-run;
+proc sort data=boot_all_clean; by ParmID; run;
 
-proc univariate data=boot_param_all_long noprint;
+/* percentile CIs */
+proc univariate data=boot_all_clean noprint;
     by ParmID;
     var Estimate;
-    output out=sev_et2_param_CI
-        pctlpts = 2.5 97.5
-        pctlpre = CI_;
+    output out=CI_out
+        pctlpts=2.5 97.5
+        pctlpre=CI_;
 run;
 
-proc print data=sev_et2_param_CI;
-    title "Bootstrap 95% CIs for ET2 Severity Mixture Parameters";
+proc print data=CI_out;
 run;
